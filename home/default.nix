@@ -12,7 +12,6 @@
     neovim
     wget
     curl
-    git-credential-manager
   ];
 
   # Set your shell to zsh (or bash, fish, etc.)
@@ -22,14 +21,6 @@
     enable = true;
     userName = "Nguyen Dinh Vu";
     userEmail = "nguyendinhvu@msn.com";
-    # Tell Git to use the credential manager
-    extraConfig = {
-      credential = {
-        # This tells the Git Credential Manager to use a cache.
-        credentialStore = "cache";
-        helper = "${pkgs.git-credential-manager}/bin/git-credential-manager";
-      };
-    };
   };
 
   # This is the version of Home Manager you are targeting.
