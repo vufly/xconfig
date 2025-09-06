@@ -6,12 +6,14 @@
   home.homeDirectory = "/home/vudinhn";
   # Install some core packages to get you started
   home.packages = with pkgs; [
+    home-manager
     git
     zsh
     tmux
     neovim
     wget
     curl
+    fzf
   ];
 
   # Set your shell to zsh (or bash, fish, etc.)
