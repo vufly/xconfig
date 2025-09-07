@@ -7,7 +7,7 @@
 
   outputs = { self, nixpkgs, home-manager }:
     let
-      # Define the systems you will be using
+      # Supported systems
       supportedSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     in {
@@ -16,8 +16,20 @@
           pkgs = nixpkgs.legacyPackages."x86_64-linux";
           modules = [
             ./home/default.nix
+            ./home/linux.nix
+            ./home/hosts/OHP360.nix
           ];
         };
+
+        # Example: If you add a MacBook later
+        # "vu@MacBook" = home-manager.lib.homeManagerConfiguration {
+        #   pkgs = nixpkgs.legacyPackages."aarch64-darwin";
+        #   modules = [
+        #     ./home/default.nix
+        #     ./home/darwin.nix
+        #     ./home/hosts/MacBook.nix
+        #   ];
+        # };
       };
     };
 }
