@@ -11,13 +11,17 @@
       supportedSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     in {
+      packages = forAllSystems (system: {
+        hm = home-manager.packages.${system}.home-manager;
+      });
+
       homeConfigurations = {
-        "vudinhn@OHP360" = home-manager.lib.homeManagerConfiguration {
+        "vudinhn@ohp360-wsl" = home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages."x86_64-linux";
           modules = [
             ./home/default.nix
             ./home/linux.nix
-            ./home/hosts/OHP360.nix
+            ./home/hosts/ohp360-wsl.nix
           ];
         };
 
