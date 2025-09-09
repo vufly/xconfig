@@ -19,13 +19,8 @@
     userEmail = "nguyendinhvu@msn.com";
   };
 
-  programs.zsh = {
-    enable = true;
-  };
-
-  # programs.neovim = {
-  #   enable = true;
-  # };
+  programs.zsh.enable = false;
+  programs.neovim.enable = false;
 
   # Chezmoi integration
   # programs.chezmoi = {
