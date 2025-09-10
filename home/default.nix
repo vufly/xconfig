@@ -2,23 +2,22 @@
 
 {
   home.packages = with pkgs; [
+    # zsh
     git
-    zsh
     tmux
     neovim
     wget
     curl
     fzf
     zoxide
+    gnupg
+    openssh
     chezmoi
+    nodejs_22
+    pnpm
   ];
 
-  programs.git = {
-    enable = true;
-    userName = "Nguyen Dinh Vu";
-    userEmail = "nguyendinhvu@msn.com";
-  };
-
+  programs.git.enable = false;
   programs.zsh.enable = false;
   programs.neovim.enable = false;
 

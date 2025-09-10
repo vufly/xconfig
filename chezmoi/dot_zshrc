@@ -92,7 +92,8 @@ alias 256="curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403b
 alias gitzip="git archive HEAD -o ${PWD##*/}.zip"
 alias gitsf="git submodule update --init --recursive"
 alias gitsp="git submodule foreach --recursive 'git pull origin master'"
-alias nup="node ~/o24/da/ui-dev-scripts/ui-proxy/ui-proxy.js"
+alias nup="node ~/o24/frontend/ui-dev-scripts/ui-proxy/ui-proxy.js"
+alias hm="nix run home-manager/master -- switch --flake ~/xconfig#vudinhn@ohp360-wsl"
 
 export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev ) 
 alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/Fork.exe $(wslpath -w $@) };load_fork'
@@ -126,21 +127,14 @@ gact() {
 }
 
 export GPG_TTY=$TTY
+export PATH="$HOME/.local/bin:$PATH"
+#export PATH="$HOME/.nix-profile/bin:$PATH"
 
 # . ~/.asdf/plugins/golang/set-env.zsh
 
 # export ANDROID_HOME=~/Android/Sdk
 # export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 
-# pnpm
-# export PNPM_HOME="/home/vudinhn/.local/share/pnpm"
-# case ":$PATH:" in
-#   *":$PNPM_HOME:"*) ;;
-#   *) export PATH="$PNPM_HOME:$PATH" ;;
-# esac
-# pnpm end
-
 # Shell integrations
-# eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
