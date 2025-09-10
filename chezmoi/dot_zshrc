@@ -130,7 +130,13 @@ export GPG_TTY=$TTY
 export PATH="$HOME/.local/bin:$PATH"
 #export PATH="$HOME/.nix-profile/bin:$PATH"
 
-# . ~/.asdf/plugins/golang/set-env.zsh
+# pnpm
+export PNPM_HOME="/home/vudinhn/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
 
 # export ANDROID_HOME=~/Android/Sdk
 # export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
