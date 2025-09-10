@@ -96,7 +96,7 @@ alias nup="node ~/o24/frontend/ui-dev-scripts/ui-proxy/ui-proxy.js"
 alias hm="nix run home-manager/master -- switch --flake ~/xconfig#vudinhn@ohp360-wsl"
 
 export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev ) 
-alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/Fork.exe $(wslpath -w $@) };load_fork'
+alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/current/Fork.exe $(wslpath -w $@) };load_fork'
 
 gac() {
   if [ -z "$1" ]; then
