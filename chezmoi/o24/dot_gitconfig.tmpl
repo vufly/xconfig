@@ -1,0 +1,12 @@
+{{ if or (eq .chezmoi.hostname "OHP360") (eq .chezmoi.hostname "ohp360-wsl") -}}
+[user]
+    name = Nguyen Dinh Vu
+    email = divn@outpost24.com
+    signingKey = B10D67A5674B03C5
+
+[commit]
+   gpgSign = true
+
+[gpg]
+   program = gpg
+{{ end -}}

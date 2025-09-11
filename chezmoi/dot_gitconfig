@@ -13,3 +13,5 @@ path = ~/o24/.gitconfig
 	rebase = true
 [color]
 	ui = true
+[push]
+    autoSetupRemote = true
