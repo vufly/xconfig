@@ -1,4 +1,4 @@
-{{- if not (and (eq .chezmoi.os "linux") (index .chezmoi.env "WSL_DISTRO_NAME")) -}}
+{{- if not (and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | lower | contains "microsoft")) -}}
 -- WezTerm config
 
 local wezterm = require 'wezterm'
