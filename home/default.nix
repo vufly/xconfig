@@ -10,6 +10,7 @@
     curl
     fzf
     zoxide
+    eza
     gnupg
     openssh
     chezmoi
