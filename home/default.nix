@@ -16,6 +16,7 @@
     chezmoi
     nodejs_22
     pnpm
+    bat
   ];
 
   programs.git.enable = false;
