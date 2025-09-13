@@ -2,28 +2,57 @@
 
 {
   home.packages = with pkgs; [
-    # zsh
-    git
-    tmux
-    neovim
-    wget
-    curl
-    fzf
-    zoxide
-    eza
-    gnupg
-    openssh
-    chezmoi
-    nodejs_22
-    pnpm
-    bat
+    # -------------------------------
+    # Shell & Core Environment Tools
+    # -------------------------------
+    zoxide          # smarter cd command
+    fzf             # fuzzy finder
+    eza             # modern replacement for ls
+    bat             # cat with syntax highlighting
+    fd              # fast alternative to find
+    ripgrep         # fast grep alternative
+    scooter         # find-and-replace TUI
+    yazi            # terminal file manager
+
+    # -------------------------------
+    # Shell & Networking Utilities
+    # -------------------------------
+    wget            # HTTP(S) download
+    curl            # URL transfers
+    gnupg           # encryption & signing
+    openssh         # ssh client & tools
+
+    # -------------------------------
+    # Editors & Terminal Tools
+    # -------------------------------
+    neovim          # text editor
+    tmux            # terminal multiplexer
+
+    # -------------------------------
+    # Source Control
+    # -------------------------------
+    git             # version control
+    lazygit         # terminal UI for git
+
+    # -------------------------------
+    # Dotfiles & Config Management
+    # -------------------------------
+    chezmoi         # dotfiles manager
+
+    # -------------------------------
+    # Node.js Ecosystem
+    # -------------------------------
+    nodejs_22       # JavaScript runtime
+    pnpm            # fast JS package manager
+    bun             # fast all-in-one JS runtime
   ];
 
+  # Disable program modules you manage manually (via chezmoi or configs)
   programs.git.enable = false;
   programs.zsh.enable = false;
   programs.neovim.enable = false;
 
-  # Chezmoi integration
+  # Example: Chezmoi integration (if you want to enable later)
   # programs.chezmoi = {
   #   enable = true;
   #   initFlags = [ "--source" "${config.home.homeDirectory}/.local/share/chezmoi" ];
