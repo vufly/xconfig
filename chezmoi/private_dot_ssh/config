@@ -1,0 +1,23 @@
+Host bitbucket.dev.outpost24.com
+  AddKeysToAgent yes
+  IdentityFile ~/.ssh/id_ed25519
+
+Host github.com
+  AddKeysToAgent yes
+  Hostname github.com
+  IdentityFile ~/.ssh/id_rsa
+
+Host gitlab.com
+  Hostname altssh.gitlab.com
+  User git
+  Port 443
+  PreferredAuthentications publickey
+
+Host uidev
+  User ubuntu
+  HostName 10.90.1.209
+  IdentityFile ~/.ssh/id_ed25519
+
+Host *
+  AddKeysToAgent yes
+  IdentityFile ~/.ssh/id_ed25519
