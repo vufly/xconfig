@@ -21,6 +21,7 @@
     curl            # URL transfers
     gnupg           # encryption & signing
     openssh         # ssh client & tools
+    bitwarden-cli   # password manager CLI
 
     # -------------------------------
     # Editors & Terminal Tools

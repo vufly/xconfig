@@ -41,6 +41,14 @@ zinit snippet OMZP::sudo
 #zinit snippet OMZP::asdf
 zinit snippet OMZP::command-not-found
 
+# Bitwarden CLI completion (generate only on install/update)
+zinit ice \
+    atclone'mkdir -p ~/.zsh/completions; bw completion --shell zsh > ~/.zsh/completions/_bw' \
+    atpull'%atclone' \
+    nocompile \
+    id-as'bitwarden-completion'
+zinit load zdharma-continuum/null
+fpath=("$HOME/.zsh/completions" $fpath)
 # Load completions
 autoload -Uz compinit && compinit
 
