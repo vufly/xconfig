@@ -16,3 +16,4 @@ if (Test-Path($ChocolateyProfile)) {
 Import-Module PSReadLine
 Set-PSReadLineOption -PredictionSource History
 Import-Module git-aliases -DisableNameChecking
+Import-Module -Name Terminal-Icons
