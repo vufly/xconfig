@@ -33,6 +33,7 @@
     # Source Control
     # -------------------------------
     git             # version control
+    tig             # text-mode interface for git
     lazygit         # terminal UI for git
 
     # -------------------------------
