@@ -35,6 +35,7 @@
     git             # version control
     tig             # text-mode interface for git
     lazygit         # terminal UI for git
+    delta           # git diff viewer
 
     # -------------------------------
     # Dotfiles & Config Management
