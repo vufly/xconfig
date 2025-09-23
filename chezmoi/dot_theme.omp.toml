@@ -3,14 +3,6 @@ version = 3
 final_space = true
 async = true
 
-# [palette]
-#   blue = '#8AADF4'
-#   lavender = '#B7BDF8'
-#   os = '#ACB0BE'
-#   pink = '#F5BDE6'
-#   text = '#494D64'
-#   wight = '#FFFFFF'
-
 [[blocks]]
   type = 'prompt'
   alignment = 'left'
@@ -68,3 +60,22 @@ async = true
       branch_icon = ' '
       branch_identical_icon = ''
 
+[[blocks]]
+  type = 'prompt'
+  alignment = 'left'
+  newline = true
+
+  [[blocks.segments]]
+    type = "text"
+    style = "plain"
+    foreground = "2"
+    foreground_templates = [ "{{ if gt .Code 0 }}1{{ end }}" ]
+    template = "   "
+
+[transient_prompt]
+  foreground_templates = [
+    "{{if gt .Code 0}}1{{end}}",
+    "{{if eq .Code 0}}2{{end}}",
+  ]
+  background = 'transparent'
+  template = ' '
