@@ -62,11 +62,17 @@ set -g status-interval 60
 set -g status-justify centre
 
 set -g status-left-length 40
-set -g status-left '#[fg=green] #S #[fg=yellow]#I/#[fg=cyan]#P '
+set -g status-left '#{prefix_highlight}#[fg=green] #S #[fg=yellow]#I/#[fg=cyan]#P '
 set -g status-right '#(battery -t) #[fg=cyan] %d %b %R '
 
 set -g window-status-format "#[fg=colour8]\uE0B6#[fg=colour253,bg=colour8]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=colour8,bg=default]\uE0B4"
 set -g window-status-current-format "#[fg=red]\uE0B6#[fg=colour15,bold,bg=red]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=red,bg=default]\uE0B4"
+
+##########################
+# Borders
+##########################
+set -g pane-border-lines heavy
+set -g pane-border-indicators arrows
 
 ##########################
 # Colors
@@ -75,8 +81,6 @@ set -g status-style fg=white
 set -g message-style fg=white,bold,bg=colour161
 set -g pane-border-style fg=colour240,bold,bg=default
 set -g pane-active-border-style fg=green,bold,bg=default
-set -g pane-border-lines heavy
-set -g pane-border-indicators arrows
 
 ##########################
 # Plugins
@@ -84,9 +88,13 @@ set -g pane-border-indicators arrows
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @plugin 'tmux-plugins/tmux-prefix-highlight'
 
 set -g @continuum-restore 'on'
 set -g @resurrect-capture-pane-contents 'on'
+set -g @prefix_highlight_empty_prompt '    '
+set -g @prefix_highlight_fg 'white'
+set -g @prefix_highlight_bg 'blue'
 
 run '~/.tmux/plugins/tpm/tpm'
 {{ end -}}
