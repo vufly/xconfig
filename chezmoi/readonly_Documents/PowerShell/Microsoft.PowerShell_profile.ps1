@@ -1,9 +1,10 @@
-function Invoke-Starship-PreCommand {
-  $title = "PS "
-  $title += Split-Path -Leaf $pwd
-  $host.ui.RawUI.WindowTitle = $title
-}
-Invoke-Expression (&starship init powershell)
+# function Invoke-Starship-PreCommand {
+#   $title = "PS "
+#   $title += Split-Path -Leaf $pwd
+#   $host.ui.RawUI.WindowTitle = $title
+# }
+# Invoke-Expression (&starship init powershell)
+
 # Import the Chocolatey Profile that contains the necessary code to enable
 # tab-completions to function for `choco`.
 # Be aware that if you are missing these lines from your profile, tab completion
@@ -17,3 +18,6 @@ Import-Module PSReadLine
 Set-PSReadLineOption -PredictionSource History
 Import-Module git-aliases -DisableNameChecking
 Import-Module -Name Terminal-Icons
+
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
+oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
