@@ -19,7 +19,7 @@ async = true
 
   [[blocks.segments]]
     type = 'path'
-    template = '  {{ .Path }} '
+    template = ' {{if eq .PWD "~"}} {{else}} {{end}}{{ .Path }} '
     powerline_symbol = ''
     background = '4'
     foreground = '0'
@@ -29,10 +29,10 @@ async = true
       style = 'powerlevel'
       mixed_threshold = 10
       max_width = 50
-      folder_icon = '...'
+      folder_icon = '…'
       home_icon = '~'
-      right_format = '<b>%s</b>'
-      gitdir_format = '<b>%s</b>'
+      edge_format = '<b>%s</b>'
+      gitdir_format = '<b><i>%s</i></b>'
 
   [[blocks.segments]]
     type = "git"
