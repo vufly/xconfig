@@ -19,5 +19,8 @@ Set-PSReadLineOption -PredictionSource History
 Import-Module git-aliases -DisableNameChecking
 Import-Module -Name Terminal-Icons
 
+mise activate pwsh | Out-String | Invoke-Expression
+Invoke-Expression (& { (zoxide init powershell --cmd cd | Out-String) })
+
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
