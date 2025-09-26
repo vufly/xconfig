@@ -34,7 +34,7 @@ foreground = "0"
 style = "powerline"
 
 [blocks.segments.properties]
-style = "powerlevel"
+style = "full"
 mixed_threshold = 10
 max_width = 50
 folder_icon = "…"
