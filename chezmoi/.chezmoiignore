@@ -4,4 +4,6 @@ Documents/PowerShell
 
 {{ if eq .chezmoi.os "windows" -}}
 .zshrc
+.p10k.zsh
+.tmux.conf
 {{ end }}
