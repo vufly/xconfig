@@ -2,6 +2,7 @@
 
 {
   home.packages = with pkgs; [
+    mise           # Fron-end to your dev environment
     # -------------------------------
     # Shell & Core Environment Tools
     # -------------------------------
