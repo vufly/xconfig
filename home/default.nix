@@ -41,13 +41,6 @@
     # Dotfiles & Config Management
     # -------------------------------
     chezmoi         # dotfiles manager
-
-    # -------------------------------
-    # Node.js Ecosystem
-    # -------------------------------
-    nodejs_22       # JavaScript runtime
-    pnpm            # fast JS package manager
-    bun             # fast all-in-one JS runtime
   ];
 
   # Disable program modules you manage manually (via chezmoi or configs)

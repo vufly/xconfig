@@ -1,3 +1,13 @@
 [tools]
-node = "22"
+# Node.js ecosystem
+node = "lts"
+bun = "latest"
+pnpm = "latest"
+
+# Python ecosystem
 python = "3"
+pipenv = "latest"
+
+# Miscellaneous
+rust = "latest"
+go = "latest"
