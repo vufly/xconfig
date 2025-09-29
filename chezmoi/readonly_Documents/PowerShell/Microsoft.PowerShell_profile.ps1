@@ -19,6 +19,19 @@ Set-PSReadLineOption -PredictionSource History
 Import-Module git-aliases -DisableNameChecking
 Import-Module -Name Terminal-Icons
 
+function gitzip {
+    $name = Split-Path -Leaf (Get-Location)
+    git archive HEAD -o "$name.zip"
+}
+
+function gitsf {
+    git submodule update --init --recursive
+}
+
+function gitsp {
+    git submodule foreach --recursive "git pull origin master"
+}
+
 mise activate pwsh | Out-String | Invoke-Expression
 Invoke-Expression (& { (zoxide init powershell --cmd cd | Out-String) })
 
