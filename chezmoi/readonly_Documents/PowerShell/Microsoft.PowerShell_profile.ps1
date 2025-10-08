@@ -5,17 +5,26 @@
 # }
 # Invoke-Expression (&starship init powershell)
 
-# Import the Chocolatey Profile that contains the necessary code to enable
-# tab-completions to function for `choco`.
-# Be aware that if you are missing these lines from your profile, tab completion
-# for `choco` will not function.
-# See https://ch0.co/tab-completion for details.
-$ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-if (Test-Path($ChocolateyProfile)) {
-  Import-Module "$ChocolateyProfile"
+# --- Chocolatey tab completion ---
+# $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+# if (Test-Path($ChocolateyProfile)) {
+#   Import-Module "$ChocolateyProfile"
+# }
+function choco {
+    if (-not (Get-Module -Name chocolateyProfile -ListAvailable)) {
+        $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+        if (Test-Path $ChocolateyProfile) {
+            Import-Module $ChocolateyProfile
+        }
+    }
+    Microsoft.PowerShell.Core\Invoke-Expression ("choco " + ($args -join ' '))
 }
+
+# --- PSReadLine setup ---
 Import-Module PSReadLine
 Set-PSReadLineOption -PredictionSource History
+
+# --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
 Import-Module -Name Terminal-Icons
 
@@ -32,8 +41,28 @@ function gitsp {
     git submodule foreach --recursive "git pull origin master"
 }
 
+# --- Mise runtime ---
 mise activate pwsh | Out-String | Invoke-Expression
-Invoke-Expression (& { (zoxide init powershell --cmd cd | Out-String) })
 
+# --- Force UTF-8 Encoding ---
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+
+# --- Oh My Posh initialization ---
 oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
+
+# --- Zoxide integration ---
+# Initialize zoxide hooks for PowerShell
+(& { (zoxide init powershell --cmd cd | Out-String) }) | Invoke-Expression
+
+# Wrap the existing prompt safely (Oh My Posh owns the prompt)
+if (-not (Test-Path Function:\_original_prompt)) {
+    Rename-Item Function:\prompt _original_prompt
+}
+
+function global:prompt {
+    # Let zoxide learn current directory
+    & zoxide add "$(Get-Location)" | Out-Null
+
+    # Then call the original Oh My Posh prompt
+    _original_prompt
+}
