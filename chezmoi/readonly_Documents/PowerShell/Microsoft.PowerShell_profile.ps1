@@ -26,7 +26,26 @@ Set-PSReadLineOption -PredictionSource History
 
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
-Import-Module -Name Terminal-Icons
+
+# Remove built-in alias
+if (Get-Alias ls -ErrorAction SilentlyContinue) {
+    Remove-Item Alias:ls -ErrorAction SilentlyContinue
+}
+
+# Detect if eza is installed
+if (Get-Command eza -ErrorAction SilentlyContinue) {
+    function ls {
+        eza
+    }
+
+    function lsi {
+        eza --icons
+    }
+}
+else {
+    # Fall back to default Get-ChildItem
+    Set-Alias ls Get-ChildItem
+}
 
 function gitzip {
     $name = Split-Path -Leaf (Get-Location)
