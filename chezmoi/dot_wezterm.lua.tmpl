@@ -10,6 +10,10 @@ if wezterm.config_builder then
   config = wezterm.config_builder()
 end
 
+config.color_scheme_dirs = {
+  wezterm.home_dir .. '/.config/wezterm/themes/bearded-theme',
+}
+
 -- wezterm.gui is not available to the mux server, so take care to
 -- do something reasonable when this config is evaluated by the mux
 function get_appearance()
@@ -22,16 +26,17 @@ end
 function scheme_for_appearance(appearance)
   if appearance:find 'Dark' then
     darkmode = true
-    return 'Atelierdune (dark) (terminal.sexy)'
+    return 'Bearded Theme Monokai Stone'
   else
     darkmode = false
-    return 'Atelierdune (light) (terminal.sexy)'
+    return 'Bearded Theme Milkshake Vanilla'
   end
 end
 
 local selected_scheme_name = scheme_for_appearance(get_appearance())
 -- This is where you actually apply your config choices
 config.color_scheme = selected_scheme_name
+wezterm.log_info('Selected color scheme: ' .. tostring(selected_scheme_name))
 config.use_fancy_tab_bar = false
 config.tab_max_width = 32
 config.window_decorations = 'RESIZE'
@@ -43,42 +48,131 @@ config.font = wezterm.font_with_fallback {
 }
 config.font_size = 12.1
 config.bold_brightens_ansi_colors = false
+config.underline_position = '-2.5pt'
 
 local all_schemes = wezterm.color.get_builtin_schemes()
-local current_scheme_definition = all_schemes[selected_scheme_name]
+do
+  local n = 0
+  for _ in pairs(all_schemes) do n = n + 1 end
+  wezterm.log_info('Builtin color scheme count: ' .. n)
+end
+-- merge schemes from color_scheme_dirs into all_schemes
+if config.color_scheme_dirs then
+  for _, dir in ipairs(config.color_scheme_dirs) do
+    wezterm.log_info('Scanning color scheme dir: ' .. tostring(dir))
+    for _, file in ipairs(wezterm.glob(dir .. '/*.toml')) do
+      wezterm.log_info('Found color scheme file: ' .. tostring(file))
+      local ok, colors, metadata = pcall(wezterm.color.load_scheme, file)
+      if ok and colors then
+        local name = (metadata and metadata.name) or file:match('([^/\\]+)%.toml$')
+        wezterm.log_info('Loaded scheme: ' .. tostring(name))
+        if name then
+          all_schemes[name] = colors
+        end
+      else
+        wezterm.log_error('Failed to load scheme from: ' .. tostring(file) .. ' error: ' .. tostring(colors))
+      end
+    end
+  end
+end
+do
+  local n = 0
+  for _ in pairs(all_schemes) do n = n + 1 end
+  wezterm.log_info('Total merged color scheme count: ' .. n)
+end
+local current_scheme_definition = all_schemes[selected_scheme_name] or wezterm.color.get_builtin_schemes()[selected_scheme_name]
+if not current_scheme_definition then
+  wezterm.log_error('Selected color scheme not found in merged or builtin sets: ' .. tostring(selected_scheme_name))
+end
 local terminal_bg_color = wezterm.color.parse(current_scheme_definition.background)
 config.colors = {
+  visual_bell = current_scheme_definition.foreground,
+  split = current_scheme_definition.foreground,
   tab_bar = {
     background = terminal_bg_color:darken(0.03):desaturate(0.5),
     active_tab = {
       bg_color = current_scheme_definition.foreground,
       fg_color = terminal_bg_color,
       intensity = 'Bold',
+      underline = 'None',
     },
     inactive_tab = {
       bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
       fg_color = current_scheme_definition.foreground,
       intensity = 'Normal',
+      underline = 'Single'
     },
     inactive_tab_hover = {
       bg_color = terminal_bg_color:darken(0.03),
       fg_color = current_scheme_definition.foreground,
       italic = true,
       intensity = 'Bold',
+      underline = 'Single'
     },
     new_tab = {
       bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
       fg_color = current_scheme_definition.foreground,
       intensity = 'Normal',
+      underline = 'Single'
     },
     new_tab_hover = {
       bg_color = terminal_bg_color:darken(0.03),
       fg_color = current_scheme_definition.foreground,
       italic = true,
       intensity = 'Bold',
+      underline = 'Single'
     },
   }
 }
+
+config.tab_bar_style = {
+  new_tab = wezterm.format {
+    { Text = ' +▕' },
+  },
+  new_tab_hover = wezterm.format {
+    { Text = ' +▕' },
+  },
+}
+
+local RIGHT_ONE_EIGHT_BLOCK = '▕'
+local BLANK = ' '
+function tab_title(tab_info)
+  local title = tab_info.tab_title
+  -- if the tab title is explicitly set, take that
+  if title and #title > 0 then
+    return title
+  end
+  -- Otherwise, use the title from the active pane
+  -- in that tab
+  return tab_info.active_pane.title
+end
+
+wezterm.on(
+  'format-tab-title',
+  function(tab, tabs, panes, config, hover, max_width)
+    local right_edge
+
+    if tab.is_active then
+      right_edge = BLANK
+    else
+      right_edge = RIGHT_ONE_EIGHT_BLOCK
+    end
+
+    local edge_foreground = background
+
+    local title = (tab.tab_index + 1) .. ' ' .. tab_title(tab)
+
+    -- ensure that the titles fit in the available space,
+    -- and that we have room for the edges.
+    title = wezterm.truncate_right(title, max_width - 2)
+
+    return {
+      { Text = BLANK },
+      { Text = title },
+      { Text = right_edge },
+    }
+  end
+)
 
 -- OS-specific default shell
 {{ if eq .chezmoi.os "windows" -}}
