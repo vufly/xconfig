@@ -4,6 +4,7 @@
 local wezterm = require 'wezterm'
 local config = {}
 local act = wezterm.action
+local darkmode = false
 
 if wezterm.config_builder then
   config = wezterm.config_builder()
@@ -20,15 +21,17 @@ end
 
 function scheme_for_appearance(appearance)
   if appearance:find 'Dark' then
+    darkmode = true
     return 'Atelierdune (dark) (terminal.sexy)'
   else
+    darkmode = false
     return 'Atelierdune (light) (terminal.sexy)'
   end
 end
 
+local selected_scheme_name = scheme_for_appearance(get_appearance())
 -- This is where you actually apply your config choices
-
-config.color_scheme = scheme_for_appearance(get_appearance())
+config.color_scheme = selected_scheme_name
 config.use_fancy_tab_bar = false
 config.tab_max_width = 32
 config.window_decorations = 'RESIZE'
@@ -40,6 +43,42 @@ config.font = wezterm.font_with_fallback {
 }
 config.font_size = 12.1
 config.bold_brightens_ansi_colors = false
+
+local all_schemes = wezterm.color.get_builtin_schemes()
+local current_scheme_definition = all_schemes[selected_scheme_name]
+local terminal_bg_color = wezterm.color.parse(current_scheme_definition.background)
+config.colors = {
+  tab_bar = {
+    background = terminal_bg_color:darken(0.03):desaturate(0.5),
+    active_tab = {
+      bg_color = current_scheme_definition.foreground,
+      fg_color = terminal_bg_color,
+      intensity = 'Bold',
+    },
+    inactive_tab = {
+      bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
+      fg_color = current_scheme_definition.foreground,
+      intensity = 'Normal',
+    },
+    inactive_tab_hover = {
+      bg_color = terminal_bg_color:darken(0.03),
+      fg_color = current_scheme_definition.foreground,
+      italic = true,
+      intensity = 'Bold',
+    },
+    new_tab = {
+      bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
+      fg_color = current_scheme_definition.foreground,
+      intensity = 'Normal',
+    },
+    new_tab_hover = {
+      bg_color = terminal_bg_color:darken(0.03),
+      fg_color = current_scheme_definition.foreground,
+      italic = true,
+      intensity = 'Bold',
+    },
+  }
+}
 
 -- OS-specific default shell
 {{ if eq .chezmoi.os "windows" -}}
