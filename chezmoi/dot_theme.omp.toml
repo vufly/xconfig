@@ -23,7 +23,7 @@ style = "diamond"
 leading_diamond = ""
 template = " {{.Icon}} "
 background = "7"
-foreground = "232"
+foreground = "0"
 powerline_symbol = ""
 
 [[blocks.segments]]
