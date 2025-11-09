@@ -65,8 +65,8 @@ set -g status-left-length 40
 set -g status-left '#{prefix_highlight}#[fg=green] #S #[fg=yellow]#I/#[fg=cyan]#P '
 set -g status-right '#(battery -t) #[fg=cyan] %d %b %R '
 
-set -g window-status-format "#[fg=colour8]\uE0B6#[fg=colour253,bg=colour8]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=colour8,bg=default]\uE0B4"
-set -g window-status-current-format "#[fg=red]\uE0B6#[fg=colour15,bold,bg=red]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=red,bg=default]\uE0B4"
+set -g window-status-format "#[fg=colour15]\uE0B6#[fg=colour8,bg=colour15]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=colour15,bg=default]\uE0B4"
+set -g window-status-current-format "#[fg=colour1]\uE0B6#[fg=colour255,bold,bg=colour1]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=colour1,bg=default]\uE0B4"
 
 ##########################
 # Borders
@@ -93,7 +93,7 @@ set -g @plugin 'tmux-plugins/tmux-prefix-highlight'
 set -g @continuum-restore 'on'
 set -g @resurrect-capture-pane-contents 'on'
 set -g @prefix_highlight_empty_prompt '    '
-set -g @prefix_highlight_fg 'white'
+set -g @prefix_highlight_fg 'colour231'
 set -g @prefix_highlight_bg 'blue'
 
 run '~/.tmux/plugins/tpm/tpm'
