@@ -11,7 +11,7 @@ if wezterm.config_builder then
 end
 
 config.color_scheme_dirs = {
-  wezterm.home_dir .. '/.config/wezterm/themes/bearded-theme',
+  '{{- .chezmoi.homeDir -}}' .. '/.config/wezterm/themes/bearded-theme',
 }
 
 -- wezterm.gui is not available to the mux server, so take care to
