@@ -36,7 +36,6 @@ end
 local selected_scheme_name = scheme_for_appearance(get_appearance())
 -- This is where you actually apply your config choices
 config.color_scheme = selected_scheme_name
-wezterm.log_info('Selected color scheme: ' .. tostring(selected_scheme_name))
 config.use_fancy_tab_bar = false
 config.tab_max_width = 32
 config.window_decorations = 'RESIZE'
@@ -54,23 +53,17 @@ local all_schemes = wezterm.color.get_builtin_schemes()
 do
   local n = 0
   for _ in pairs(all_schemes) do n = n + 1 end
-  wezterm.log_info('Builtin color scheme count: ' .. n)
 end
 -- merge schemes from color_scheme_dirs into all_schemes
 if config.color_scheme_dirs then
   for _, dir in ipairs(config.color_scheme_dirs) do
-    wezterm.log_info('Scanning color scheme dir: ' .. tostring(dir))
     for _, file in ipairs(wezterm.glob(dir .. '/*.toml')) do
-      wezterm.log_info('Found color scheme file: ' .. tostring(file))
       local ok, colors, metadata = pcall(wezterm.color.load_scheme, file)
       if ok and colors then
         local name = (metadata and metadata.name) or file:match('([^/\\]+)%.toml$')
-        wezterm.log_info('Loaded scheme: ' .. tostring(name))
         if name then
           all_schemes[name] = colors
         end
-      else
-        wezterm.log_error('Failed to load scheme from: ' .. tostring(file) .. ' error: ' .. tostring(colors))
       end
     end
   end
@@ -78,12 +71,8 @@ end
 do
   local n = 0
   for _ in pairs(all_schemes) do n = n + 1 end
-  wezterm.log_info('Total merged color scheme count: ' .. n)
 end
 local current_scheme_definition = all_schemes[selected_scheme_name] or wezterm.color.get_builtin_schemes()[selected_scheme_name]
-if not current_scheme_definition then
-  wezterm.log_error('Selected color scheme not found in merged or builtin sets: ' .. tostring(selected_scheme_name))
-end
 local terminal_bg_color = wezterm.color.parse(current_scheme_definition.background)
 config.colors = {
   visual_bell = current_scheme_definition.foreground,
