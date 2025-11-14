@@ -24,6 +24,14 @@ function choco {
 Import-Module PSReadLine
 Set-PSReadLineOption -PredictionSource History
 
+# --- PSFzf ---
+Import-Module PSFzf
+Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+$commandOverride = [ScriptBlock]{ param($Location) Write-Host $Location }
+Set-PsFzfOption -AltCCommand $commandOverride
+Set-PSReadLineKeyHandler -Key Tab -ScriptBlock { Invoke-FzfTabCompletion }
+Set-PsFzfOption -TabExpansion
+
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
 
