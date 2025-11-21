@@ -1,60 +1,59 @@
 {{- if not (and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | lower | contains "microsoft")) -}}
--- WezTerm config
+-- WezTerm Configuration
+-- Refactored for readability and organization
 
 local wezterm = require 'wezterm'
-local config = {}
 local act = wezterm.action
-local darkmode = false
 
+-- Initialize configuration builder
+local config = {}
 if wezterm.config_builder then
   config = wezterm.config_builder()
 end
 
-config.color_scheme_dirs = {
-  '{{- .chezmoi.homeDir -}}' .. '/.config/wezterm/themes/bearded-theme',
-}
+--------------------------------------------------------------------------------
+-- Helper Functions
+--------------------------------------------------------------------------------
 
--- wezterm.gui is not available to the mux server, so take care to
--- do something reasonable when this config is evaluated by the mux
-function get_appearance()
+-- Determine if we are in Dark or Light mode
+local function get_appearance()
   if wezterm.gui then
     return wezterm.gui.get_appearance()
   end
   return 'Dark'
 end
 
-function scheme_for_appearance(appearance)
+-- Select color scheme based on appearance
+local function scheme_for_appearance(appearance)
   if appearance:find 'Dark' then
-    darkmode = true
     return 'Bearded Theme Monokai Stone'
   else
-    darkmode = false
     return 'Bearded Theme Milkshake Vanilla'
   end
 end
 
-local selected_scheme_name = scheme_for_appearance(get_appearance())
--- This is where you actually apply your config choices
-config.color_scheme = selected_scheme_name
-config.use_fancy_tab_bar = false
-config.tab_max_width = 32
-config.window_decorations = 'RESIZE'
-config.window_close_confirmation = 'AlwaysPrompt'
-
-config.font = wezterm.font_with_fallback {
-  'RecMonoFly Nerd Font',
-  'Symbols Nerd Font',
-}
-config.font_size = 12.1
-config.bold_brightens_ansi_colors = false
-config.underline_position = '-2.5pt'
-
-local all_schemes = wezterm.color.get_builtin_schemes()
-do
-  local n = 0
-  for _ in pairs(all_schemes) do n = n + 1 end
+-- Get the title for a tab
+local function get_tab_title(tab_info)
+  local title = tab_info.tab_title
+  -- If the tab title is explicitly set, use it
+  if title and #title > 0 then
+    return title
+  end
+  -- Otherwise, use the title from the active pane
+  return tab_info.active_pane.title
 end
--- merge schemes from color_scheme_dirs into all_schemes
+
+--------------------------------------------------------------------------------
+-- Color Schemes & Appearance
+--------------------------------------------------------------------------------
+
+-- Directories containing custom color schemes
+config.color_scheme_dirs = {
+  '{{- .chezmoi.homeDir -}}' .. '/.config/wezterm/themes/bearded-theme',
+}
+
+-- Load custom schemes from directories
+local all_schemes = wezterm.color.get_builtin_schemes()
 if config.color_scheme_dirs then
   for _, dir in ipairs(config.color_scheme_dirs) do
     for _, file in ipairs(wezterm.glob(dir .. '/*.toml')) do
@@ -68,102 +67,112 @@ if config.color_scheme_dirs then
     end
   end
 end
-do
-  local n = 0
-  for _ in pairs(all_schemes) do n = n + 1 end
-end
+
+-- Select and apply the color scheme
+local selected_scheme_name = scheme_for_appearance(get_appearance())
+config.color_scheme = selected_scheme_name
+
+-- Derive specific colors for the tab bar based on the selected scheme
 local current_scheme_definition = all_schemes[selected_scheme_name] or wezterm.color.get_builtin_schemes()[selected_scheme_name]
-local terminal_bg_color = wezterm.color.parse(current_scheme_definition.background)
-config.colors = {
-  visual_bell = current_scheme_definition.foreground,
-  split = current_scheme_definition.foreground,
-  tab_bar = {
-    background = terminal_bg_color:darken(0.03):desaturate(0.5),
-    active_tab = {
-      bg_color = current_scheme_definition.foreground,
-      fg_color = terminal_bg_color,
-      intensity = 'Bold',
-      underline = 'None',
-    },
-    inactive_tab = {
-      bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
-      fg_color = current_scheme_definition.foreground,
-      intensity = 'Normal',
-      underline = 'Single'
-    },
-    inactive_tab_hover = {
-      bg_color = terminal_bg_color:darken(0.03),
-      fg_color = current_scheme_definition.foreground,
-      italic = true,
-      intensity = 'Bold',
-      underline = 'Single'
-    },
-    new_tab = {
-      bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
-      fg_color = current_scheme_definition.foreground,
-      intensity = 'Normal',
-      underline = 'Single'
-    },
-    new_tab_hover = {
-      bg_color = terminal_bg_color:darken(0.03),
-      fg_color = current_scheme_definition.foreground,
-      italic = true,
-      intensity = 'Bold',
-      underline = 'Single'
-    },
+
+if current_scheme_definition then
+  local terminal_bg_color = wezterm.color.parse(current_scheme_definition.background)
+  local fg_color = current_scheme_definition.foreground
+
+  config.colors = {
+    visual_bell = fg_color,
+    split = fg_color,
+    tab_bar = {
+      background = terminal_bg_color:darken(0.03):desaturate(0.5),
+      active_tab = {
+        bg_color = fg_color,
+        fg_color = terminal_bg_color,
+        intensity = 'Bold',
+        underline = 'None',
+      },
+      inactive_tab = {
+        bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
+        fg_color = fg_color,
+        intensity = 'Normal',
+        underline = 'Single'
+      },
+      inactive_tab_hover = {
+        bg_color = terminal_bg_color:darken(0.03),
+        fg_color = fg_color,
+        italic = true,
+        intensity = 'Bold',
+        underline = 'Single'
+      },
+      new_tab = {
+        bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
+        fg_color = fg_color,
+        intensity = 'Normal',
+        underline = 'Single'
+      },
+      new_tab_hover = {
+        bg_color = terminal_bg_color:darken(0.03),
+        fg_color = fg_color,
+        italic = true,
+        intensity = 'Bold',
+        underline = 'Single'
+      },
+    }
   }
+end
+
+--------------------------------------------------------------------------------
+-- Fonts
+--------------------------------------------------------------------------------
+
+config.font = wezterm.font_with_fallback {
+  'RecMonoFly Nerd Font',
+  'Symbols Nerd Font',
 }
+config.font_size = 12.1
+config.bold_brightens_ansi_colors = false
+config.underline_position = '-2.5pt'
+
+--------------------------------------------------------------------------------
+-- Window Settings
+--------------------------------------------------------------------------------
+
+config.window_decorations = 'RESIZE'
+config.window_close_confirmation = 'AlwaysPrompt'
+
+--------------------------------------------------------------------------------
+-- Tab Bar Configuration
+--------------------------------------------------------------------------------
+
+config.use_fancy_tab_bar = false
+config.tab_max_width = 32
 
 config.tab_bar_style = {
-  new_tab = wezterm.format {
-    { Text = ' +▕' },
-  },
-  new_tab_hover = wezterm.format {
-    { Text = ' +▕' },
-  },
+  new_tab = wezterm.format { { Text = ' +▕' } },
+  new_tab_hover = wezterm.format { { Text = ' +▕' } },
 }
 
-local RIGHT_ONE_EIGHT_BLOCK = '▕'
-local BLANK = ' '
-function tab_title(tab_info)
-  local title = tab_info.tab_title
-  -- if the tab title is explicitly set, take that
-  if title and #title > 0 then
-    return title
-  end
-  -- Otherwise, use the title from the active pane
-  -- in that tab
-  return tab_info.active_pane.title
-end
+-- Custom tab title formatting
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+  local RIGHT_ONE_EIGHT_BLOCK = '▕'
+  local BLANK = ' '
 
-wezterm.on(
-  'format-tab-title',
-  function(tab, tabs, panes, config, hover, max_width)
-    local right_edge
+  local right_edge = tab.is_active and BLANK or RIGHT_ONE_EIGHT_BLOCK
+  local title = (tab.tab_index + 1) .. ' ' .. get_tab_title(tab)
 
-    if tab.is_active then
-      right_edge = BLANK
-    else
-      right_edge = RIGHT_ONE_EIGHT_BLOCK
-    end
+  -- Ensure title fits
+  title = wezterm.truncate_right(title, max_width - 2)
 
-    local edge_foreground = background
+  return {
+    { Text = BLANK },
+    { Text = title },
+    { Text = right_edge },
+  }
+end)
 
-    local title = (tab.tab_index + 1) .. ' ' .. tab_title(tab)
+--------------------------------------------------------------------------------
+-- Shell Configuration
+--------------------------------------------------------------------------------
 
-    -- ensure that the titles fit in the available space,
-    -- and that we have room for the edges.
-    title = wezterm.truncate_right(title, max_width - 2)
-
-    return {
-      { Text = BLANK },
-      { Text = title },
-      { Text = right_edge },
-    }
-  end
-)
-
--- OS-specific default shell
 {{ if eq .chezmoi.os "windows" -}}
 config.default_prog = { 'pwsh.exe' }
 {{ else -}}
