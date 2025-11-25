@@ -1,0 +1,107 @@
+{
+  // Zed Syntax Highlighting Overrides
+  // Ported from VS Code configuration
+  // Overrides text styles globally (font style and weight) without specifying a theme
+  "experimental.theme_overrides": {
+    "syntax": {
+      // Keywords
+      "keyword": {
+        "font_weight": 400,
+        "font_style": "italic"
+      },
+      // Operators
+      "operator": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Variables
+      "variable": {
+        "font_weight": 400,
+        "font_style": "italic"
+      },
+      "variable.builtin": {
+        "font_weight": 700,
+        "font_style": "italic"
+      },
+      // Parameters
+      "variable.parameter": {
+        "font_style": "italic"
+      },
+      "variable.parameter.builtin": {
+        "font_weight": 700,
+        "font_style": "italic"
+      },
+      "variable.member": {
+        "font_style": "italic"
+      },
+      // Object properties
+      "property": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Functions
+      "function": {
+        "font_weight": 700
+      },
+      "method": {
+        "font_weight": 700
+      },
+      "function.builtin": {
+        "font_weight": 700
+      },
+      // Classes and Types
+      "type": {
+        "font_weight": 700,
+        "font_style": "italic"
+      },
+      "class": {
+        "font_style": "italic"
+      },
+      "constructor": {
+        "font_style": "italic"
+      },
+      // Strings
+      "string": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Comments
+      "comment": {
+        "font_style": "italic"
+      },
+      "comment.doc": {
+        "font_style": "italic"
+      },
+      // Constants
+      "constant": {
+        "font_weight": 700
+      },
+      "boolean": {
+        "font_weight": 700
+      },
+      // Numbers
+      "number": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Punctuation / Brackets
+      "punctuation": {
+        "font_weight": 700
+      },
+      "punctuation.bracket": {
+        "font_weight": 700
+      },
+      "punctuation.delimiter": {
+        "font_weight": 700
+      },
+      // HTML/XML Tags
+      "tag": {
+        "font_weight": 700
+      },
+      // Attributes
+      "attribute": {
+        "font_style": "italic"
+      }
+    }
+  }
+}

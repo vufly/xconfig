@@ -1,0 +1,140 @@
+{
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      // Keywords
+      {
+        "scope": "keyword",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": "keyword.operator", // More specific operator scope
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      // Variables and Parameters
+      {
+        "scope": "variable",
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      {
+        "scope": "variable.parameter",
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+      {
+        "scope": "variable.other.object",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": "variable.other.object.property",
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      // Functions and Classes
+      {
+        "scope": "entity.name.function",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": "entity.name.class",
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+      {
+        "scope": "entity.name.type", // Data types
+        "settings": {
+          "fontStyle": "bold italic"
+        }
+      },
+      // Strings, Comments, Constants, and Numbers
+      {
+        "scope": "string",
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      {
+        "scope": "comment",
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+      {
+        "scope": "constant",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": "constant.numeric",
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      // Operators and Punctuation
+      {
+        "scope": "operator", // General operator scope (if needed)
+        "settings": {
+          "fontStyle": ""
+        }
+      },
+      {
+        "scope": "punctuation",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": "meta.brace",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      // Storage Types and Built-in Functions
+      {
+        "scope": "storage.type",
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+      {
+        "scope": "support.function",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      // HTML/XML/JSX
+      {
+        "scope": "entity.name.tag",
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": "entity.other.attribute-name",
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+      // CSS
+      {
+        "scope": "variable.argument.css",
+        "settings": {
+          "fontStyle": "italic"
+        }
+      }
+    ]
+  }
+}
