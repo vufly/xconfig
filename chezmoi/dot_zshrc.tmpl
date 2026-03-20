@@ -113,7 +113,7 @@ gac() {
     return 1
   fi
   git add --all
-  git commit -m "$(git branch --show-current): $1"
+  git commit -m "$(git branch --show-current) $1"
 }
 
 gact() {
