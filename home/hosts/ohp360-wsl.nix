@@ -4,7 +4,11 @@
   home.username = "vudinhn";
   home.homeDirectory = "/home/vudinhn";
 
-  programs.zsh.shellAliases = {
-    nup = "node ~/o24/da/ui-dev-scripts/ui-proxy/ui-proxy.js";
-  };
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
+
+  home.packages = with pkgs; [
+    codex
+  ];
 }
