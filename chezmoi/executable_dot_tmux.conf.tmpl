@@ -1,15 +1,14 @@
-{{ if ne .chezmoi.os "windows" -}}
 ##########################
 # Core Configuration
 ##########################
 
-unbind C-b
 set -g prefix C-a
-bind-key C-a send-prefix
 
 set -g mouse on
 set -g default-terminal "xterm-256color"
+{{ if ne .chezmoi.os "windows" -}}
 set -ga terminal-overrides ",xterm-256color:Tc"
+{{ end -}}
 
 set -g history-limit 10000
 set -sg escape-time 10
@@ -20,11 +19,21 @@ setw -g pane-base-index 1
 set -g renumber-windows on
 
 set -g status-interval 5
+
+{{ if ne .chezmoi.os "windows" -}}
 set -g automatic-rename on
 set -g automatic-rename-format '#{b:pane_current_path}'
+{{ end -}}
 
 set -g set-titles on
 set -g set-titles-string '#S:#I.#P #W'
+
+{{ if eq .chezmoi.os "windows" -}}
+set -g cursor-style block
+set -g cursor-blink off
+set -g allow-predictions on
+set -g prediction-dimming on
+{{ end -}}
 
 ##########################
 # Keybindings
@@ -38,18 +47,20 @@ bind '"' split-window -h -c '#{pane_current_path}'
 # Clipboard (OS-specific)
 ##########################
 setw -g mode-keys vi
-unbind -T copy-mode-vi Enter
 
 {{ if eq .chezmoi.os "darwin" -}}
 # macOS uses pbcopy
+unbind -T copy-mode-vi Enter
 bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel "pbcopy"
 bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "pbcopy"
 {{ else if and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
 # WSL: forward to Windows clipboard
+unbind -T copy-mode-vi Enter
 bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel "clip.exe"
 bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "clip.exe"
 {{ else if eq .chezmoi.os "linux" -}}
 # Linux bare metal with xclip
+unbind -T copy-mode-vi Enter
 bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel "xclip -selection clipboard"
 bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "xclip -in -selection clipboard"
 {{ end -}}
@@ -58,15 +69,21 @@ bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe-and-cancel "xc
 # Status Bar
 ##########################
 set -gq status-utf8 on
-set -g status-interval 60
 set -g status-justify centre
 
 set -g status-left-length 40
+{{ if eq .chezmoi.os "windows" -}}
+set -g status-left '#{?client_prefix,#[fg=colour231,bg=blue] ^A ,#[fg=colour0,bg=default]████}#[fg=green,bg=default] #S #[fg=yellow]#I/#[fg=cyan]#P '
+set -g status-right '{battery}  #[fg=cyan] %d %b %R '
+{{ else -}}
 set -g status-left '#{prefix_highlight}#[fg=green] #S #[fg=yellow]#I/#[fg=cyan]#P '
-set -g status-right '#(battery -t) #[fg=cyan] %d %b %R '
+set -g status-right '#{battery_icon} #{battery_percentage} #[fg=cyan] %d %b %R '
+{{ end -}}
 
-set -g window-status-format "#[fg=colour15]\uE0B6#[fg=colour8,bg=colour15]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=colour15,bg=default]\uE0B4"
-set -g window-status-current-format "#[fg=colour1]\uE0B6#[fg=colour255,bold,bg=colour1]#{?window_zoomed_flag,\uF531 ,}#I|#W#[fg=colour1,bg=default]\uE0B4"
+# Window status formatting with Nerd Font icons
+# Nerd Font references: U+E0B6 = , U+E0B4 = , U+F531 = 
+set -g window-status-format "#[fg=colour15]#[fg=colour8,bg=colour15]#{?window_zoomed_flag, ,}#I|#W#[fg=colour15,bg=default]"
+set -g window-status-current-format "#[fg=colour1]#[fg=colour255,bold,bg=colour1]#{?window_zoomed_flag, ,}#I|#W#[fg=colour1,bg=default]"
 
 ##########################
 # Borders
@@ -77,7 +94,11 @@ set -g pane-border-indicators arrows
 ##########################
 # Colors
 ##########################
+{{ if eq .chezmoi.os "windows" -}}
+set -g status-style fg=white,bg=colour0
+{{ else -}}
 set -g status-style fg=white
+{{ end -}}
 set -g message-style fg=white,bold,bg=colour161
 set -g pane-border-style fg=colour240,bold,bg=default
 set -g pane-active-border-style fg=green,bold,bg=default
@@ -85,10 +106,19 @@ set -g pane-active-border-style fg=green,bold,bg=default
 ##########################
 # Plugins
 ##########################
+{{ if eq .chezmoi.os "windows" -}}
+set -g @plugin 'psmux-plugins/ppm'
+set -g @plugin 'psmux-plugins/psmux-resurrect'
+set -g @plugin 'psmux-plugins/psmux-continuum'
+set -g @plugin 'psmux-plugins/psmux-prefix-highlight'
+set -g @plugin 'psmux-plugins/psmux-battery'
+{{ else -}}
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @plugin 'tmux-plugins/tmux-prefix-highlight'
+set -g @plugin 'tmux-plugins/tmux-battery'
+{{ end -}}
 
 set -g @continuum-restore 'on'
 set -g @resurrect-capture-pane-contents 'on'
@@ -96,5 +126,8 @@ set -g @prefix_highlight_empty_prompt '    '
 set -g @prefix_highlight_fg 'colour231'
 set -g @prefix_highlight_bg 'blue'
 
+{{ if eq .chezmoi.os "windows" -}}
+run '~/.psmux/plugins/ppm/ppm.ps1'
+{{ else -}}
 run '~/.tmux/plugins/tpm/tpm'
 {{ end -}}

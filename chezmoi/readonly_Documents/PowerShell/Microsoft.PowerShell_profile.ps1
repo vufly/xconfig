@@ -55,6 +55,36 @@ else {
     Set-Alias ls Get-ChildItem
 }
 
+function t {
+    & tmux $args
+}
+
+function ta {
+    & tmux a -t $args
+}
+
+function tls {
+    & tmux ls $args
+}
+
+function tn {
+    & tmux new -t $args
+}
+
+function tk {
+    & tmux kill-session -t $args
+}
+
+function tka {
+    tmux list-sessions -F "#{session_name}" | Where-Object { $_ } | ForEach-Object {
+        & tmux kill-session -t $_
+    }
+}
+
+function trs {
+    & tmux source-file "$HOME/.tmux.conf"
+}
+
 function gitzip {
     $name = Split-Path -Leaf (Get-Location)
     git archive HEAD -o "$name.zip"
