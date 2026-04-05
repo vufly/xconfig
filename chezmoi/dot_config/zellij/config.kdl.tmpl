@@ -1,4 +1,6 @@
+{{ if eq .chezmoi.os "windows" -}}
 default_shell "pwsh"
+{{ end -}}
 default_mode "locked"
 // default_layout "compact" // replaces by
 
