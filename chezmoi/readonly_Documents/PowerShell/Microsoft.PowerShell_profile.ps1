@@ -92,7 +92,7 @@ function z {
 }
 
 function za {
-    & zellij attach $args
+    & zellij attach $args --force-run-commands
 }
 
 function zls {
