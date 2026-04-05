@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Aquarelle Cymbidium"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#ded8dc"
+background = "#292227"
+cursor_bg = "#f3e1ac"
+cursor_border = "#f3e1ac"
+cursor_fg = "#2c252a"
+selection_bg = "#5b383b"
+selection_fg = "#ded8dc"
+scrollbar_thumb = "#41393e"
+split = "#1b171a"
+ansi = ["#2c252a", "#e87a70", "#aada77", "#f3e1ac", "#73bee9", "#edc1ea", "#a9edd9", "#ded8dc"]
+brights = ["#61505c", "#ff6759", "#abf45d", "#ffe7a0", "#5dc4ff", "#f9b5f4", "#99fddf", "#ffffff"]
+
+[colors.tab_bar]
+background = "#262024"
+inactive_tab_edge = "#262024"
+inactive_tab_edge_hover = "#262024"
+
+[colors.tab_bar.active_tab]
+bg_color = "#2c252a"
+fg_color = "#ded8dc"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#262024"
+fg_color = "#70606c"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#2c252a"
+fg_color = "#ded8dc"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#262024"
+fg_color = "#70606c"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#2c252a"
+fg_color = "#ded8dc"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

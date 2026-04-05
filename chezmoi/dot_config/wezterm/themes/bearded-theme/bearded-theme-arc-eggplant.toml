@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Arc Eggplant"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#c8c1d9"
+background = "#16121d"
+cursor_bg = "#EACD61"
+cursor_border = "#EACD61"
+cursor_fg = "#181421"
+selection_bg = "#39364f"
+selection_fg = "#c8c1d9"
+scrollbar_thumb = "#2c2835"
+split = "#0a080e"
+ansi = ["#181421", "#E35535", "#3CEC85", "#EACD61", "#69C3FF", "#F38CEC", "#22ECDB", "#c8c1d9"]
+brights = ["#46395c", "#ff4319", "#29ff82", "#ffd94c", "#69c3ff", "#ff80f6", "#0fffeb", "#ffffff"]
+
+[colors.tab_bar]
+background = "#13101a"
+inactive_tab_edge = "#13101a"
+inactive_tab_edge_hover = "#13101a"
+
+[colors.tab_bar.active_tab]
+bg_color = "#181421"
+fg_color = "#c8c1d9"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#13101a"
+fg_color = "#52456f"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#181421"
+fg_color = "#c8c1d9"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#13101a"
+fg_color = "#52456f"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#181421"
+fg_color = "#c8c1d9"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

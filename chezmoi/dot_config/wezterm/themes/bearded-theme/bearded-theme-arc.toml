@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Arc"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#d0d7e4"
+background = "#1a212f"
+cursor_bg = "#EACD61"
+cursor_border = "#EACD61"
+cursor_fg = "#1c2433"
+selection_bg = "#364154"
+selection_fg = "#d0d7e4"
+scrollbar_thumb = "#313847"
+split = "#11161f"
+ansi = ["#1c2433", "#E35535", "#3CEC85", "#EACD61", "#69C3FF", "#F38CEC", "#22ECDB", "#d0d7e4"]
+brights = ["#3e4f71", "#ff4319", "#29ff82", "#ffd94c", "#69c3ff", "#ff80f6", "#0fffeb", "#ffffff"]
+
+[colors.tab_bar]
+background = "#181f2c"
+inactive_tab_edge = "#181f2c"
+inactive_tab_edge_hover = "#181f2c"
+
+[colors.tab_bar.active_tab]
+bg_color = "#1c2433"
+fg_color = "#d0d7e4"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#181f2c"
+fg_color = "#4a5e84"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#1c2433"
+fg_color = "#d0d7e4"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#181f2c"
+fg_color = "#4a5e84"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#1c2433"
+fg_color = "#d0d7e4"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

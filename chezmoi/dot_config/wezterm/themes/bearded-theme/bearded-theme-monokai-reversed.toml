@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Monokai Reversed"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#c6cad7"
+background = "#15171d"
+cursor_bg = "#ffd866"
+cursor_border = "#ffd866"
+cursor_fg = "#12141a"
+selection_bg = "#383c46"
+selection_fg = "#c6cad7"
+scrollbar_thumb = "#2b2e35"
+split = "#0a0b0f"
+ansi = ["#12141a", "#fc6a67", "#a9dc76", "#ffd866", "#78dce8", "#e991e3", "#78e8c6", "#c6cad7"]
+brights = ["#404658", "#ff6764", "#a9f65c", "#ffd866", "#61eeff", "#fd7df4", "#61ffcf", "#ffffff"]
+
+[colors.tab_bar]
+background = "#171921"
+inactive_tab_edge = "#171921"
+inactive_tab_edge_hover = "#171921"
+
+[colors.tab_bar.active_tab]
+bg_color = "#12141a"
+fg_color = "#c6cad7"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#171921"
+fg_color = "#4c526b"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#12141a"
+fg_color = "#c6cad7"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#171921"
+fg_color = "#4c526b"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#12141a"
+fg_color = "#c6cad7"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

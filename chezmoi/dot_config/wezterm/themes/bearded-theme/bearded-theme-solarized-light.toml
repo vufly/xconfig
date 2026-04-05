@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Solarized Light"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#000000"
+background = "#f8f1df"
+cursor_bg = "#cf9c01"
+cursor_border = "#cf9c01"
+cursor_fg = "#fdf6e3"
+selection_bg = "#c2d9c9"
+selection_fg = "#000000"
+scrollbar_thumb = "#cfc9ba"
+split = "#ddd3b7"
+ansi = ["#fdf6e3", "#f45645", "#a5b82e", "#cf9c01", "#4db0f7", "#c64fbc", "#1aaca0", "#000000"]
+brights = ["#e6cc8b", "#ff4d3a", "#bedb0c", "#d09d00", "#45b1ff", "#e92cd9", "#00c6b6", "#333333"]
+
+[colors.tab_bar]
+background = "#f4edda"
+inactive_tab_edge = "#f4edda"
+inactive_tab_edge_hover = "#f4edda"
+
+[colors.tab_bar.active_tab]
+bg_color = "#fdf6e3"
+fg_color = "#000000"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#f4edda"
+fg_color = "#8fa2a0"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#fdf6e3"
+fg_color = "#000000"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#f4edda"
+fg_color = "#8fa2a0"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#fdf6e3"
+fg_color = "#000000"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

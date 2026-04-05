@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Solarized Reversed"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#bad7e3"
+background = "#0f1d24"
+cursor_bg = "#e2ae10"
+cursor_border = "#e2ae10"
+cursor_fg = "#0d1a20"
+selection_bg = "#214d50"
+selection_fg = "#bad7e3"
+scrollbar_thumb = "#25353c"
+split = "#070f12"
+ansi = ["#0d1a20", "#f45645", "#a5b82e", "#e2ae10", "#4db0f7", "#df96d9", "#26bbae", "#bad7e3"]
+brights = ["#2d576c", "#ff4d3a", "#bedb0c", "#f2b600", "#45b1ff", "#f481ea", "#04ddca", "#ffffff"]
+
+[colors.tab_bar]
+background = "#102128"
+inactive_tab_edge = "#102128"
+inactive_tab_edge_hover = "#102128"
+
+[colors.tab_bar.active_tab]
+bg_color = "#0d1a20"
+fg_color = "#bad7e3"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#102128"
+fg_color = "#356c82"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#0d1a20"
+fg_color = "#bad7e3"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#102128"
+fg_color = "#356c82"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#0d1a20"
+fg_color = "#bad7e3"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

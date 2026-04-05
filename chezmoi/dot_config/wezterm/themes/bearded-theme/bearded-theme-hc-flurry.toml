@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Hc Flurry"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#272d34"
+background = "#f0f2f5"
+cursor_bg = "#e39c03"
+cursor_border = "#e39c03"
+cursor_fg = "#f5f8fc"
+selection_bg = "#b8bcc1"
+selection_fg = "#272d34"
+scrollbar_thumb = "#cfd1d5"
+split = "#c2c8ce"
+ansi = ["#f5f8fc", "#ee5f50", "#41ad4e", "#e39c03", "#0aa3d6", "#f08ad9", "#00b696", "#272d34"]
+brights = ["#b3bdcc", "#ff513f", "#1dd133", "#e69d00", "#00a8e0", "#ff7be1", "#00b696", "#535f6e"]
+
+[colors.tab_bar]
+background = "#EAECEE"
+inactive_tab_edge = "#EAECEE"
+inactive_tab_edge_hover = "#EAECEE"
+
+[colors.tab_bar.active_tab]
+bg_color = "#e2e5ea"
+fg_color = "#272d34"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#EAECEE"
+fg_color = "#898989"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#e2e5ea"
+fg_color = "#272d34"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#EAECEE"
+fg_color = "#898989"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#e2e5ea"
+fg_color = "#272d34"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

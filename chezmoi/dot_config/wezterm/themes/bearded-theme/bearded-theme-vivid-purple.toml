@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Vivid Purple"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#c7bfe8"
+background = "#15102d"
+cursor_bg = "#FFB638"
+cursor_border = "#FFB638"
+cursor_fg = "#171131"
+selection_bg = "#3c2f66"
+selection_fg = "#c7bfe8"
+scrollbar_thumb = "#2c2645"
+split = "#0c091a"
+ansi = ["#171131", "#D62C2C", "#42DD76", "#FFB638", "#28A9FF", "#E66DFF", "#14E5D4", "#c7bfe8"]
+brights = ["#382b78", "#fc0606", "#21fe6b", "#ffb638", "#28a9ff", "#e66dff", "#00f9e5", "#ffffff"]
+
+[colors.tab_bar]
+background = "#130e29"
+inactive_tab_edge = "#130e29"
+inactive_tab_edge_hover = "#130e29"
+
+[colors.tab_bar.active_tab]
+bg_color = "#171131"
+fg_color = "#c7bfe8"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#130e29"
+fg_color = "#44338f"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#171131"
+fg_color = "#c7bfe8"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#130e29"
+fg_color = "#44338f"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#171131"
+fg_color = "#c7bfe8"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+

@@ -1,0 +1,63 @@
+[metadata]
+name = "Bearded Theme Milkshake Vanilla"
+author = "BeardedBear"
+origin_url = "https://github.com/BeardedBear/bearded-theme"
+
+[colors]
+foreground = "#000000"
+background = "#e9e3d4"
+cursor_bg = "#c08403"
+cursor_border = "#c08403"
+cursor_fg = "#ece7da"
+selection_bg = "#d1c09b"
+selection_fg = "#000000"
+scrollbar_thumb = "#c2bdb1"
+split = "#d2c6a7"
+ansi = ["#ece7da", "#d12525", "#008b17", "#c08403", "#0076c5", "#c121a4", "#008f8f", "#000000"]
+brights = ["#c6b791", "#f60000", "#008b17", "#c38500", "#0076c5", "#e200b9", "#008f8f", "#333333"]
+
+[colors.tab_bar]
+background = "#e6dfce"
+inactive_tab_edge = "#e6dfce"
+inactive_tab_edge_hover = "#e6dfce"
+
+[colors.tab_bar.active_tab]
+bg_color = "#e4dbc6"
+fg_color = "#000000"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab]
+bg_color = "#e6dfce"
+fg_color = "#796d49"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.inactive_tab_hover]
+bg_color = "#e4dbc6"
+fg_color = "#000000"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab]
+bg_color = "#e6dfce"
+fg_color = "#796d49"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
+[colors.tab_bar.new_tab_hover]
+bg_color = "#e4dbc6"
+fg_color = "#000000"
+intensity = "Normal"
+italic = false
+strikethrough = false
+underline = "None"
+
