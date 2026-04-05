@@ -55,6 +55,7 @@ else {
     Set-Alias ls Get-ChildItem
 }
 
+# --- tmux aliases ---
 function t {
     & tmux $args
 }
@@ -85,6 +86,32 @@ function trs {
     & tmux source-file "$HOME/.tmux.conf"
 }
 
+# --- zellij aliases ---
+function z {
+    & zellij $args
+}
+
+function za {
+    & zellij attach $args
+}
+
+function zls {
+    & zellij ls $args
+}
+
+function zn {
+    & zellij -s $args
+}
+
+function zk {
+    & zellij kill-session $args
+}
+
+function zka {
+    & zellij kill-all-sessions
+}
+
+# --- git aliases ---
 function gitzip {
     $name = Split-Path -Leaf (Get-Location)
     git archive HEAD -o "$name.zip"

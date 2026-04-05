@@ -1,4 +1,6 @@
 default_shell "pwsh"
+default_mode "tmux"
+// default_layout "compact" // replaces by
 
 // If you'd like to override the default keybindings completely, be sure to change "keybinds" to "keybinds clear-defaults=true"
 keybinds {
@@ -8,6 +10,7 @@ keybinds {
     }
     locked {
         bind "Ctrl g" { SwitchToMode "Normal"; }
+        bind "Ctrl a" { SwitchToMode "Tmux"; }
     }
     resize {
         bind "Ctrl n" { SwitchToMode "Normal"; }
@@ -162,26 +165,26 @@ keybinds {
     }
     tmux {
         bind "[" { SwitchToMode "Scroll"; }
-        bind "Ctrl b" { Write 2; SwitchToMode "Normal"; }
-        bind "\"" { NewPane "Down"; SwitchToMode "Normal"; }
-        bind "%" { NewPane "Right"; SwitchToMode "Normal"; }
-        bind "z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
-        bind "c" { NewTab; SwitchToMode "Normal"; }
+        bind "Ctrl a" { Write 2; SwitchToMode "Locked"; }
+        bind "\"" { NewPane "Right"; SwitchToMode "Locked"; }
+        bind "%" { NewPane "Down"; SwitchToMode "Locked"; }
+        bind "z" { ToggleFocusFullscreen; SwitchToMode "Locked"; }
+        bind "c" { NewTab; SwitchToMode "Locked"; }
         bind "," { SwitchToMode "RenameTab"; }
-        bind "p" { GoToPreviousTab; SwitchToMode "Normal"; }
-        bind "n" { GoToNextTab; SwitchToMode "Normal"; }
-        bind "Left" { MoveFocus "Left"; SwitchToMode "Normal"; }
-        bind "Right" { MoveFocus "Right"; SwitchToMode "Normal"; }
-        bind "Down" { MoveFocus "Down"; SwitchToMode "Normal"; }
-        bind "Up" { MoveFocus "Up"; SwitchToMode "Normal"; }
-        bind "h" { MoveFocus "Left"; SwitchToMode "Normal"; }
-        bind "l" { MoveFocus "Right"; SwitchToMode "Normal"; }
-        bind "j" { MoveFocus "Down"; SwitchToMode "Normal"; }
-        bind "k" { MoveFocus "Up"; SwitchToMode "Normal"; }
+        bind "p" { GoToPreviousTab; SwitchToMode "Locked"; }
+        bind "n" { GoToNextTab; SwitchToMode "Locked"; }
+        bind "Left" { MoveFocus "Left"; SwitchToMode "Locked"; }
+        bind "Right" { MoveFocus "Right"; SwitchToMode "Locked"; }
+        bind "Down" { MoveFocus "Down"; SwitchToMode "Locked"; }
+        bind "Up" { MoveFocus "Up"; SwitchToMode "Locked"; }
+        bind "h" { MoveFocus "Left"; SwitchToMode "Locked"; }
+        bind "l" { MoveFocus "Right"; SwitchToMode "Locked"; }
+        bind "j" { MoveFocus "Down"; SwitchToMode "Locked"; }
+        bind "k" { MoveFocus "Up"; SwitchToMode "Locked"; }
         bind "o" { FocusNextPane; }
         bind "d" { Detach; }
         bind "Space" { NextSwapLayout; }
-        bind "x" { CloseFocus; SwitchToMode "Normal"; }
+        bind "x" { CloseFocus; SwitchToMode "Locked"; }
     }
     shared_except "locked" {
         bind "Ctrl g" { SwitchToMode "Locked"; }
@@ -223,7 +226,7 @@ keybinds {
         bind "Ctrl h" { SwitchToMode "Move"; }
     }
     shared_except "tmux" "locked" {
-        bind "Ctrl b" { SwitchToMode "Tmux"; }
+        bind "Ctrl a" { SwitchToMode "Tmux"; }
     }
 }
 
@@ -233,7 +236,10 @@ plugins {
     tab-bar location="zellij:tab-bar"
     status-bar location="zellij:status-bar"
     strider location="zellij:strider"
-    compact-bar location="zellij:compact-bar"
+    // compact-bar location="zellij:compact-bar"
+    compact-bar location="zellij:compact-bar" {
+        tooltip "F1"
+    }
     session-manager location="zellij:session-manager"
     welcome-screen location="zellij:session-manager" {
         welcome_screen true
@@ -244,11 +250,13 @@ plugins {
     configuration location="zellij:configuration"
     plugin-manager location="zellij:plugin-manager"
     about location="zellij:about"
+    zjstatus location="https://github.com/dj95/zjstatus/releases/latest/download/zjstatus.wasm"
 }
 
 // Plugins to load in the background when a new session starts
 load_plugins {
     "zellij:link"
+    "zjstatus"
     // "file:/path/to/my-plugin.wasm"
     // "https://example.com/my-plugin.wasm"
 }
