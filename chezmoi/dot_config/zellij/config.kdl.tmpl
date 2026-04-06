@@ -2,7 +2,7 @@
 default_shell "pwsh"
 {{ end -}}
 default_mode "locked"
-// default_layout "compact" // replaces by zjstatus
+// default_layout "compact" // replaced by zjstatus
 
 theme "ansi2"
 themes {
@@ -316,6 +316,15 @@ keybinds {
         bind "d" { Detach; }
         bind "Space" { NextSwapLayout; }
         bind "x" { CloseFocus; SwitchToMode "Locked"; }
+        bind "1" { GoToTab 1; SwitchToMode "Locked"; }
+        bind "2" { GoToTab 2; SwitchToMode "Locked"; }
+        bind "3" { GoToTab 3; SwitchToMode "Locked"; }
+        bind "4" { GoToTab 4; SwitchToMode "Locked"; }
+        bind "5" { GoToTab 5; SwitchToMode "Locked"; }
+        bind "6" { GoToTab 6; SwitchToMode "Locked"; }
+        bind "7" { GoToTab 7; SwitchToMode "Locked"; }
+        bind "8" { GoToTab 8; SwitchToMode "Locked"; }
+        bind "9" { GoToTab 9; SwitchToMode "Locked"; }
     }
     shared_except "locked" {
         bind "Ctrl g" { SwitchToMode "Locked"; }
