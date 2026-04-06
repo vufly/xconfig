@@ -96,6 +96,13 @@ alias tk="t kill-session -t"
 alias tka='tmux list-sessions -F "#{session_name}" | grep -v "^$" | xargs -I {} tmux kill-session -t {}'
 alias trs="tmux source-file ~/.tmux.conf"
 
+alias z="zellij"
+alias za="zellij attach --force-run-commands"
+alias zls="zellij list-sessions"
+alias zn="zellij -s"
+alias zk="zellij kill-session"
+alias zka="zellij kill-all-sessions"
+
 alias 256="curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash"
 
 alias gitzip="git archive HEAD -o ${PWD##*/}.zip"
@@ -104,7 +111,7 @@ alias gitsp="git submodule foreach --recursive 'git pull origin master'"
 alias nup="node ~/o24/frontend/ui-dev-scripts/ui-proxy/ui-proxy.js"
 alias hm="nix run home-manager/master -- switch --flake ~/xconfig#${USER}@$(hostname)"
 
-export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev ) 
+export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev )
 alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/current/Fork.exe $(wslpath -w $@) };load_fork'
 
 gac() {

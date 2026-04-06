@@ -30,6 +30,7 @@
     # -------------------------------
     neovim          # text editor
     tmux            # terminal multiplexer
+    zellij          # modern terminal multiplexer
 
     # -------------------------------
     # Source Control
