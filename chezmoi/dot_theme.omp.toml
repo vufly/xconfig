@@ -68,6 +68,7 @@ template = " {{ url (cat .UpstreamIcon .HEAD) .UpstreamURL }}{{if .BranchStatus 
 
 [blocks.segments.properties]
 fetch_status = true
+fetch_push_status = true
 fetch_upstream_icon = true
 source = "cli"
 branch_icon = " "
