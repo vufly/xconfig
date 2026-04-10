@@ -1,0 +1,54 @@
+# --- THEME ---
+theme = "catppuccin_mocha"
+
+[editor]
+# Visuals
+line-number = "relative"      # Easier vertical movement with relative numbers
+cursorline = true             # Highlight the current line for better focus
+scrolloff = 5                 # Keep 5 lines visible above/below the cursor
+mouse = true                  # Enable mouse support for scrolling/clicking
+color-modes = true            # Add color to the mode indicator
+
+# UI Elements
+[editor.statusline]
+left = ["mode", "spinner", "file-name"]
+right = ["diagnostics", "selections", "position", "file-type"]
+separator = "│"
+
+[editor.cursor-shape]
+insert = "bar"                # Beam cursor for insert mode
+normal = "block"              # Block cursor for normal mode
+select = "underline"          # Underline cursor for visual mode
+
+[editor.indent-guides]
+render = true                 # Display vertical lines for indentation levels
+character = "│"               # Subtle character for indent guides
+
+[editor.lsp]
+display-messages = true       # Show LSP server messages in status line
+display-inlay-hints = true    # Show inline type hints (great for Rust/TS)
+
+[editor.file-picker]
+hidden = false                # Don't ignore hidden files (e.g., .env)
+
+[editor.soft-wrap]
+enable = true                 # Wrap long lines visually
+
+# --- KEYBINDINGS ---
+[keys.normal]
+"C-s" = ":w"                  # Classic Ctrl+S to save
+esc = ["collapse_selection", "keep_primary_selection"] # Clear multiple cursors with Esc
+"C-h" = "select_prev_sibling" # Faster navigation
+"C-l" = "select_next_sibling"
+"C-y" = [
+	':sh rm -f /tmp/unique-ca1ea106',
+	':insert-output yazi "%{buffer_name}" --chooser-file=/tmp/unique-ca1ea106',
+	':sh printf "\x1b[?1049h\x1b[?2004h" > /dev/tty',
+	':open %sh{cat /tmp/unique-ca1ea106}',
+	':redraw',
+	':set mouse false',
+  ':set mouse true',
+]
+
+[keys.insert]
+"C-space" = "completion"      # Trigger auto-completion manually

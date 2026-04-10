@@ -29,6 +29,7 @@
     # Editors & Terminal Tools
     # -------------------------------
     neovim          # text editor
+    helix           # text editor
     tmux            # terminal multiplexer
     zellij          # modern terminal multiplexer
 
