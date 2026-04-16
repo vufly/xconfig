@@ -1,6 +1,25 @@
 git:
   pagers:
     - colorArg: always
-      pager: delta --dark --paging=never --line-numbers
+      pager: delta --paging=never --line-numbers
+  log:
+    showWholeGraph: true
+    order: topo-order
+  overrideGpg: true
+  allBranchesLogCmds:
+    - "git log --graph --all --color=always --abbrev-commit --decorate --date=relative --oneline"
+    - "git log --graph --all --color=always --abbrev-commit --decorate --date=relative --pretty=format:'%C(yellow)%h%Creset %C(auto)%d%Creset %C(cyan)%an%Creset: %s %Cgreen(%cr)%Creset'"
+    - "git log --graph --all --color=always --abbrev-commit --decorate --date=relative --pretty=medium"
 gui:
   nerdFontsVersion: "3"
+  statusPanelView: allBranchesLog
+  showIcons: true
+  theme:
+    selectedLineBgColor:
+      - reverse
+customCommands:
+  - key: 't'                          # Phím tắt lớn T
+    context: 'global'
+    command: 'tig --all --graph --color'
+    description: 'Open tig graph'
+    subprocess: true                  # Quan trọng: mở tig full-screen rồi quay lại LazyGit

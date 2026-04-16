@@ -14,4 +14,21 @@ path = ~/o24/.gitconfig
 [color]
 	ui = true
 [push]
-    autoSetupRemote = true
+  autoSetupRemote = true
+
+[core]
+  pager = delta
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  navigate = true  # use n and N to move between diff sections
+  line-numbers = true
+  hyperlinks = true
+  line-numbers-minus-style = 1
+  line-numbers-zero-style = 243
+  line-numbers-plus-style = 2
+
+[merge]
+  conflictStyle = zdiff3
