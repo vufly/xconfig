@@ -18,8 +18,8 @@ gui:
     selectedLineBgColor:
       - reverse
 customCommands:
-  - key: 't'                          # Phím tắt lớn T
+  - key: 't'
     context: 'global'
     command: 'tig --all --graph --color'
     description: 'Open tig graph'
-    subprocess: true                  # Quan trọng: mở tig full-screen rồi quay lại LazyGit
+    subprocess: true

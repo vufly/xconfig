@@ -1,8 +1,10 @@
 {{ if ne .chezmoi.os "windows" }}
 Documents/PowerShell
+AppData/Local/lazygit/config.yml.tmpl
 {{ end }}
 
 {{ if eq .chezmoi.os "windows" -}}
 .zshrc
 .p10k.zsh
+.config/lazygit
 {{ end }}
