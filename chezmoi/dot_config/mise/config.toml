@@ -10,5 +10,5 @@ python = "3"
 # Miscellaneous
 rust = "latest"
 go = "latest"
-
 codex = "latest"
+"npm:oh-my-codex" = "latest"
