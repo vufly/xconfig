@@ -22,4 +22,4 @@ customCommands:
     context: 'global'
     command: 'tig --all --graph --color'
     description: 'Open tig graph'
-    subprocess: true
+    output: terminal
