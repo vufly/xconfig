@@ -1,7 +1,11 @@
 git:
   pagers:
     - colorArg: always
-      pager: delta --paging=never --line-numbers
+      pager: delta --paging=never --line-numbers --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+{{- if eq .chezmoi.os "windows" }}
+    - useExternalDiffGitConfig: true
+    - externalDiffCommand: {{ .chezmoi.homeDir -}}/Documents/PowerShell/lazygit-pager.ps1
+{{- end }}
   log:
     showWholeGraph: true
     order: topo-order

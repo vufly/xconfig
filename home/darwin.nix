@@ -1,8 +1,8 @@
 { config, pkgs, ... }:
 
 {
-  home.username = "vu";
-  home.homeDirectory = "/Users/vu";
+  home.username = "dinhvu";
+  home.homeDirectory = "/Users/dinhvu";
 
   # macOS-specific packages
   home.packages = with pkgs; [
