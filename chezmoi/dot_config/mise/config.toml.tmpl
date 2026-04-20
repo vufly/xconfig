@@ -1,3 +1,12 @@
+[tool_alias]
+eza = "aqua:eza-community/eza"
+oh-my-codex = "npm:oh-my-codex"
+psmux = "github:psmux/psmux"
+syncthing = "github:syncthing/syncthing"
+tig = "github:jonas/tig"
+tmux = "aqua:tmux/tmux-builds"
+zellij = "github:zellij-org/zellij"
+
 [tools]
 # JavaScript / TypeScript runtimes and package managers
 bun = "latest"
@@ -11,11 +20,11 @@ rust = "latest"
 
 # Codex tooling
 codex = "latest"
-"npm:oh-my-codex" = "latest"
+oh-my-codex = "latest"
 
 # Shell and core terminal utilities
 bat = "latest"
-"aqua:eza-community/eza" = "latest"
+eza = "latest"
 fastfetch = "latest"
 fd = "latest"
 fzf = "latest"
@@ -27,20 +36,20 @@ zoxide = "latest"
 # Editors and terminal multiplexers
 helix = "latest"
 neovim = "latest"
-"github:zellij-org/zellij" = "latest"
+zellij = "latest"
 
 # Source control helpers
 delta = "latest"
-"github:jonas/tig" = { version = "latest", version_prefix = "tig-" }
+tig = { version = "latest", version_prefix = "tig-" }
 lazygit = "latest"
 
 # Security and secrets
 bitwarden = "latest"
 
 {{ if eq .chezmoi.os "windows" -}}
-"github:psmux/psmux" = "latest"
-"github:syncthing/syncthing" = "latest"
+psmux = "latest"
+syncthing = "latest"
 yt-dlp = "latest"
 {{ else -}}
-"aqua:tmux/tmux-builds" = "latest"
+tmux = "latest"
 {{ end }}
