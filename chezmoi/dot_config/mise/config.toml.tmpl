@@ -15,7 +15,7 @@ codex = "latest"
 
 # Shell and core terminal utilities
 bat = "latest"
-eza = "latest"
+"github:eza-community/eza" = "latest"
 fastfetch = "latest"
 fd = "latest"
 fzf = "latest"
@@ -27,7 +27,7 @@ zoxide = "latest"
 # Editors and terminal multiplexers
 helix = "latest"
 neovim = "latest"
-zellij = "latest"
+"github:zellij-org/zellij" = "latest"
 
 # Source control helpers
 delta = "latest"
@@ -39,6 +39,8 @@ bitwarden = "latest"
 
 {{- if eq .chezmoi.os "windows" }}
 "github:psmux/psmux" = "latest"
+"github:syncthing/syncthing" = "latest"
+yt-dlp = "latest"
 {{ else -}}
 "aqua:tmux/tmux-builds" = "latest"
 {{ end }}
