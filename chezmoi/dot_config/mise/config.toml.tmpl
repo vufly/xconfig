@@ -15,7 +15,7 @@ codex = "latest"
 
 # Shell and core terminal utilities
 bat = "latest"
-"github:eza-community/eza" = "latest"
+"aqua:eza-community/eza" = "latest"
 fastfetch = "latest"
 fd = "latest"
 fzf = "latest"
@@ -27,17 +27,17 @@ zoxide = "latest"
 # Editors and terminal multiplexers
 helix = "latest"
 neovim = "latest"
-"github:zellij-org/zellij" = "latest"
+"aqua:zellij-org/zellij" = "latest"
 
 # Source control helpers
 delta = "latest"
-"github:jonas/tig" = "latest"
+"github:jonas/tig" = { version = "latest", version_prefix = "tig-" }
 lazygit = "latest"
 
 # Security and secrets
 bitwarden = "latest"
 
-{{- if eq .chezmoi.os "windows" }}
+{{ if eq .chezmoi.os "windows" -}}
 "github:psmux/psmux" = "latest"
 "github:syncthing/syncthing" = "latest"
 yt-dlp = "latest"
