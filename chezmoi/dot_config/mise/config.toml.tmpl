@@ -12,3 +12,7 @@ rust = "latest"
 go = "latest"
 codex = "latest"
 "npm:oh-my-codex" = "latest"
+
+{{- if eq .chezmoi.os "windows" }}
+"github:psmux/psmux" = "latest"
+{{- end }}
