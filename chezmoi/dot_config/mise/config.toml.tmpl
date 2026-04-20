@@ -1,18 +1,44 @@
 [tools]
-# Node.js ecosystem
-node = "lts"
+# JavaScript / TypeScript runtimes and package managers
 bun = "latest"
+node = "lts"
 pnpm = "latest"
 
-# Python ecosystem
-python = "3"
-
-# Miscellaneous
-rust = "latest"
+# Language runtimes and toolchains
 go = "latest"
+python = "3"
+rust = "latest"
+
+# Codex tooling
 codex = "latest"
 "npm:oh-my-codex" = "latest"
 
+# Shell and core terminal utilities
+bat = "latest"
+eza = "latest"
+fastfetch = "latest"
+fd = "latest"
+fzf = "latest"
+ripgrep = "latest"
+scooter = "latest"
+yazi = "latest"
+zoxide = "latest"
+
+# Editors and terminal multiplexers
+helix = "latest"
+neovim = "latest"
+"aqua:tmux/tmux-builds" = "latest"
+zellij = "latest"
+
+# Source control helpers
+delta = "latest"
+"github:jonas/tig" = "latest"
+lazygit = "latest"
+
+# Security and secrets
+bitwarden = "latest"
+
 {{- if eq .chezmoi.os "windows" }}
+# Windows-only terminal multiplexer
 "github:psmux/psmux" = "latest"
 {{- end }}
