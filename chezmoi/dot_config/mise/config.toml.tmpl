@@ -27,7 +27,6 @@ zoxide = "latest"
 # Editors and terminal multiplexers
 helix = "latest"
 neovim = "latest"
-"aqua:tmux/tmux-builds" = "latest"
 zellij = "latest"
 
 # Source control helpers
@@ -39,6 +38,7 @@ lazygit = "latest"
 bitwarden = "latest"
 
 {{- if eq .chezmoi.os "windows" }}
-# Windows-only terminal multiplexer
 "github:psmux/psmux" = "latest"
-{{- end }}
+{{ else -}}
+"aqua:tmux/tmux-builds" = "latest"
+{{ end }}
