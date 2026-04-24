@@ -1,11 +1,13 @@
 [tool_alias]
 9router = "npm:9router"
+codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
 oh-my-codex = "npm:oh-my-codex"
 psmux = "github:psmux/psmux"
 syncthing = "github:syncthing/syncthing"
 tig = "github:jonas/tig"
 tmux = "aqua:tmux/tmux-builds"
+wakatime = "github:wakatime/wakatime-cli"
 zellij = "github:zellij-org/zellij"
 
 [settings]
@@ -51,6 +53,10 @@ lazygit = "latest"
 
 # Security and secrets
 bitwarden = "latest"
+
+# Productivity and monitoring
+wakatime = { version = "latest", bin = "wakatime-cli" }
+codex-wakatime = "latest"
 
 {{ if eq .chezmoi.os "windows" -}}
 psmux = "latest"
