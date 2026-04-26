@@ -7,4 +7,5 @@ AppData/Local/lazygit/config.yml.tmpl
 .zshrc
 .p10k.zsh
 .config/lazygit
+scripts/set-theme.sh
 {{ end }}

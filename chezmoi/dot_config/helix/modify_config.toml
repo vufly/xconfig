@@ -1,5 +1,9 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $isLight := contains "theme = \"bearded-theme-milkshake-vanilla\"" .chezmoi.stdin -}}
+{{- $themeName := ternary "bearded-theme-milkshake-vanilla" "bearded-theme-monokai-stone" $isLight -}}
 # --- THEME ---
-theme = "catppuccin_mocha"
+# This line is updated manually by ~/scripts/set-theme.sh.
+theme = "{{ $themeName }}"
 
 [editor]
 # Visuals

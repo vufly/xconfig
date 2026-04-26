@@ -12,6 +12,7 @@
     gnupg
     openssh
     wget
+    unzip
   ];
 
   # Managed directly via chezmoi and local config files.
