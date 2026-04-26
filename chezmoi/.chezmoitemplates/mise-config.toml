@@ -1,0 +1,67 @@
+[tool_alias]
+9router = "npm:9router"
+codex-wakatime = "npm:codex-wakatime"
+eza = "aqua:eza-community/eza"
+oh-my-codex = "npm:oh-my-codex"
+psmux = "github:psmux/psmux"
+syncthing = "github:syncthing/syncthing"
+tig = "github:jonas/tig"
+tmux = "aqua:tmux/tmux-builds"
+wakatime = "github:wakatime/wakatime-cli"
+zellij = "github:zellij-org/zellij"
+
+[settings]
+[settings.npm]
+package_manager = "pnpm"
+
+[tools]
+# JavaScript / TypeScript runtimes and package managers
+bun = "latest"
+node = "lts"
+pnpm = "latest"
+
+# Language runtimes and toolchains
+go = "latest"
+python = "3"
+rust = "latest"
+
+# Vibe coding
+codex = "latest"
+oh-my-codex = "latest"
+opencode = "latest"
+
+# Shell and core terminal utilities
+bat = "latest"
+eza = "latest"
+fastfetch = "latest"
+fd = "latest"
+fzf = "latest"
+ripgrep = "latest"
+scooter = "latest"
+yazi = "latest"
+zoxide = "latest"
+
+# Editors and terminal multiplexers
+helix = "latest"
+neovim = "latest"
+zellij = "latest"
+
+# Source control helpers
+delta = "latest"
+tig = { version = "latest", version_prefix = "tig-" }
+lazygit = "latest"
+
+# Security and secrets
+bitwarden = "latest"
+
+# Productivity and monitoring
+wakatime = { version = "latest", bin = "wakatime-cli" }
+codex-wakatime = "latest"
+
+{{ if eq .chezmoi.os "windows" -}}
+psmux = "latest"
+syncthing = "latest"
+yt-dlp = "latest"
+{{ else -}}
+tmux = "latest"
+{{ end }}

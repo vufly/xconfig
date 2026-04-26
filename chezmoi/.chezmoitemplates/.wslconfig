@@ -1,0 +1,7 @@
+{{- if eq .chezmoi.os "windows" -}}
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+firewall=true
+autoProxy=true
+{{ end -}}

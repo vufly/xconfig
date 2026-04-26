@@ -1,0 +1,188 @@
+{{- if not (and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | lower | contains "microsoft")) -}}
+-- WezTerm Configuration
+-- Refactored for readability and organization
+
+local wezterm = require 'wezterm'
+local act = wezterm.action
+
+-- Initialize configuration builder
+local config = {}
+if wezterm.config_builder then
+  config = wezterm.config_builder()
+end
+
+--------------------------------------------------------------------------------
+-- Helper Functions
+--------------------------------------------------------------------------------
+
+-- Determine if we are in Dark or Light mode
+local function get_appearance()
+  if wezterm.gui then
+    return wezterm.gui.get_appearance()
+  end
+  return 'Dark'
+end
+
+-- Select color scheme based on appearance
+local function scheme_for_appearance(appearance)
+  if appearance:find 'Dark' then
+    return 'Bearded Theme Monokai Stone'
+    -- return 'Bearded Theme Milkshake Vanilla'
+  else
+    -- return 'Bearded Theme Monokai Stone'
+    return 'Bearded Theme Milkshake Vanilla'
+  end
+end
+
+-- Get the title for a tab
+local function get_tab_title(tab_info)
+  local title = tab_info.tab_title
+  -- If the tab title is explicitly set, use it
+  if title and #title > 0 then
+    return title
+  end
+  -- Otherwise, use the title from the active pane
+  return tab_info.active_pane.title
+end
+
+--------------------------------------------------------------------------------
+-- Color Schemes & Appearance
+--------------------------------------------------------------------------------
+
+-- Directories containing custom color schemes
+config.color_scheme_dirs = {
+  '{{- .chezmoi.homeDir -}}' .. '/.config/wezterm/themes/bearded-theme',
+}
+
+-- Load custom schemes from directories
+local all_schemes = wezterm.color.get_builtin_schemes()
+if config.color_scheme_dirs then
+  for _, dir in ipairs(config.color_scheme_dirs) do
+    for _, file in ipairs(wezterm.glob(dir .. '/*.toml')) do
+      local ok, colors, metadata = pcall(wezterm.color.load_scheme, file)
+      if ok and colors then
+        local name = (metadata and metadata.name) or file:match('([^/\\]+)%.toml$')
+        if name then
+          all_schemes[name] = colors
+        end
+      end
+    end
+  end
+end
+
+-- Select and apply the color scheme
+local selected_scheme_name = scheme_for_appearance(get_appearance())
+config.color_scheme = selected_scheme_name
+
+-- Derive specific colors for the tab bar based on the selected scheme
+local current_scheme_definition = all_schemes[selected_scheme_name] or wezterm.color.get_builtin_schemes()[selected_scheme_name]
+
+if current_scheme_definition then
+  local terminal_bg_color = wezterm.color.parse(current_scheme_definition.background)
+  local fg_color = current_scheme_definition.foreground
+
+  config.colors = {
+    visual_bell = fg_color,
+    split = fg_color,
+    tab_bar = {
+      background = terminal_bg_color:darken(0.03):desaturate(0.5),
+      active_tab = {
+        bg_color = fg_color,
+        fg_color = terminal_bg_color,
+        intensity = 'Bold',
+        underline = 'None',
+      },
+      inactive_tab = {
+        bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
+        fg_color = fg_color,
+        intensity = 'Normal',
+        underline = 'Single'
+      },
+      inactive_tab_hover = {
+        bg_color = terminal_bg_color:darken(0.03),
+        fg_color = fg_color,
+        italic = true,
+        intensity = 'Bold',
+        underline = 'Single'
+      },
+      new_tab = {
+        bg_color = terminal_bg_color:darken(0.03):desaturate(0.5),
+        fg_color = fg_color,
+        intensity = 'Normal',
+        underline = 'Single'
+      },
+      new_tab_hover = {
+        bg_color = terminal_bg_color:darken(0.03),
+        fg_color = fg_color,
+        italic = true,
+        intensity = 'Bold',
+        underline = 'Single'
+      },
+    }
+  }
+end
+
+config.default_cursor_style = 'BlinkingBlock'
+config.cursor_blink_rate = 500
+
+--------------------------------------------------------------------------------
+-- Fonts
+--------------------------------------------------------------------------------
+
+config.font = wezterm.font_with_fallback {
+  'RecMonoFly Nerd Font',
+  'Symbols Nerd Font',
+}
+config.font_size = 12.1
+config.bold_brightens_ansi_colors = false
+config.underline_position = '-2.5pt'
+
+--------------------------------------------------------------------------------
+-- Window Settings
+--------------------------------------------------------------------------------
+
+config.window_decorations = 'RESIZE'
+config.window_close_confirmation = 'AlwaysPrompt'
+
+--------------------------------------------------------------------------------
+-- Tab Bar Configuration
+--------------------------------------------------------------------------------
+
+config.use_fancy_tab_bar = false
+config.tab_max_width = 32
+
+config.tab_bar_style = {
+  new_tab = wezterm.format { { Text = ' +▕' } },
+  new_tab_hover = wezterm.format { { Text = ' +▕' } },
+}
+
+-- Custom tab title formatting
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+  local RIGHT_ONE_EIGHT_BLOCK = '▕'
+  local BLANK = ' '
+
+  local right_edge = tab.is_active and BLANK or RIGHT_ONE_EIGHT_BLOCK
+  local title = (tab.tab_index + 1) .. ' ' .. get_tab_title(tab)
+
+  -- Ensure title fits
+  title = wezterm.truncate_right(title, max_width - 2)
+
+  return {
+    { Text = BLANK },
+    { Text = title },
+    { Text = right_edge },
+  }
+end)
+
+--------------------------------------------------------------------------------
+-- Shell Configuration
+--------------------------------------------------------------------------------
+
+{{ if eq .chezmoi.os "windows" -}}
+config.default_prog = { 'pwsh.exe' }
+{{ else -}}
+config.default_prog = { os.getenv("SHELL") }
+{{ end }}
+
+return config
+{{- end -}}
