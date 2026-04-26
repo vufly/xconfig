@@ -1,11 +1,14 @@
 {{ if ne .chezmoi.os "windows" }}
 Documents/PowerShell
 AppData/Local/lazygit/config.yml.tmpl
+AppData/Roaming/helix
+scripts/set-theme.ps1
 {{ end }}
 
 {{ if eq .chezmoi.os "windows" -}}
 .zshrc
 .p10k.zsh
+.config/helix
 .config/lazygit
 scripts/set-theme.sh
 {{ end }}

@@ -35,6 +35,10 @@ Set-PsFzfOption -TabExpansion
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
 
+function theme {
+    & "$HOME/scripts/set-theme.ps1" @args
+}
+
 # Remove built-in alias
 if (Get-Alias ls -ErrorAction SilentlyContinue) {
     Remove-Item Alias:ls -ErrorAction SilentlyContinue
