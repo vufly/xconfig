@@ -3,6 +3,7 @@
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
 oh-my-codex = "npm:oh-my-codex"
+pnpm = "github:pnpm/pnpm"
 psmux = "github:psmux/psmux"
 syncthing = "github:syncthing/syncthing"
 tig = "github:jonas/tig"
