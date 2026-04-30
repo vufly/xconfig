@@ -22,7 +22,11 @@ function choco {
 
 # --- PSReadLine setup ---
 Import-Module PSReadLine
-Set-PSReadLineOption -PredictionSource History
+if ($Host.Name -eq 'ConsoleHost' -and $ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') {
+    try {
+        Set-PSReadLineOption -PredictionSource History
+    } catch {}
+}
 
 # --- PSFzf ---
 Import-Module PSFzf
