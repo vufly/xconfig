@@ -10,6 +10,7 @@ const DEFAULTS = {
   npm: '@ai-sdk/openai-compatible',
   modelsDevUrl: 'https://models.dev/api.json',
   configPath: new URL('../chezmoi/dot_config/opencode/opencode.json', import.meta.url),
+  zedConfigPath: new URL('../zed_config.json', import.meta.url),
 };
 
 const args = parseArgs(process.argv.slice(2));
@@ -21,6 +22,7 @@ const config = {
   npm: args.npm ?? DEFAULTS.npm,
   configPath: args['config-path'] ?? DEFAULTS.configPath,
   output: args.output,
+  zedConfigPath: args['zed-config-path'] ?? DEFAULTS.zedConfigPath,
   modelsDevUrl: args['models-dev-url'] ?? DEFAULTS.modelsDevUrl,
   headers: parseHeaderArgs(args.header),
 };
@@ -78,9 +80,19 @@ const outputPath = config.output ?? config.configPath;
 await writeFile(outputPath, outputText, 'utf8');
 process.stdout.write(`updated ${displayPath(outputPath)}\n`);
 
+const { zedConfig, skippedModels } = buildZedConfig(config, providerConfig);
+await writeFile(config.zedConfigPath, `${JSON.stringify(zedConfig, null, 2)}\n`, 'utf8');
+process.stdout.write(`updated ${displayPath(config.zedConfigPath)}\n`);
+
 if (missing.length > 0) {
   process.stderr.write(
     `warn: missing models.dev limits for ${missing.length} model(s): ${missing.join(', ')}\n`,
+  );
+}
+
+if (skippedModels.length > 0) {
+  process.stderr.write(
+    `warn: skipped ${skippedModels.length} Zed model(s) without max_tokens: ${skippedModels.join(', ')}\n`,
   );
 }
 
@@ -177,6 +189,48 @@ async function fetchJson(url) {
 async function readOpencodeConfig(filePath) {
   const content = await readFile(filePath, 'utf8');
   return JSON.parse(content);
+}
+
+function buildZedConfig(config, providerConfig) {
+  const skippedModels = [];
+  const availableModels = [];
+
+  for (const [id, model] of Object.entries(providerConfig.models ?? {})) {
+    const maxTokens = model?.limit?.context;
+    if (!Number.isFinite(maxTokens)) {
+      skippedModels.push(id);
+      continue;
+    }
+
+    const availableModel = {
+      name: id,
+      display_name: model?.name || id,
+      max_tokens: maxTokens,
+    };
+
+    const maxOutputTokens = model?.limit?.output;
+    if (Number.isFinite(maxOutputTokens)) {
+      availableModel.max_output_tokens = maxOutputTokens;
+    }
+
+    availableModels.push(availableModel);
+  }
+
+  availableModels.sort((left, right) => left.display_name.localeCompare(right.display_name));
+
+  return {
+    zedConfig: {
+      language_models: {
+        openai_compatible: {
+          [config.providerName]: {
+            api_url: config.baseUrl,
+            available_models: availableModels,
+          },
+        },
+      },
+    },
+    skippedModels,
+  };
 }
 
 function hasHeader(headers, targetKey) {

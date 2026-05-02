@@ -1,5 +1,6 @@
 [tool_alias]
 9router = "npm:9router"
+cliproxy = "github:router-for-me/CLIProxyAPI"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
 oh-my-codex = "npm:oh-my-codex"
@@ -67,5 +68,7 @@ psmux = "latest"
 syncthing = "latest"
 yt-dlp = "latest"
 {{ else -}}
+cliproxy = "latest"
 tmux = "latest"
+
 {{ end }}

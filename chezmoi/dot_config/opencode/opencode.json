@@ -6,7 +6,7 @@
   "provider": {
     "openai": {
       "options": {
-        "baseURL": "http://127.0.0.1:64131/v1"
+        "baseURL": "http://127.0.0.1:61144/v1"
       }
     },
     "windsurf": {
