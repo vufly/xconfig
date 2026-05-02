@@ -1,11 +1,924 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-wakatime"],
+  "plugin": [
+    "opencode-wakatime"
+  ],
   "provider": {
-      "openai": {
-        "options": {
-          "baseURL": "http://127.0.0.1:64131/v1"
+    "openai": {
+      "options": {
+        "baseURL": "http://127.0.0.1:64131/v1"
+      }
+    },
+    "windsurf": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Windsurf",
+      "options": {
+        "baseURL": "http://localhost:50731/v1",
+        "apiKey": "Penci1"
+      },
+      "models": {
+        "claude-4-sonnet": {
+          "name": "Claude Sonnet 4",
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          }
+        },
+        "claude-4-sonnet-thinking": {
+          "name": "Claude 4 Sonnet Thinking",
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          }
+        },
+        "claude-4-opus": {
+          "name": "Claude Opus 4",
+          "limit": {
+            "context": 200000,
+            "output": 32000
+          }
+        },
+        "claude-4-opus-thinking": {
+          "name": "Claude 4 Opus Thinking",
+          "limit": {
+            "context": 200000,
+            "output": 32000
+          }
+        },
+        "claude-4.1-opus": {
+          "name": "Claude Opus 4.1",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          }
+        },
+        "claude-4.1-opus-thinking": {
+          "name": "Claude 4.1 Opus Thinking",
+          "limit": {
+            "context": 200000,
+            "output": 32000
+          }
+        },
+        "claude-4.5-haiku": {
+          "name": "Claude Haiku 4.5",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          }
+        },
+        "claude-4.5-sonnet": {
+          "name": "Claude Sonnet 4.5",
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          }
+        },
+        "claude-4.5-sonnet-thinking": {
+          "name": "Claude Sonnet 4.5 Thinking",
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          }
+        },
+        "claude-4.5-opus": {
+          "name": "Claude Opus 4.5",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          }
+        },
+        "claude-4.5-opus-thinking": {
+          "name": "Claude Opus 4.5 Thinking",
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          }
+        },
+        "claude-sonnet-4.6": {
+          "name": "Claude Sonnet 4.6",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-sonnet-4.6-thinking": {
+          "name": "Claude Sonnet 4.6 Thinking",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-sonnet-4.6-1m": {
+          "name": "Claude Sonnet 4.6 1M",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-sonnet-4.6-thinking-1m": {
+          "name": "Claude Sonnet 4.6 Thinking 1M",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-opus-4.6": {
+          "name": "Claude 4.6 Opus",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-opus-4.6-thinking": {
+          "name": "Claude 4.6 Opus Thinking",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-medium": {
+          "name": "Claude-Opus-4.7 Medium",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-low": {
+          "name": "Claude-Opus-4.7 Low",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-high": {
+          "name": "Claude-Opus-4.7 High",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-xhigh": {
+          "name": "Claude-Opus-4.7 XHigh",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-medium-thinking": {
+          "name": "Claude-Opus-4.7 Medium Thinking",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-high-thinking": {
+          "name": "Claude-Opus-4.7 High Thinking",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-xhigh-thinking": {
+          "name": "Claude-Opus-4.7 XHigh Thinking",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-7-max": {
+          "name": "Claude-Opus-4.7 Max",
+          "limit": {
+            "context": 1048576,
+            "output": 128000
+          }
+        },
+        "gpt-4o": {
+          "name": "GPT-4o",
+          "limit": {
+            "context": 128000,
+            "output": 16384
+          }
+        },
+        "gpt-4.1": {
+          "name": "GPT-4.1",
+          "limit": {
+            "context": 1047576,
+            "output": 32768
+          }
+        },
+        "gpt-5": {
+          "name": "GPT-5",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5-medium": {
+          "name": "GPT-5 Medium",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5-high": {
+          "name": "GPT-5 High",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5-codex": {
+          "name": "GPT-5-Codex",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1": {
+          "name": "GPT-5.1",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-low": {
+          "name": "GPT-5.1 Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-medium": {
+          "name": "GPT-5.1 Medium",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-high": {
+          "name": "GPT-5.1 High",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-fast": {
+          "name": "GPT-5.1 Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-low-fast": {
+          "name": "GPT-5.1 Low Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-medium-fast": {
+          "name": "GPT-5.1 Medium Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-high-fast": {
+          "name": "GPT-5.1 High Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-low": {
+          "name": "GPT-5.1 Codex Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-medium": {
+          "name": "GPT-5.1 Codex Medium",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-mini-low": {
+          "name": "GPT-5.1 Codex mini Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-mini": {
+          "name": "GPT-5.1 Codex mini",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-max-low": {
+          "name": "GPT-5.1 Codex Low Max",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-max-medium": {
+          "name": "GPT-5.1 Codex Medium Max",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.1-codex-max-high": {
+          "name": "GPT-5.1 Codex High Max",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2": {
+          "name": "GPT-5.2",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-none": {
+          "name": "GPT-5.2 None",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-low": {
+          "name": "GPT-5.2 Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-high": {
+          "name": "GPT-5.2 High",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-xhigh": {
+          "name": "GPT-5.2 XHigh",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-none-fast": {
+          "name": "GPT-5.2 None Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-low-fast": {
+          "name": "GPT-5.2 Low Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-medium-fast": {
+          "name": "GPT-5.2 Medium Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-high-fast": {
+          "name": "GPT-5.2 High Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-xhigh-fast": {
+          "name": "GPT-5.2 XHigh Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-low": {
+          "name": "GPT-5.2 Codex Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-medium": {
+          "name": "GPT-5.2 Codex Medium",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-high": {
+          "name": "GPT-5.2 Codex High",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-xhigh": {
+          "name": "GPT-5.2 Codex XHigh",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-low-fast": {
+          "name": "GPT-5.2 Codex Low Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-medium-fast": {
+          "name": "GPT-5.2 Codex Medium Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-high-fast": {
+          "name": "GPT-5.2 Codex High Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.2-codex-xhigh-fast": {
+          "name": "GPT-5.2 Codex XHigh Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex": {
+          "name": "GPT-5.3 Codex",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-none": {
+          "name": "GPT-5.4 None",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-low": {
+          "name": "GPT-5.4 Low",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-medium": {
+          "name": "GPT-5.4 Medium",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-high": {
+          "name": "GPT-5.4 High",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-xhigh": {
+          "name": "GPT-5.4 XHigh",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-mini-low": {
+          "name": "GPT-5.4 mini Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-mini-medium": {
+          "name": "GPT-5.4 mini Medium",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-mini-high": {
+          "name": "GPT-5.4 mini High",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.4-mini-xhigh": {
+          "name": "GPT-5.4 mini XHigh",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5": {
+          "name": "GPT-5.5",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-none": {
+          "name": "GPT-5.5 None",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-low": {
+          "name": "GPT-5.5 Low",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-medium": {
+          "name": "GPT-5.5 Medium",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-high": {
+          "name": "GPT-5.5 High",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-xhigh": {
+          "name": "GPT-5.5 XHigh",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-none-fast": {
+          "name": "GPT-5.5 None Fast",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-low-fast": {
+          "name": "GPT-5.5 Low Fast",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-medium-fast": {
+          "name": "GPT-5.5 Medium Fast",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-high-fast": {
+          "name": "GPT-5.5 High Fast",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.5-xhigh-fast": {
+          "name": "GPT-5.5 XHigh Fast",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-low": {
+          "name": "GPT-5.3 Codex Low",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-high": {
+          "name": "GPT-5.3 Codex High",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-xhigh": {
+          "name": "GPT-5.3 Codex XHigh",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-low-fast": {
+          "name": "GPT-5.3 Codex Low Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-medium-fast": {
+          "name": "GPT-5.3 Codex Medium Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-high-fast": {
+          "name": "GPT-5.3 Codex High Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-5.3-codex-xhigh-fast": {
+          "name": "GPT-5.3 Codex XHigh Fast",
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          }
+        },
+        "gpt-oss-120b": {
+          "name": "OpenAI GPT-OSS 120b",
+          "limit": {
+            "context": 131072,
+            "output": 131072
+          }
+        },
+        "o3-mini": {
+          "name": "o3-mini",
+          "limit": {
+            "context": 200000,
+            "output": 100000
+          }
+        },
+        "o3": {
+          "name": "o3",
+          "limit": {
+            "context": 200000,
+            "output": 100000
+          }
+        },
+        "o3-high": {
+          "name": "o3 High",
+          "limit": {
+            "context": 200000,
+            "output": 100000
+          }
+        },
+        "o3-pro": {
+          "name": "o3-pro",
+          "limit": {
+            "context": 200000,
+            "output": 100000
+          }
+        },
+        "o4-mini": {
+          "name": "o4-mini",
+          "limit": {
+            "context": 200000,
+            "output": 100000
+          }
+        },
+        "gemini-2.5-pro": {
+          "name": "Gemini 2.5 Pro",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-2.5-flash": {
+          "name": "Gemini 2.5 Flash",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.0-pro": {
+          "name": "Gemini 3 Pro",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.0-flash-minimal": {
+          "name": "Gemini 3 Flash Minimal",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.0-flash-low": {
+          "name": "Gemini 3 Flash Low",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.0-flash": {
+          "name": "Gemini 3 Flash",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.0-flash-high": {
+          "name": "Gemini 3 Flash High",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.1-pro-low": {
+          "name": "Gemini 3.1 Pro Preview Low",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "gemini-3.1-pro-high": {
+          "name": "Gemini 3.1 Pro Preview High",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          }
+        },
+        "grok-3": {
+          "name": "Grok 3",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "grok-3-mini-thinking": {
+          "name": "Grok 3 Mini Thinking",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "grok-code-fast-1": {
+          "name": "Grok Code Fast 1",
+          "limit": {
+            "context": 256000,
+            "output": 10000
+          }
+        },
+        "kimi-k2": {
+          "name": "Kimi K2",
+          "limit": {
+            "context": 262144,
+            "output": 262144
+          }
+        },
+        "kimi-k2-thinking": {
+          "name": "Kimi K2 Thinking",
+          "limit": {
+            "context": 262144,
+            "output": 262144
+          }
+        },
+        "kimi-k2.5": {
+          "name": "Kimi K2.5",
+          "limit": {
+            "context": 262144,
+            "output": 262144
+          }
+        },
+        "kimi-k2-6": {
+          "name": "Kimi-K2.6",
+          "limit": {
+            "context": 256000,
+            "output": 128000
+          }
+        },
+        "glm-4.7": {
+          "name": "GLM-4.7",
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          }
+        },
+        "glm-4.7-fast": {
+          "name": "GLM-4.7 Fast",
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          }
+        },
+        "glm-5": {
+          "name": "GLM-5",
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          }
+        },
+        "glm-5.1": {
+          "name": "GLM-5.1",
+          "limit": {
+            "context": 200000,
+            "output": 131072
+          }
+        },
+        "minimax-m2.5": {
+          "name": "MiniMax M2.5",
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          }
+        },
+        "swe-1.5": {},
+        "swe-1.5-fast": {},
+        "swe-1.5-thinking": {},
+        "swe-1.6": {},
+        "swe-1.6-fast": {},
+        "claude-opus-4-6-1m": {
+          "name": "Claude 4.6 Opus 1M",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-6-thinking-1m": {
+          "name": "Claude 4.6 Opus Thinking 1M",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-6-fast": {
+          "name": "Anthropic: Claude Opus 4.6 (Fast)",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "claude-opus-4-6-thinking-fast": {
+          "name": "Claude 4.6 Opus Thinking Fast",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "gpt-5-4-none-priority": {
+          "name": "GPT-5.4 None Priority",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5-4-low-priority": {
+          "name": "GPT-5.4 Low Priority",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5-4-medium-priority": {
+          "name": "GPT-5.4 Medium Priority",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5-4-high-priority": {
+          "name": "GPT-5.4 High Priority",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
+        },
+        "gpt-5-4-xhigh-priority": {
+          "name": "GPT-5.4 XHigh Priority",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          }
         }
       }
     }
+  }
 }
