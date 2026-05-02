@@ -8,6 +8,9 @@ const DEFAULTS = {
   baseUrl: 'http://localhost:50731/v1',
   apiKey: 'Penci1',
   npm: '@ai-sdk/openai-compatible',
+  cliProxyName: 'CLI Proxy',
+  cliProxyBaseUrl: 'http://localhost:61144/v1',
+  cliProxyApiKey: 'sk-BQ3vyrNgzGah4o6Cf',
   modelsDevUrl: 'https://models.dev/api.json',
   configPath: new URL('../chezmoi/dot_config/opencode/opencode.json', import.meta.url),
   zedConfigPath: new URL('../zed_config.json', import.meta.url),
@@ -20,44 +23,30 @@ const config = {
   baseUrl: stripTrailingSlash(args['base-url'] ?? DEFAULTS.baseUrl),
   apiKey: args['api-key'] ?? DEFAULTS.apiKey,
   npm: args.npm ?? DEFAULTS.npm,
+  cliProxyName: args['cli-proxy-name'] ?? DEFAULTS.cliProxyName,
+  cliProxyBaseUrl: stripTrailingSlash(args['cli-proxy-base-url'] ?? DEFAULTS.cliProxyBaseUrl),
+  cliProxyApiKey: args['cli-proxy-api-key'] ?? DEFAULTS.cliProxyApiKey,
   configPath: args['config-path'] ?? DEFAULTS.configPath,
   output: args.output,
   zedConfigPath: args['zed-config-path'] ?? DEFAULTS.zedConfigPath,
   modelsDevUrl: args['models-dev-url'] ?? DEFAULTS.modelsDevUrl,
   headers: parseHeaderArgs(args.header),
+  cliProxyHeaders: parseHeaderArgs(args['cli-proxy-header']),
 };
 
-const [remoteModels, modelsDev] = await Promise.all([
+const [remoteModels, cliProxyRemoteModels, modelsDev] = await Promise.all([
   fetchProviderModels(config),
+  fetchProviderModels({
+    baseUrl: config.cliProxyBaseUrl,
+    apiKey: config.cliProxyApiKey,
+    headers: config.cliProxyHeaders,
+  }),
   fetchJson(config.modelsDevUrl),
 ]);
 
 const modelIndex = buildModelIndex(modelsDev);
-const missing = [];
-const models = {};
-
-for (const remoteModel of remoteModels) {
-  const resolved = resolveModel(remoteModel.id, modelIndex);
-  const modelConfig = {};
-
-  if (typeof remoteModel.name === 'string' && remoteModel.name.length > 0) {
-    modelConfig.name = remoteModel.name;
-  } else {
-    const generatedName = generateModelName(remoteModel.id, resolved);
-    if (generatedName) modelConfig.name = generatedName;
-  }
-
-  const context = remoteModel.id.includes('-1m') ? 1_000_000 : resolved?.model?.limit?.context;
-  const output = resolved?.model?.limit?.output;
-
-  if (Number.isFinite(context) && Number.isFinite(output)) {
-    modelConfig.limit = { context, output };
-  } else {
-    missing.push(remoteModel.id);
-  }
-
-  models[remoteModel.id] = modelConfig;
-}
+const opencodeSource = buildProviderModels(remoteModels, modelIndex);
+const cliProxySource = buildProviderModels(cliProxyRemoteModels, modelIndex);
 
 const providerConfig = {
   npm: config.npm,
@@ -67,7 +56,7 @@ const providerConfig = {
     apiKey: config.apiKey,
     ...(Object.keys(config.headers).length > 0 ? { headers: config.headers } : {}),
   },
-  models,
+  models: opencodeSource.models,
 };
 
 const opencodeConfig = await readOpencodeConfig(config.configPath);
@@ -80,20 +69,26 @@ const outputPath = config.output ?? config.configPath;
 await writeFile(outputPath, outputText, 'utf8');
 process.stdout.write(`updated ${displayPath(outputPath)}\n`);
 
-const { zedConfig, skippedModels } = buildZedConfig(config, providerConfig);
+const { zedConfig, skippedByProvider } = buildZedConfig([
+  {
+    name: config.providerName,
+    baseUrl: config.baseUrl,
+    models: opencodeSource.models,
+  },
+  {
+    name: config.cliProxyName,
+    baseUrl: config.cliProxyBaseUrl,
+    models: cliProxySource.models,
+  },
+]);
 await writeFile(config.zedConfigPath, `${JSON.stringify(zedConfig, null, 2)}\n`, 'utf8');
 process.stdout.write(`updated ${displayPath(config.zedConfigPath)}\n`);
 
-if (missing.length > 0) {
-  process.stderr.write(
-    `warn: missing models.dev limits for ${missing.length} model(s): ${missing.join(', ')}\n`,
-  );
-}
+warnMissingModels(config.providerName, opencodeSource.missing);
+warnMissingModels(config.cliProxyName, cliProxySource.missing);
 
-if (skippedModels.length > 0) {
-  process.stderr.write(
-    `warn: skipped ${skippedModels.length} Zed model(s) without max_tokens: ${skippedModels.join(', ')}\n`,
-  );
+for (const [providerName, skippedModels] of Object.entries(skippedByProvider)) {
+  warnSkippedZedModels(providerName, skippedModels);
 }
 
 function parseArgs(argv) {
@@ -126,7 +121,7 @@ function parseArgs(argv) {
 }
 
 function pushArg(parsed, key, value) {
-  if (key === 'header') {
+  if (key === 'header' || key === 'cli-proxy-header') {
     const current = parsed[key] ?? [];
     current.push(value);
     parsed[key] = current;
@@ -191,11 +186,64 @@ async function readOpencodeConfig(filePath) {
   return JSON.parse(content);
 }
 
-function buildZedConfig(config, providerConfig) {
+function buildProviderModels(remoteModels, modelIndex) {
+  const missing = [];
+  const models = {};
+
+  for (const remoteModel of remoteModels) {
+    const resolved = resolveModel(remoteModel.id, modelIndex);
+    const modelConfig = {};
+
+    if (typeof remoteModel.name === 'string' && remoteModel.name.length > 0) {
+      modelConfig.name = remoteModel.name;
+    } else {
+      const generatedName = generateModelName(remoteModel.id, resolved);
+      if (generatedName) modelConfig.name = generatedName;
+    }
+
+    const context = remoteModel.id.includes('-1m') ? 1_000_000 : resolved?.model?.limit?.context;
+    const output = resolved?.model?.limit?.output;
+
+    if (Number.isFinite(context) && Number.isFinite(output)) {
+      modelConfig.limit = { context, output };
+    } else {
+      missing.push(remoteModel.id);
+    }
+
+    models[remoteModel.id] = modelConfig;
+  }
+
+  return { missing, models };
+}
+
+function buildZedConfig(providers) {
+  const openaiCompatible = {};
+  const skippedByProvider = {};
+
+  for (const provider of providers) {
+    const { availableModels, skippedModels } = buildZedAvailableModels(provider.models);
+    openaiCompatible[provider.name] = {
+      api_url: provider.baseUrl,
+      available_models: availableModels,
+    };
+    skippedByProvider[provider.name] = skippedModels;
+  }
+
+  return {
+    zedConfig: {
+      language_models: {
+        openai_compatible: openaiCompatible,
+      },
+    },
+    skippedByProvider,
+  };
+}
+
+function buildZedAvailableModels(models) {
   const skippedModels = [];
   const availableModels = [];
 
-  for (const [id, model] of Object.entries(providerConfig.models ?? {})) {
+  for (const [id, model] of Object.entries(models ?? {})) {
     const maxTokens = model?.limit?.context;
     if (!Number.isFinite(maxTokens)) {
       skippedModels.push(id);
@@ -217,20 +265,23 @@ function buildZedConfig(config, providerConfig) {
   }
 
   availableModels.sort((left, right) => left.display_name.localeCompare(right.display_name));
+  return { availableModels, skippedModels };
+}
 
-  return {
-    zedConfig: {
-      language_models: {
-        openai_compatible: {
-          [config.providerName]: {
-            api_url: config.baseUrl,
-            available_models: availableModels,
-          },
-        },
-      },
-    },
-    skippedModels,
-  };
+function warnMissingModels(providerName, missingModels) {
+  if (missingModels.length === 0) return;
+
+  process.stderr.write(
+    `warn: missing models.dev limits for ${providerName} ${missingModels.length} model(s): ${missingModels.join(', ')}\n`,
+  );
+}
+
+function warnSkippedZedModels(providerName, skippedModels) {
+  if (skippedModels.length === 0) return;
+
+  process.stderr.write(
+    `warn: skipped ${providerName} ${skippedModels.length} Zed model(s) without max_tokens: ${skippedModels.join(', ')}\n`,
+  );
 }
 
 function hasHeader(headers, targetKey) {

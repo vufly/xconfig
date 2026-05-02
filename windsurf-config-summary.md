@@ -1,11 +1,13 @@
 # Windsurf Config Summary
 
-- One script: `others/generate-opencode-provider-config.mjs`.
-- Fetches model ids from `http://localhost:50731/v1/models`.
+- One script: `others/generate-windsurf-opencode-zed-config.mjs`.
+- Fetches Windsurf model ids from `http://localhost:50731/v1/models`.
+- Fetches CLI Proxy model ids from `http://localhost:61144/v1/models` with `Authorization: Bearer <CLI_PROXY_API_KEY>`.
 - Fetches limits and base names from `https://models.dev/api.json`.
 - Writes `chezmoi/dot_config/opencode/opencode.json` and `zed_config.json`.
 - Replaces only `provider.windsurf` inside opencode config.
-- Zed output uses `language_models.openai_compatible.Windsurf`.
+- Zed output uses `language_models.openai_compatible.Windsurf` and `language_models.openai_compatible["CLI Proxy"]`.
+- Zed provider auth should come from environment variable `CLI_PROXY_API_KEY`.
 - Naming rule: prefer local `/v1/models` `name`; otherwise use matched `models.dev` base name plus suffixes from local id: `None`, `Low`, `Medium`, `High`, `XHigh`, `Fast`, `Priority`, `Minimal`, `Max`, `Thinking`, `1M`.
 - `-1m` forces `context: 1000000`.
 - Removed standalone `others/generate-zed-windsurf-config.mjs` after merging.
