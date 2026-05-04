@@ -3,7 +3,9 @@
 cliproxy = "github:router-for-me/CLIProxyAPI"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
+graphifyy = "pipx:graphifyy"
 oh-my-codex = "npm:oh-my-codex"
+pm2 = "npm:pm2"
 pnpm = "github:pnpm/pnpm"
 psmux = "github:psmux/psmux"
 rtk = "github:rtk-ai/rtk"
@@ -18,18 +20,21 @@ zellij = "github:zellij-org/zellij"
 package_manager = "pnpm"
 
 [tools]
-# JavaScript / TypeScript runtimes and package managers
+# JavaScript / TypeScript ecosystem
 bun = "latest"
 node = "lts"
+pm2 = "latest"
 pnpm = "latest"
 
 # Language runtimes and toolchains
 go = "latest"
 python = "3"
 rust = "latest"
+uv = "latest"
 
 # Vibe coding
 codex = "latest"
+graphifyy = "latest"
 oh-my-codex = "latest"
 opencode = "latest"
 rtk = "latest"
@@ -70,5 +75,4 @@ yt-dlp = "latest"
 {{ else -}}
 cliproxy = "latest"
 tmux = "latest"
-
 {{ end }}
