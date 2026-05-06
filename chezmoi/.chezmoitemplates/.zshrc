@@ -109,8 +109,25 @@ alias gitzip="git archive HEAD -o ${PWD##*/}.zip"
 alias gitsf="git submodule update --init --recursive"
 alias gitsp="git submodule foreach --recursive 'git pull origin master'"
 alias theme="$HOME/scripts/set-theme.sh"
-alias nup="node ~/o24/frontend/ui-dev-scripts/ui-proxy/ui-proxy.js"
 alias hm="nix run home-manager/master -- switch --flake ~/xconfig#${USER}@$(hostname)"
+
+BW_SESSION_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/bw-session"
+
+bwu() {
+  local session
+  session="$(bw unlock --raw)" || return
+  mkdir -p "${BW_SESSION_FILE%/*}"
+  umask 077
+  printf '%s' "$session" > "$BW_SESSION_FILE"
+  export BW_SESSION="$session"
+  tmux set-environment -g BW_SESSION "$session" 2>/dev/null || true
+}
+
+bwload() {
+  [[ -r "$BW_SESSION_FILE" ]] && export BW_SESSION="$(<"$BW_SESSION_FILE")"
+}
+
+precmd_functions+=(bwload)
 
 export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev )
 alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/current/Fork.exe $(wslpath -w $@) };load_fork'
@@ -146,17 +163,24 @@ gact() {
 export GPG_TTY=$TTY
 export PATH="$HOME/.local/bin:$PATH"
 #export PATH="$HOME/.nix-profile/bin:$PATH"
+# export ANDROID_HOME=~/Android/Sdk
+# export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 
 # pnpm
-export PNPM_HOME="/home/vudinhn/.local/share/pnpm"
+export PNPM_HOME="/home/${USER}/.local/share/pnpm"
 case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
 
-# export ANDROID_HOME=~/Android/Sdk
-# export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+# Claude code
+export ANTHROPIC_BASE_URL=http://localhost:61144
+export ANTHROPIC_AUTH_TOKEN=sk-BQ3vyrNgzGah4o6Cf
+export ANTHROPIC_DEFAULT_OPUS_MODEL='gpt-5.5(high)'
+export ANTHROPIC_DEFAULT_SONNET_MODEL='gpt-5.4(high)'
+export ANTHROPIC_DEFAULT_HAIKU_MODEL='gpt-5.4-mini(medium)'
+
 
 # Shell integrations
 eval "$(mise activate zsh)"

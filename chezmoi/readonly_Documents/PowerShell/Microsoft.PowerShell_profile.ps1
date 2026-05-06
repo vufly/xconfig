@@ -43,6 +43,21 @@ function theme {
     & "$HOME/scripts/set-theme.ps1" @args
 }
 
+$global:BW_SESSION_FILE = Join-Path ([System.IO.Path]::GetTempPath()) "bw-session.txt"
+
+function bwu {
+    $session = bw unlock --raw
+    if ($LASTEXITCODE -ne 0) { return }
+    Set-Content -Path $global:BW_SESSION_FILE -Value $session -NoNewline
+    $env:BW_SESSION = $session
+}
+
+function bwload {
+    if (Test-Path $global:BW_SESSION_FILE) {
+        $env:BW_SESSION = Get-Content $global:BW_SESSION_FILE -Raw
+    }
+}
+
 # Remove built-in alias
 if (Get-Alias ls -ErrorAction SilentlyContinue) {
     Remove-Item Alias:ls -ErrorAction SilentlyContinue
@@ -152,6 +167,7 @@ if (-not (Test-Path Function:\_original_prompt)) {
 }
 
 function global:prompt {
+    bwload
     # Let zoxide learn current directory
     & zoxide add "$(Get-Location)" | Out-Null
 

@@ -1,5 +1,6 @@
 [tool_alias]
 9router = "npm:9router"
+claude-code = "npm:@anthropic-ai/claude-code"
 cliproxy = "github:router-for-me/CLIProxyAPI"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
@@ -34,6 +35,7 @@ uv = "latest"
 
 # Vibe coding
 codex = "latest"
+claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 graphifyy = "latest"
 oh-my-codex = "latest"
 opencode = "latest"
@@ -45,6 +47,7 @@ eza = "latest"
 fastfetch = "latest"
 fd = "latest"
 fzf = "latest"
+glow = "latest"
 jq = "latest"
 ripgrep = "latest"
 scooter = "latest"

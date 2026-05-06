@@ -6,15 +6,15 @@
   "provider": {
     "openai": {
       "options": {
-        "baseURL": "http://127.0.0.1:61144/v1"
+        "baseURL": "{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}"
       }
     },
     "windsurf": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Windsurf",
       "options": {
-        "baseURL": "http://localhost:50731/v1",
-        "apiKey": "Penci1"
+        "baseURL": "{{ (bitwardenFields "item" "windsurf-api").baseUrl.value }}",
+        "apiKey": "{{ (bitwardenFields "item" "windsurf-api").apiKey.value }}"
       },
       "models": {
         "claude-4-sonnet": {
