@@ -29,7 +29,7 @@ pnpm = "latest"
 
 # Language runtimes and toolchains
 go = "latest"
-python = "3"
+python = "3.13"
 rust = "latest"
 uv = "latest"
 
