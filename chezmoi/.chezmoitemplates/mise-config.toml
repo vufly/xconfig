@@ -37,7 +37,6 @@ uv = "latest"
 codex = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 graphifyy = "latest"
-oh-my-codex = "latest"
 opencode = "latest"
 rtk = "latest"
 
