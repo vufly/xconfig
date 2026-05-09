@@ -6,15 +6,15 @@
   "provider": {
     "openai": {
       "options": {
-        "baseURL": "{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}"
+        "baseURL": "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}"
       }
     },
     "windsurf": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Windsurf",
       "options": {
-        "baseURL": "{{ (bitwardenFields "item" "windsurf-api").baseUrl.value }}",
-        "apiKey": "{{ (bitwardenFields "item" "windsurf-api").apiKey.value }}"
+        "baseURL": "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "windsurf-api").baseUrl.value }}{{ end }}",
+        "apiKey": "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "windsurf-api").apiKey.value }}{{ end }}"
       },
       "models": {
         "claude-4-sonnet": {

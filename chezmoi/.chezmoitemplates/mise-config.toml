@@ -4,7 +4,7 @@ claude-code = "npm:@anthropic-ai/claude-code"
 cliproxy = "github:router-for-me/CLIProxyAPI"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
-graphifyy = "pipx:graphifyy"
+graphify = "pipx:graphifyy"
 oh-my-codex = "npm:oh-my-codex"
 pm2 = "npm:pm2"
 pnpm = "github:pnpm/pnpm"
@@ -36,7 +36,7 @@ uv = "latest"
 # Vibe coding
 codex = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
-graphifyy = "latest"
+graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
 opencode = "latest"
 rtk = { version = "latest", postinstall = "rtk init -g && rtk init -g --codex && rtk init -g --opencode" }
 

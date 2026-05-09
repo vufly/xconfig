@@ -174,9 +174,11 @@ case ":$PATH:" in
 esac
 # pnpm end
 
+{{- if lookPath "bw" }}
 # Claude code
-export ANTHROPIC_BASE_URL=http://localhost:61144
-export ANTHROPIC_AUTH_TOKEN=sk-BQ3vyrNgzGah4o6Cf
+export ANTHROPIC_BASE_URL={{ (bitwardenFields "item" "cliproxy").baseUrl.value }}
+export ANTHROPIC_AUTH_TOKEN={{ (bitwardenFields "item" "cliproxy").apiKey.value }}
+{{- end }}
 export ANTHROPIC_DEFAULT_OPUS_MODEL='gpt-5.5(high)'
 export ANTHROPIC_DEFAULT_SONNET_MODEL='gpt-5.4(high)'
 export ANTHROPIC_DEFAULT_HAIKU_MODEL='gpt-5.4-mini(medium)'
