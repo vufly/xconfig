@@ -38,7 +38,7 @@ codex = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 graphifyy = "latest"
 opencode = "latest"
-rtk = "latest"
+rtk = { version = "latest", postinstall = "rtk init -g && rtk init -g --codex && rtk init -g --opencode" }
 
 # Shell and core terminal utilities
 bat = "latest"
