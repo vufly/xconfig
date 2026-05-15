@@ -8,6 +8,7 @@
     # Base tools still managed by Home Manager
     chezmoi
     curl
+    gcc
     git
     gnupg
     nixpkgs-review
