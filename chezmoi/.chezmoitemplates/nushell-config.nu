@@ -69,6 +69,7 @@ let user_name = ($env.USER? | default "")
 # Aliases
 alias vim = nvim
 alias c = clear
+alias lsi = eza --icons
 
 alias t = tmux
 alias ta = tmux a -t
@@ -138,9 +139,9 @@ def --env --wrapped theme [...args: string] {
     _ => {}
   }
 
-  if ((which vivid | length) > 0) {
-    $env.LS_COLORS = (vivid generate ansi)
-  }
+  # if ((which vivid | length) > 0) {
+  #   $env.LS_COLORS = (vivid generate ansi)
+  # }
 }
 
 {{- if not $isWindows }}
@@ -185,8 +186,8 @@ def --env bwload [] {
 $env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt | append { || bwload })
 
 use ($nu.default-config-dir | path join mise.nu)
-if ((which vivid | length) > 0) {
-  $env.LS_COLORS = (vivid generate ansi)
-}
+# if ((which vivid | length) > 0) {
+#   $env.LS_COLORS = (vivid generate ansi)
+# }
 oh-my-posh init nu --config "~/.theme.omp.toml"
 source ~/.zoxide.nu

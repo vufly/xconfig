@@ -181,9 +181,9 @@ function gitsp {
 
 # --- Mise runtime ---
 mise activate pwsh | Out-String | Invoke-Expression
-if (Get-Command vivid -ErrorAction SilentlyContinue) {
-    $env:LS_COLORS = vivid generate ansi
-}
+# if (Get-Command vivid -ErrorAction SilentlyContinue) {
+#     $env:LS_COLORS = vivid generate ansi
+# }
 
 # --- Force UTF-8 Encoding ---
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
