@@ -54,6 +54,16 @@ $env.ANTHROPIC_DEFAULT_OPUS_MODEL = "gpt-5.5(high)"
 $env.ANTHROPIC_DEFAULT_SONNET_MODEL = "gpt-5.4(high)"
 $env.ANTHROPIC_DEFAULT_HAIKU_MODEL = "gpt-5.4-mini(medium)"
 
+{{- $isWindows := eq .chezmoi.os "windows" }}
+{{- if $isWindows }}
+let home_dir = ($env.USERPROFILE? | default $nu.default-config-dir)
+let runtime_dir = ($env.TEMP? | default ($env.TMP? | default ($home_dir | path join ".cache")))
+{{- else }}
+let home_dir = ($env.HOME? | default $nu.default-config-dir)
+let runtime_dir = ($env.XDG_RUNTIME_DIR? | default ($home_dir | path join ".cache"))
+let user_name = ($env.USER? | default "")
+{{- end }}
+
 # Aliases
 alias vim = nvim
 alias c = clear
@@ -110,12 +120,18 @@ def gact [] {
 }
 
 def --wrapped theme [...args: string] {
-  run-external ($env.HOME | path join "scripts/set-theme.sh") ...$args
+{{- if $isWindows }}
+  run-external "powershell" "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" ($home_dir | path join "scripts/set-theme.ps1") ...$args
+{{- else }}
+  run-external ($home_dir | path join "scripts/set-theme.sh") ...$args
+{{- end }}
 }
 
+{{- if not $isWindows }}
 def hm [] {
-  nix run home-manager/master -- switch --flake $"($env.HOME)/xconfig#($env.USER)@(hostname)"
+  nix run home-manager/master -- switch --flake $"($home_dir)/xconfig#($user_name)@(hostname)"
 }
+{{- end }}
 
 def ilias [] {
   let picked = (
@@ -127,16 +143,18 @@ def ilias [] {
   commandline edit --insert $"($picked.name) "
 }
 
-$env.BW_SESSION_FILE = (
-  $env.XDG_RUNTIME_DIR? | default ($env.HOME | path join ".cache") | path join "bw-session"
-)
+$env.BW_SESSION_FILE = ($runtime_dir | path join "bw-session")
 
 def --env bwu [] {
   let session = (bw unlock --raw)
   if $env.LAST_EXIT_CODE != 0 { return }
 
   mkdir ($env.BW_SESSION_FILE | path dirname)
+{{- if $isWindows }}
+  $session | save --force --raw $env.BW_SESSION_FILE
+{{- else }}
   sh -c 'umask 077; printf %s "$2" > "$1"' sh $env.BW_SESSION_FILE $session
+{{- end }}
   $env.BW_SESSION = $session
 
   try { tmux set-environment -g BW_SESSION $session }
