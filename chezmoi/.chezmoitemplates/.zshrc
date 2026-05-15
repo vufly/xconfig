@@ -37,7 +37,6 @@ zinit light Aloxaf/fzf-tab
 # Add in snippets
 zinit snippet OMZP::git
 zinit snippet OMZP::sudo
-#zinit snippet OMZP::asdf
 zinit snippet OMZP::command-not-found
 
 # Bitwarden CLI completion (generate only on install/update)
@@ -110,6 +109,27 @@ alias gitsf="git submodule update --init --recursive"
 alias gitsp="git submodule foreach --recursive 'git pull origin master'"
 alias theme="$HOME/scripts/set-theme.sh"
 alias hm="nix run home-manager/master -- switch --flake ~/xconfig#${USER}@$(hostname)"
+
+ilias() {
+  local selected alias_name
+
+  if ! (( $+commands[fzf] )); then
+    zle -M "fzf not found"
+    return 1
+  fi
+
+  [[ -n ${WIDGET:-} ]] && zle -I
+  selected="$(alias | sort | fzf --height=40% --prompt='alias> ')" || return
+  alias_name="${selected%%=*}"
+
+  if [[ -n ${WIDGET:-} ]]; then
+    LBUFFER+="${alias_name} "
+    zle reset-prompt
+  else
+    print -z "${alias_name} "
+  fi
+}
+zle -N ilias
 
 BW_SESSION_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/bw-session"
 

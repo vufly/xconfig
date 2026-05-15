@@ -39,6 +39,37 @@ Set-PsFzfOption -TabExpansion
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
 
+function Get-GitAliasCommand {
+    $exclude = @(
+        'Get-Git-CurrentBranch',
+        'Get-Git-MainBranch',
+        'Get-Git-Aliases'
+    )
+
+    Get-Command -Module git-aliases -CommandType Function |
+        Where-Object { $_.Name -notin $exclude } |
+        Sort-Object Name |
+        ForEach-Object {
+            [PSCustomObject]@{
+                Name       = $_.Name
+                Definition = ($_.Definition -replace '\s+', ' ').Trim()
+            }
+        }
+}
+
+function ilias {
+    $selected = Get-GitAliasCommand |
+        ForEach-Object { "$($_.Name)`t$($_.Definition)" } |
+        fzf --height 40% --prompt 'alias> '
+
+    if (-not $selected) { return }
+
+    $name = ($selected -split "`t", 2)[0]
+    [Microsoft.PowerShell.PSConsoleReadLine]::Insert("$name ")
+}
+
+Set-PSReadLineKeyHandler -Chord 'Alt+a' -ScriptBlock { ilias }
+
 function theme {
     & "$HOME/scripts/set-theme.ps1" @args
 }

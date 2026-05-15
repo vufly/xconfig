@@ -10,6 +10,7 @@
     curl
     git
     gnupg
+    nixpkgs-review
     openssh
     wget
     unzip

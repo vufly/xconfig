@@ -42,6 +42,7 @@ rtk = { version = "latest", postinstall = "rtk init -g && rtk init -g --codex &&
 
 # Shell and core terminal utilities
 bat = "latest"
+carapace = "latest"
 eza = "latest"
 fastfetch = "latest"
 fd = "latest"

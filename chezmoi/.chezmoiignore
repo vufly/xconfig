@@ -12,3 +12,6 @@ scripts/set-theme.ps1
 .config/lazygit
 scripts/set-theme.sh
 {{ end }}
+
+.config/nushell/mise.nu
+.config/nushell/history.txt
