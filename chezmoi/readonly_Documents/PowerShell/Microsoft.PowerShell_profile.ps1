@@ -181,9 +181,10 @@ function gitsp {
 
 # --- Mise runtime ---
 mise activate pwsh | Out-String | Invoke-Expression
-# if (Get-Command vivid -ErrorAction SilentlyContinue) {
-#     $env:LS_COLORS = vivid generate ansi
-# }
+$LSColorsPath = Join-Path $HOME ".config/LS_COLORS"
+if (Test-Path $LSColorsPath) {
+    $env:LS_COLORS = (Get-Content -Raw $LSColorsPath).Trim()
+}
 
 # --- Force UTF-8 Encoding ---
 [Console]::OutputEncoding = [Text.Encoding]::UTF8

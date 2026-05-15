@@ -66,6 +66,11 @@ let runtime_dir = ($env.XDG_RUNTIME_DIR? | default ($home_dir | path join ".cach
 let user_name = ($env.USER? | default "")
 {{- end }}
 
+let ls_colors_path = ($home_dir | path join ".config/LS_COLORS")
+if ($ls_colors_path | path exists) {
+  $env.LS_COLORS = (open --raw $ls_colors_path | str trim)
+}
+
 # Aliases
 alias vim = nvim
 alias c = clear
@@ -139,9 +144,6 @@ def --env --wrapped theme [...args: string] {
     _ => {}
   }
 
-  # if ((which vivid | length) > 0) {
-  #   $env.LS_COLORS = (vivid generate ansi)
-  # }
 }
 
 {{- if not $isWindows }}
@@ -186,8 +188,5 @@ def --env bwload [] {
 $env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt | append { || bwload })
 
 use ($nu.default-config-dir | path join mise.nu)
-# if ((which vivid | length) > 0) {
-#   $env.LS_COLORS = (vivid generate ansi)
-# }
 oh-my-posh init nu --config "~/.theme.omp.toml"
 source ~/.zoxide.nu

@@ -74,6 +74,10 @@ setopt hist_save_no_dups
 setopt hist_ignore_dups
 setopt hist_find_no_dups
 
+if [[ -r "$HOME/.config/LS_COLORS" ]]; then
+  export LS_COLORS="$(<"$HOME/.config/LS_COLORS")"
+fi
+
 # Completion styling
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
@@ -206,8 +210,5 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL='gpt-5.4-mini(medium)'
 
 # Shell integrations
 eval "$(mise activate zsh)"
-# if (( $+commands[vivid] )); then
-#   export LS_COLORS="$(vivid generate ansi)"
-# fi
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"

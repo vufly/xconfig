@@ -1,0 +1,4 @@
+[".config/LS_COLORS"]
+type = "file"
+url = "https://github.com/vufly/vieza/releases/latest/download/LS_COLORS"
+refreshPeriod = "168h"
