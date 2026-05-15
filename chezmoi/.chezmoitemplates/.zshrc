@@ -206,5 +206,8 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL='gpt-5.4-mini(medium)'
 
 # Shell integrations
 eval "$(mise activate zsh)"
+if (( $+commands[vivid] )); then
+  export LS_COLORS="$(vivid generate ansi)"
+fi
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"

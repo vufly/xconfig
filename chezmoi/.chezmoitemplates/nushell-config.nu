@@ -16,6 +16,8 @@
 # You can also pretty-print and page through the documentation for configuration
 # options using:
 #     config nu --doc | nu-highlight | less -R
+use std/config [light-theme dark-theme]
+
 $env.config.hooks.display_output = { table --expand --icons }
 $env.config.show_banner = false
 $env.config.show_hints = true
@@ -119,12 +121,26 @@ def gact [] {
   rm --force $temp_file
 }
 
-def --wrapped theme [...args: string] {
+def --env --wrapped theme [...args: string] {
+  let mode = if (($args | length) > 0) { $args.0 } else { "" }
+
 {{- if $isWindows }}
   run-external "powershell" "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" ($home_dir | path join "scripts/set-theme.ps1") ...$args
 {{- else }}
   run-external ($home_dir | path join "scripts/set-theme.sh") ...$args
 {{- end }}
+
+  if ($env.LAST_EXIT_CODE? | default 0) != 0 { return }
+
+  match $mode {
+    "light" => { $env.config.color_config = (light-theme) }
+    "dark" => { $env.config.color_config = (dark-theme) }
+    _ => {}
+  }
+
+  if ((which vivid | length) > 0) {
+    $env.LS_COLORS = (vivid generate ansi)
+  }
 }
 
 {{- if not $isWindows }}
@@ -169,5 +185,8 @@ def --env bwload [] {
 $env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt | append { || bwload })
 
 use ($nu.default-config-dir | path join mise.nu)
+if ((which vivid | length) > 0) {
+  $env.LS_COLORS = (vivid generate ansi)
+}
 oh-my-posh init nu --config "~/.theme.omp.toml"
 source ~/.zoxide.nu

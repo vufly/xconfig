@@ -52,6 +52,7 @@ jq = "latest"
 oh-my-posh = "latest"
 ripgrep = "latest"
 scooter = "latest"
+vivid = "latest"
 yazi = "latest"
 zoxide = "latest"
 
