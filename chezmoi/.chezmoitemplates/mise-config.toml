@@ -63,6 +63,7 @@ zellij = "latest"
 
 # Source control helpers
 delta = "latest"
+gh = "latest"
 tig = { version = "latest", version_prefix = "tig-" }
 lazygit = "latest"
 
