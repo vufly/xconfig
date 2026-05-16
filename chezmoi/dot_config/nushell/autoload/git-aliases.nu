@@ -3,14 +3,53 @@ export def git_current_branch [] {
     ^git rev-parse --abbrev-ref HEAD
 }
 
+export def git_develop_branch [] {
+    let in_repo = (^git rev-parse --git-dir | complete)
+    if $in_repo.exit_code != 0 {
+        return "develop"
+    }
+
+    for branch in [dev devel develop development] {
+        let found = (^git show-ref -q --verify $"refs/heads/($branch)" | complete)
+        if $found.exit_code == 0 {
+            return $branch
+        }
+    }
+
+    "develop"
+}
+
 export def git_main_branch [] {
-    git remote show origin
-        | lines
-        | str trim
-        | find --regex 'HEAD .*?[：: ].+'
-        | first
-        | ansi strip
-        | str replace --regex 'HEAD .*?[：: ]\s*(.+)' '$1'
+    let in_repo = (^git rev-parse --git-dir | complete)
+    if $in_repo.exit_code != 0 {
+        return "master"
+    }
+
+    for branch in [main trunk mainline default stable master] {
+        for ref in [
+            $"refs/heads/($branch)"
+            $"refs/remotes/origin/($branch)"
+            $"refs/remotes/upstream/($branch)"
+        ] {
+            let found = (^git show-ref -q --verify $ref | complete)
+            if $found.exit_code == 0 {
+                return $branch
+            }
+        }
+    }
+
+    for remote in [origin upstream] {
+        let ref = (^git rev-parse --abbrev-ref $"($remote)/HEAD" | complete)
+        if $ref.exit_code == 0 {
+            let branch = ($ref.stdout | str trim)
+            let prefix = $"($remote)/"
+            if ($branch | str starts-with $prefix) {
+                return ($branch | str replace $prefix '')
+            }
+        }
+    }
+
+    "master"
 }
 
 #
@@ -25,12 +64,13 @@ export alias gau = git add --update
 export alias gav = git add --verbose
 export alias gap = git apply
 export alias gapt = git apply --3way
+export alias g = git
 
 export alias gb = git branch
 export alias gba = git branch --all
 export alias gbd = git branch --delete
 export alias gbD = git branch --delete --force
-export alias gbl = git blame -b -w
+export alias gbl = git blame -w
 export alias gbm = git branch --move
 export alias gbmc = git branch --move (git_current_branch)
 export alias gbnm = git branch --no-merged
@@ -55,15 +95,16 @@ export def gcam [message: string] {
     git commit --all --message $message
 }
 export def gcsm [message: string] {
-    git commit --all --signoff $message
+    git commit --signoff --message $message
 }
 export alias gcas = git commit --all --signoff
 export def gcasm [message: string] {
     git commit --all --signoff --message $message
 }
 export alias gcb = git checkout -b
-export alias gcd = git checkout develop
+export alias gcd = git checkout (git_develop_branch)
 export alias gcf = git config --list
+export alias gcfu = git commit --fixup
 export alias gcl = git clone --recurse-submodules
 export alias gclean = git clean --interactive -d
 export def gpristine [] {
@@ -95,17 +136,37 @@ export alias gdup = git diff @{upstream}
 export alias gdw = git diff --word-diff
 
 export alias gf = git fetch
-export alias gfa = git fetch --all --prune
+export alias gfa = git fetch --all --tags --prune --jobs=10
 export alias gfo = git fetch origin
 
 export alias gg = git gui citool
 export alias gga = git gui citool --amend
+export def ggl [...branches: string] {
+    if ($branches | length) > 1 {
+        git pull origin ...$branches
+    } else {
+        let branch = if ($branches | is-empty) { git_current_branch } else { $branches.0 }
+        git pull origin $branch
+    }
+}
+export def ggp [...branches: string] {
+    if ($branches | length) > 1 {
+        git push origin ...$branches
+    } else {
+        let branch = if ($branches | is-empty) { git_current_branch } else { $branches.0 }
+        git push origin $branch
+    }
+}
+export def ggu [branch?: string] {
+    let pull_branch = if $branch == null { git_current_branch } else { $branch }
+    git pull --rebase origin $pull_branch
+}
 
 export alias ghh = git help
 
 export alias gignore = git update-index --assume-unchanged
 
-export alias gl = git log
+export alias gl = git pull
 export alias glg = git log --stat
 export alias glgp = git log --stat --patch
 export alias glgg = git log --graph
@@ -121,6 +182,7 @@ export alias glola = git log --graph $'--pretty=%Cred%h%Creset -%C(char lp)auto(
 export alias glols = git log --graph $'--pretty=%Cred%h%Creset -%C(char lp)auto(char rp)%d%Creset %s %Cgreen(char lp)%ar(char rp) %C(char lp)bold blue(char rp)<%an>%Creset' --stat
 
 export alias gm = git merge
+export alias gmc = git merge --continue
 export alias gmtl = git mergetool --no-prompt
 export alias gmtlvim = git mergetool --no-prompt --tool=vimdiff
 export alias gma = git merge --abort
@@ -131,7 +193,7 @@ export def gmom [] {
 
 export alias gp = git push
 export alias gpd = git push --dry-run
-export alias gpf = git push --force-with-lease
+export alias gpf = git push --force-with-lease --force-if-includes
 export alias gpf! = git push --force
 export alias gpl = git pull
 export def gpoat [] {
@@ -142,8 +204,12 @@ export alias gpodc = git push origin --delete (git_current_branch)
 def "nu-complete git pull rebase" [] {
   ["false","true","merges","interactive"]
 }
-export def gpr [rebase_type: string@"nu-complete git pull rebase"] {
-    git pull --rebase $rebase_type
+export def gpr [rebase_type?: string@"nu-complete git pull rebase"] {
+    if $rebase_type == null {
+        git pull --rebase
+    } else {
+        git pull --rebase $rebase_type
+    }
 }
 export alias gpu = git push upstream
 export alias gpv = git push --verbose
@@ -153,16 +219,20 @@ export alias gpra = git pull --rebase --autostash
 export alias gprav = git pull --rebase --autostash --verbose
 export alias gprv = git pull --rebase --verbose
 export alias gpsup = git push --set-upstream origin (git_current_branch)
+export alias gpsupf = git push --set-upstream origin (git_current_branch) --force-with-lease --force-if-includes
 export alias gra = git remote add
 export alias grb = git rebase
 export alias grba = git rebase --abort
 export alias grbc = git rebase --continue
-export alias grbd = git rebase develop
+export alias grbd = git rebase (git_develop_branch)
 export alias grbi = git rebase --interactive
 export alias grbm = git rebase (git_main_branch)
 export alias grbo = git rebase --onto
 export alias grbs = git rebase --skip
 export alias grev = git revert
+export alias greva = git revert --abort
+export alias grevc = git revert --continue
+export alias grf = git reflog
 export alias grh = git reset
 export alias grhh = git reset --hard
 export alias groh = git reset $"origin/(git_current_branch)" --hard
@@ -201,12 +271,14 @@ export alias gstc = git stash clear
 export alias gstd = git stash drop
 export alias gstl = git stash list
 export alias gstp = git stash pop
-export alias gsts = git stash show --text
+export alias gsts = git stash show --patch
 export alias gstu = gsta --include-untracked
 export alias gstall = git stash --all
 export alias gsu = git submodule update
 export alias gsw = git switch
 export alias gswc = git switch --create
+export alias gswd = git switch (git_develop_branch)
+export alias gswm = git switch (git_main_branch)
 
 export alias gts = git tag --sign
 export def gtv [] {
@@ -215,14 +287,18 @@ export def gtv [] {
 export alias glum = git pull upstream (git_main_branch)
 
 export alias gunignore = git update-index --no-assume-unchanged
-export def gup [rebase_type: string@"nu-complete git pull rebase"] {
-    git pull --rebase $rebase_type
+export def gup [rebase_type?: string@"nu-complete git pull rebase"] {
+    if $rebase_type == null {
+        git pull --rebase
+    } else {
+        git pull --rebase $rebase_type
+    }
 }
 export alias gupv = git pull --rebase --verbose
 export alias gupa = git pull --rebase --autostash
 export alias gupav = git pull --rebase --autostash --verbose
 
-export alias gwch = git whatchanged -p --abbrev-commit --pretty=medium
+export alias gwch = git log --patch --abbrev-commit --pretty=medium --raw
 
 export alias gwt = git worktree
 export def gwta [path: path, branch?: string] {
@@ -237,10 +313,10 @@ export alias gwtmv = git worktree move
 export def gwtm [worktree: string] {
     git worktree remove $worktree
 }
+export alias gwtrm = git worktree remove
 
 export alias gam = git am
 export alias gamc = git am --continue
 export alias gams = git am --skip
 export alias gama = git am --abort
 export alias gamscp = git am --show-current-patch
-
