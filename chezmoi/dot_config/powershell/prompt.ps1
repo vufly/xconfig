@@ -60,7 +60,7 @@ $script:CAILOXO_OS_ICONS = @{
   'redhat' = '󱄛'
   'ubuntu' = ''
   'unknown' = ''
-  'windows' = ''
+  'windows' = ''
   'wsl' = ''
 }
 $script:CAILOXO_UPSTREAM_ICONS = @{
@@ -95,7 +95,7 @@ function Cailoxo-Format-Part {
 function Cailoxo-Normalize-Path {
   param([string]$Path)
   if ($null -eq $Path) { return '' }
-  $Path.Replace('\\', '/')
+  $Path.Replace('\', '/')
 }
 
 function Cailoxo-Home-Path {
@@ -151,9 +151,9 @@ function Cailoxo-Shorten-Path {
   param([int]$Budget)
   $cwd = Cailoxo-Normalize-Path ((Get-Location).ProviderPath)
   $homePath = Cailoxo-Home-Path
-  if ($cwd -eq $homePath) {
+  if ([string]::Equals($cwd, $homePath, [StringComparison]::OrdinalIgnoreCase)) {
     $display = '~'
-  } elseif ($homePath -ne '' -and $cwd.StartsWith($homePath + '/')) {
+  } elseif ($homePath -ne '' -and $cwd.StartsWith($homePath + '/', [StringComparison]::OrdinalIgnoreCase)) {
     $display = '~' + $cwd.Substring($homePath.Length)
   } else {
     $display = $cwd
@@ -351,7 +351,7 @@ function Cailoxo-Render-Full {
   $budget = [Math]::Max(1, $width - $fixed)
   $path = Cailoxo-Format-Path (Cailoxo-Shorten-Path $budget) $gitRoot
   $homePath = Cailoxo-Home-Path
-  $isHome = (Cailoxo-Normalize-Path ((Get-Location).ProviderPath)) -eq $homePath
+  $isHome = [string]::Equals((Cailoxo-Normalize-Path ((Get-Location).ProviderPath)), $homePath, [StringComparison]::OrdinalIgnoreCase)
   $pathText = Cailoxo-Path-Template @{ path = $path; home = $isHome; home_icon = $script:CAILOXO_HOME_ICON; folder_icon = $script:CAILOXO_FOLDER_ICON }
 
   $gitStyle = if ($git.dirty) { $script:CAILOXO_GIT_DIRTY_STYLE } else { $script:CAILOXO_GIT_CLEAN_STYLE }
