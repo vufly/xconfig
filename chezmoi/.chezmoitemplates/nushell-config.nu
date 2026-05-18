@@ -188,5 +188,6 @@ def --env bwload [] {
 $env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt | append { || bwload })
 
 use ($nu.default-config-dir | path join mise.nu)
-oh-my-posh init nu --config "~/.theme.omp.toml"
+# oh-my-posh init nu --config "~/.theme.omp.toml"
+source ($nu.default-config-dir | path join prompt.nu)
 source ~/.zoxide.nu
