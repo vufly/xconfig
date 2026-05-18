@@ -6,7 +6,7 @@ if [[ -o interactive ]]; then
 
   typeset -g __CAILOXO_OS_TEMPLATE=' {{ icon }} '
   typeset -g __CAILOXO_PATH_TEMPLATE=' {{ if home }} {{ else }} {{ end }}{{ path }} '
-  typeset -g __CAILOXO_GIT_TEMPLATE=' {{ upstream_icon }}{{ branch_icon }}{{ branch }} {{ status }} '
+  typeset -g __CAILOXO_GIT_TEMPLATE=' {{ upstream_icon }}{{ branch_icon }}{{ branch }}{{ if status }} {{ status }}{{ end }} '
   typeset -g __CAILOXO_PROMPT_TEMPLATE='   '
   typeset -g __CAILOXO_TRANSIENT_TEMPLATE=' '
   typeset -g __CAILOXO_HOME_ICON='~'
@@ -237,6 +237,25 @@ if [[ -o interactive ]]; then
 
   __cailoxo_apply_template() {
     local tpl=$1
+    local before rest body after then_part else_part
+    while [[ $tpl == *'{{ if status }}'* ]]; do
+      before=${tpl%%'{{ if status }}'*}
+      rest=${tpl#*'{{ if status }}'}
+      body=${rest%%'{{ end }}'*}
+      after=${rest#*'{{ end }}'}
+      if [[ $body == *'{{ else }}'* ]]; then
+        then_part=${body%%'{{ else }}'*}
+        else_part=${body#*'{{ else }}'}
+      else
+        then_part=$body
+        else_part=
+      fi
+      if [[ -n $git_status ]]; then
+        tpl="${before}${then_part}${after}"
+      else
+        tpl="${before}${else_part}${after}"
+      fi
+    done
     tpl=${tpl//\{\{ icon \}\}/${os_icon}}
     tpl=${tpl//\{\{ path \}\}/${render_path}}
     tpl=${tpl//\{\{ home_icon \}\}/${home_icon}}

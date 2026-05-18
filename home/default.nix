@@ -13,6 +13,7 @@
     gnupg
     nixpkgs-review
     openssh
+    powershell
     wget
     unzip
   ];

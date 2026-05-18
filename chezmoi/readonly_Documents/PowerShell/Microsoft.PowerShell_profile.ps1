@@ -190,15 +190,24 @@ if (Test-Path $LSColorsPath) {
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 # --- Oh My Posh initialization ---
-oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
+# oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
+
+# --- Cailoxo prompt initialization ---
+$CailoxoPromptPath = Join-Path $HOME ".config/powershell/prompt.ps1"
+if (Test-Path $CailoxoPromptPath) {
+    . $CailoxoPromptPath
+}
 
 # --- Zoxide integration ---
 # Initialize zoxide hooks for PowerShell
 (& { (zoxide init powershell --cmd cd | Out-String) }) | Invoke-Expression
 
-# Wrap the existing prompt safely (Oh My Posh owns the prompt)
-if (-not (Test-Path Function:\_original_prompt)) {
-    Rename-Item Function:\prompt _original_prompt
+# Wrap the existing prompt safely (Cailoxo owns the prompt)
+if (Test-Path Function:\prompt) {
+    if (Test-Path Function:\_cailoxo_prompt) {
+        Remove-Item Function:\_cailoxo_prompt -Force
+    }
+    Rename-Item Function:\prompt _cailoxo_prompt
 }
 
 function global:prompt {
@@ -206,6 +215,6 @@ function global:prompt {
     # Let zoxide learn current directory
     & zoxide add "$(Get-Location)" | Out-Null
 
-    # Then call the original Oh My Posh prompt
-    _original_prompt
+    # Then call the Cailoxo prompt
+    _cailoxo_prompt
 }
