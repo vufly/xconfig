@@ -13,6 +13,9 @@ $script:CAILOXO_GITDIR_FORMAT = '<b><i>%s</i></b>'
 $script:CAILOXO_BRANCH_ICON = ' '
 $script:CAILOXO_STATUS_SEPARATOR = ' '
 $script:CAILOXO_FETCH_UPSTREAM_ICON = $true
+$script:CAILOXO_FETCH_REMOTE = $true
+$script:CAILOXO_FETCH_REMOTE_INTERVAL_MS = 60000
+$script:CAILOXO_FETCH_REMOTE_TIMEOUT_MS = 5000
 $script:CAILOXO_MIN_DIRS = 1
 $script:CAILOXO_FINAL_SPACE = $true
 $script:CAILOXO_OS_STYLE = '[38;5;0m[48;5;7m'
@@ -73,6 +76,14 @@ $script:CAILOXO_UPSTREAM_ICONS = @{
 }
 
 $script:CAILOXO_PROMPT_TYPE = 'primary'
+$script:CAILOXO_FETCH_PROCESS = $null
+$script:CAILOXO_FETCH_EVENT = $null
+$script:CAILOXO_FETCH_LAST_KEY = ''
+$script:CAILOXO_FETCH_LAST_START_MS = 0
+$script:CAILOXO_FETCH_DEADLINE_MS = 0
+$script:CAILOXO_FETCH_REPAINT_PENDING = $false
+$script:CAILOXO_RENDERING = $false
+$script:CAILOXO_FETCH_READY = $false
 
 function Cailoxo-Plain-Template {
   param([string]$Text)
@@ -218,13 +229,120 @@ function Cailoxo-Upstream-Info {
   param([string]$Branch)
   $info = @{ upstream = ''; upstream_icon = ''; upstream_url = '' }
   if (-not $script:CAILOXO_FETCH_UPSTREAM_ICON) { return $info }
-  $remote = (& git config --get "branch.$Branch.remote" 2>$null) -join ''
-  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($remote)) { $remote = 'origin' }
+  $remote = Cailoxo-Remote-Name $Branch
   $url = (& git config --get "remote.$remote.url" 2>$null) -join ''
   if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $info }
   $upstream = Cailoxo-Upstream-Provider $url.Trim()
   $icon = if ($upstream -ne '' -and $script:CAILOXO_UPSTREAM_ICONS.ContainsKey($upstream)) { $script:CAILOXO_UPSTREAM_ICONS[$upstream] } else { '' }
   @{ upstream = $upstream; upstream_icon = $icon; upstream_url = $url.Trim() }
+}
+
+function Cailoxo-Remote-Name {
+  param([string]$Branch)
+  $remote = (& git config --get "branch.$Branch.remote" 2>$null) -join ''
+  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($remote)) { return 'origin' }
+  $remote.Trim()
+}
+
+function Cailoxo-Now-Ms {
+  [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+}
+
+function Cailoxo-Request-Repaint {
+  if ($script:CAILOXO_RENDERING) {
+    $script:CAILOXO_FETCH_REPAINT_PENDING = $true
+    return
+  }
+  try {
+    $line = $null
+    $cursor = $null
+    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+    [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+    $script:CAILOXO_FETCH_REPAINT_PENDING = $false
+  } catch {
+    $script:CAILOXO_FETCH_REPAINT_PENDING = $true
+  }
+}
+
+function Cailoxo-Poll-Fetch {
+  param([switch]$Repaint)
+  if ($null -ne $script:CAILOXO_FETCH_PROCESS) {
+    $now = Cailoxo-Now-Ms
+    if (-not $script:CAILOXO_FETCH_PROCESS.HasExited -and $script:CAILOXO_FETCH_DEADLINE_MS -gt 0 -and $now -ge $script:CAILOXO_FETCH_DEADLINE_MS) {
+      try { $script:CAILOXO_FETCH_PROCESS.Kill($true) } catch { try { $script:CAILOXO_FETCH_PROCESS.Kill() } catch {} }
+    }
+    if ($script:CAILOXO_FETCH_PROCESS.HasExited) {
+      try { $script:CAILOXO_FETCH_PROCESS.Dispose() } catch {}
+      $script:CAILOXO_FETCH_PROCESS = $null
+      $script:CAILOXO_FETCH_DEADLINE_MS = 0
+      if ($null -ne $script:CAILOXO_FETCH_EVENT) {
+        try { Unregister-Event -SubscriptionId $script:CAILOXO_FETCH_EVENT.Id -ErrorAction SilentlyContinue } catch {}
+        $script:CAILOXO_FETCH_EVENT = $null
+      }
+      $script:CAILOXO_FETCH_REPAINT_PENDING = $true
+    }
+  } else {
+    if ($null -ne $script:CAILOXO_FETCH_EVENT) {
+      try { Unregister-Event -SubscriptionId $script:CAILOXO_FETCH_EVENT.Id -ErrorAction SilentlyContinue } catch {}
+      $script:CAILOXO_FETCH_EVENT = $null
+    }
+  }
+  if ($Repaint -and $script:CAILOXO_FETCH_REPAINT_PENDING) { Cailoxo-Request-Repaint }
+}
+
+function Cailoxo-Start-Fetch {
+  param([string]$Branch)
+  if (-not $script:CAILOXO_FETCH_REMOTE) { return }
+  if (-not $script:CAILOXO_FETCH_READY) { return }
+  Cailoxo-Poll-Fetch
+  if ($null -ne $script:CAILOXO_FETCH_PROCESS) { return }
+
+  $remote = Cailoxo-Remote-Name $Branch
+  if ([string]::IsNullOrWhiteSpace($remote)) { return }
+  $root = (& git rev-parse --show-toplevel 2>$null) -join ''
+  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($root)) { return }
+  $root = $root.Trim()
+
+  $now = Cailoxo-Now-Ms
+  $key = "$root|$remote"
+  if ($script:CAILOXO_FETCH_LAST_KEY -eq $key -and ($now - $script:CAILOXO_FETCH_LAST_START_MS) -lt $script:CAILOXO_FETCH_REMOTE_INTERVAL_MS) { return }
+  $script:CAILOXO_FETCH_LAST_KEY = $key
+  $script:CAILOXO_FETCH_LAST_START_MS = $now
+
+  $psi = [System.Diagnostics.ProcessStartInfo]::new()
+  $psi.FileName = 'git'
+  $psi.WorkingDirectory = $root
+  $psi.UseShellExecute = $false
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.CreateNoWindow = $true
+  $psi.ArgumentList.Add('fetch')
+  $psi.ArgumentList.Add('--quiet')
+  $psi.ArgumentList.Add('--no-tags')
+  $psi.ArgumentList.Add($remote)
+    try {
+    $script:CAILOXO_FETCH_PROCESS = [System.Diagnostics.Process]::Start($psi)
+    $script:CAILOXO_FETCH_PROCESS.EnableRaisingEvents = $true
+    try { $script:CAILOXO_FETCH_PROCESS.BeginOutputReadLine() } catch {}
+    try { $script:CAILOXO_FETCH_PROCESS.BeginErrorReadLine() } catch {}
+    $script:CAILOXO_FETCH_DEADLINE_MS = $now + $script:CAILOXO_FETCH_REMOTE_TIMEOUT_MS
+    if ($null -ne $script:CAILOXO_FETCH_EVENT) { Unregister-Event -SubscriptionId $script:CAILOXO_FETCH_EVENT.Id -ErrorAction SilentlyContinue }
+    $script:CAILOXO_FETCH_EVENT = Register-ObjectEvent -InputObject $script:CAILOXO_FETCH_PROCESS -EventName Exited -Action {
+      $script:CAILOXO_FETCH_REPAINT_PENDING = $true
+      if (-not $script:CAILOXO_RENDERING) {
+        try {
+          $line = $null
+          $cursor = $null
+          [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+          [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+          $script:CAILOXO_FETCH_REPAINT_PENDING = $false
+        } catch {}
+      }
+    }
+  } catch {
+    $script:CAILOXO_FETCH_PROCESS = $null
+    $script:CAILOXO_FETCH_DEADLINE_MS = 0
+  }
 }
 
 function Cailoxo-Apply-Template {
@@ -306,6 +424,7 @@ function Cailoxo-Git-Info {
   $branch = $branch.Trim()
   if ($branch -eq '') { return $empty }
   $upstream = Cailoxo-Upstream-Info $branch
+  Cailoxo-Start-Fetch $branch
 
   $counts = @{ ahead = 0; behind = 0; conflicted = 0; untracked = 0; modified = 0; staged = 0; renamed = 0; deleted = 0; stashed = 0 }
   $status = & git status --porcelain=v1 2>$null
@@ -375,6 +494,8 @@ function Cailoxo-Render-Transient {
 function prompt {
   $originalSuccess = $?
   $originalLastExitCode = $global:LASTEXITCODE
+  $script:CAILOXO_RENDERING = $true
+  Cailoxo-Poll-Fetch
   $lastStatus = if ($originalSuccess) { 0 } elseif ($null -ne $originalLastExitCode) { [int]$originalLastExitCode } else { 1 }
   if ($script:CAILOXO_PROMPT_TYPE -eq 'transient') {
     $script:CAILOXO_PROMPT_TYPE = 'primary'
@@ -383,6 +504,8 @@ function prompt {
     $output = Cailoxo-Render-Full $lastStatus
   }
   try { Set-PSReadLineOption -ExtraPromptLineCount ((($output -split "`n").Count) - 1) } catch {}
+  $script:CAILOXO_RENDERING = $false
+  $script:CAILOXO_FETCH_READY = $true
   $global:LASTEXITCODE = $originalLastExitCode
   $output
 }
@@ -395,6 +518,7 @@ function Set-CailoxoTransientPrompt {
 try {
   Set-PSReadLineKeyHandler -Key Enter -BriefDescription 'CailoxoEnterKeyHandler' -ScriptBlock {
     try {
+      Cailoxo-Poll-Fetch -Repaint
       $parseErrors = $null
       [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$null, [ref]$null, [ref]$parseErrors, [ref]$null)
       if ($null -eq $parseErrors -or $parseErrors.Count -eq 0) { Set-CailoxoTransientPrompt }

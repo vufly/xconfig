@@ -10,6 +10,7 @@ pm2 = "npm:pm2"
 pnpm = "github:pnpm/pnpm"
 psmux = "github:psmux/psmux"
 rtk = "github:rtk-ai/rtk"
+serie = "cargo:serie"
 syncthing = "github:syncthing/syncthing"
 tig = "github:jonas/tig"
 tmux = "aqua:tmux/tmux-builds"
@@ -64,8 +65,9 @@ zellij = "latest"
 # Source control helpers
 delta = "latest"
 gh = "latest"
-tig = { version = "latest", version_prefix = "tig-" }
 lazygit = "latest"
+serie = "latest"
+tig = { version = "latest", version_prefix = "tig-" }
 
 # Security and secrets
 bitwarden = "latest"
