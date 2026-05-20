@@ -66,7 +66,6 @@ zellij = "latest"
 delta = "latest"
 gh = "latest"
 lazygit = "latest"
-serie = "latest"
 tig = { version = "latest", version_prefix = "tig-" }
 
 # Security and secrets
@@ -82,5 +81,6 @@ syncthing = "latest"
 yt-dlp = "latest"
 {{ else -}}
 cliproxy = "latest"
+serie = "latest"
 tmux = "latest"
 {{ end }}
