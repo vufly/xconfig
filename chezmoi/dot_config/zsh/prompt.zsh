@@ -15,12 +15,16 @@ if [[ -o interactive ]]; then
   typeset -g __CAILOXO_GITDIR_FORMAT='<b><i>%s</i></b>'
   typeset -g __CAILOXO_BRANCH_ICON=' '
   typeset -g __CAILOXO_STATUS_SEPARATOR=' '
+  typeset -gi __CAILOXO_GIT_STATUS=1
   typeset -gi __CAILOXO_FETCH_UPSTREAM_ICON=1
+  typeset -gi __CAILOXO_GIT_URL=1
   typeset -gi __CAILOXO_FETCH_REMOTE=1
   typeset -gi __CAILOXO_FETCH_REMOTE_INTERVAL_S=60
   typeset -gi __CAILOXO_FETCH_REMOTE_TIMEOUT_S=5
   typeset -gi __CAILOXO_MIN_DIRS=1
   typeset -gi __CAILOXO_FINAL_SPACE=1
+  typeset -gi __CAILOXO_PATH_URL=1
+  typeset -gi __CAILOXO_OSC7=1
   typeset -g __CAILOXO_OS_STYLE=$'\e[38;5;0m\e[48;5;7m'
   typeset -g __CAILOXO_PATH_STYLE=$'\e[38;5;0m\e[48;5;4m'
   typeset -g __CAILOXO_GIT_CLEAN_STYLE=$'\e[38;5;0m\e[48;5;2m'
@@ -43,40 +47,16 @@ if [[ -o interactive ]]; then
 
   __cailoxo_style_template() {
     local text=$1
-    local bold_on bold_off underline_on underline_off overline_on overline_off italic_on italic_off
-    local strike_on strike_off dim_on dim_off blink_on blink_off reverse_on reverse_off
+    local bold_on bold_off italic_on italic_off
     bold_on=$(__cailoxo_pansi $'\e[1m')
     bold_off=$(__cailoxo_pansi $'\e[22m')
-    underline_on=$(__cailoxo_pansi $'\e[4m')
-    underline_off=$(__cailoxo_pansi $'\e[24m')
-    overline_on=$(__cailoxo_pansi $'\e[53m')
-    overline_off=$(__cailoxo_pansi $'\e[55m')
     italic_on=$(__cailoxo_pansi $'\e[3m')
     italic_off=$(__cailoxo_pansi $'\e[23m')
-    strike_on=$(__cailoxo_pansi $'\e[9m')
-    strike_off=$(__cailoxo_pansi $'\e[29m')
-    dim_on=$(__cailoxo_pansi $'\e[2m')
-    dim_off=$(__cailoxo_pansi $'\e[22m')
-    blink_on=$(__cailoxo_pansi $'\e[5m')
-    blink_off=$(__cailoxo_pansi $'\e[25m')
-    reverse_on=$(__cailoxo_pansi $'\e[7m')
-    reverse_off=$(__cailoxo_pansi $'\e[27m')
     text=${text//'<b>'/$bold_on}
     text=${text//'<\/b>'/$bold_off}
-    text=${text//'<u>'/$underline_on}
-    text=${text//'<\/u>'/$underline_off}
-    text=${text//'<o>'/$overline_on}
-    text=${text//'<\/o>'/$overline_off}
     text=${text//'<i>'/$italic_on}
     text=${text//'<\/i>'/$italic_off}
-    text=${text//'<s>'/$strike_on}
-    text=${text//'<\/s>'/$strike_off}
-    text=${text//'<d>'/$dim_on}
-    text=${text//'<\/d>'/$dim_off}
-    text=${text//'<f>'/$blink_on}
-    text=${text//'<\/f>'/$blink_off}
-    text=${text//'<r>'/$reverse_on}
-    text=${text//'<\/r>'/$reverse_off}
+
     print -r -- "$text"
   }
 
@@ -84,21 +64,46 @@ if [[ -o interactive ]]; then
     local text=$1
     text=${text//'<b>'/}
     text=${text//'<\/b>'/}
-    text=${text//'<u>'/}
-    text=${text//'<\/u>'/}
-    text=${text//'<o>'/}
-    text=${text//'<\/o>'/}
     text=${text//'<i>'/}
     text=${text//'<\/i>'/}
-    text=${text//'<s>'/}
-    text=${text//'<\/s>'/}
-    text=${text//'<d>'/}
-    text=${text//'<\/d>'/}
-    text=${text//'<f>'/}
-    text=${text//'<\/f>'/}
-    text=${text//'<r>'/}
-    text=${text//'<\/r>'/}
+
     print -r -- "$text"
+  }
+
+  __cailoxo_url_escape() {
+    local value=${1//\\//}
+    value=${value//\%/%25}
+    value=${value// /%20}
+    value=${value//\#/%23}
+    value=${value//\?/%3F}
+    value=${value//\;/%3B}
+    print -r -- "$value"
+  }
+
+  __cailoxo_file_url() {
+    local path=$(__cailoxo_url_escape "$PWD") host=${HOST:-$(hostname 2>/dev/null)}
+    if [[ $path == [[:alpha:]]:/* ]]; then
+      print -r -- "file:///$path"
+    else
+      print -r -- "file://$host$path"
+    fi
+  }
+
+  __cailoxo_osc7() {
+    (( __CAILOXO_OSC7 )) || return
+    local url=$(__cailoxo_file_url)
+    [[ -n $url ]] && __cailoxo_pansi $'\e]7;'"$url"$'\e\\'
+  }
+
+  __cailoxo_path_url_start() {
+    (( __CAILOXO_PATH_URL )) || return
+    local url=$(__cailoxo_file_url)
+    [[ -n $url ]] && __cailoxo_pansi $'\e]8;;'"$url"$'\e\\'
+  }
+
+  __cailoxo_path_url_end() {
+    (( __CAILOXO_PATH_URL )) || return
+    __cailoxo_pansi $'\e]8;;\e\\'
   }
 
   __cailoxo_format_part() {
@@ -221,6 +226,73 @@ if [[ -o interactive ]]; then
     fi
   }
 
+  __cailoxo_clean_git_url() {
+    local url=$1 rest host path
+    [[ -n $url ]] || return
+    url=${url%/}
+    url=${url%.git}
+
+    if [[ $url == http://* || $url == https://* ]]; then
+      print -r -- "$url"
+      return
+    fi
+
+    if [[ $url == git@ssh.dev.azure.com:v3/* ]]; then
+      path=${url#git@ssh.dev.azure.com:v3/}
+      local -a parts
+      parts=(${(s:/:)path})
+      if (( ${#parts} >= 3 )); then
+        print -r -- "https://dev.azure.com/$parts[1]/$parts[2]/_git/$parts[3]"
+        return
+      fi
+    fi
+
+    if [[ $url == *://* ]]; then
+      rest=${url#*://}
+      rest=${rest#*@}
+      host=${rest%%/*}
+      path=${rest#*/}
+      host=${host%%:*}
+      if [[ $host == ssh.dev.azure.com && $path == v3/* ]]; then
+        local -a parts
+        parts=(${(s:/:)path})
+        if (( ${#parts} >= 4 )); then
+          print -r -- "https://dev.azure.com/$parts[2]/$parts[3]/_git/$parts[4]"
+          return
+        fi
+      fi
+      [[ $path != $rest && -n $host && -n $path ]] && print -r -- "https://$host/$path"
+      return
+    fi
+
+    if [[ $url == *@*:* ]]; then
+      rest=${url#*@}
+      host=${rest%%:*}
+      path=${rest#*:}
+      [[ -n $host && -n $path ]] && print -r -- "https://$host/$path"
+      return
+    fi
+
+    if [[ $url == *:* ]]; then
+      host=${url%%:*}
+      path=${url#*:}
+      [[ -n $host && -n $path ]] && print -r -- "https://$host/$path"
+      return
+    fi
+  }
+
+  __cailoxo_git_url_start() {
+    (( __CAILOXO_GIT_URL )) || return
+    [[ -n $upstream_url ]] || return
+    __cailoxo_pansi $'\e]8;;'"$upstream_url"$'\e\\'
+  }
+
+  __cailoxo_git_url_end() {
+    (( __CAILOXO_GIT_URL )) || return
+    [[ -n $upstream_url ]] || return
+    __cailoxo_pansi $'\e]8;;\e\\'
+  }
+
   __cailoxo_upstream_icon() {
     (( __CAILOXO_FETCH_UPSTREAM_ICON )) || return
     local remote url provider upstream_icon=
@@ -322,15 +394,18 @@ if [[ -o interactive ]]; then
       fi
     done
     tpl=${tpl//\{\{ icon \}\}/${os_icon}}
+    tpl=${tpl//\{\{icon\}\}/${os_icon}}
     tpl=${tpl//\{\{ path \}\}/${render_path}}
-    tpl=${tpl//\{\{ home_icon \}\}/${home_icon}}
-    tpl=${tpl//\{\{ folder_icon \}\}/${folder_icon}}
+    tpl=${tpl//\{\{path\}\}/${render_path}}
     tpl=${tpl//\{\{ status \}\}/${git_status}}
+    tpl=${tpl//\{\{status\}\}/${git_status}}
     tpl=${tpl//\{\{ branch_icon \}\}/${branch_icon}}
+    tpl=${tpl//\{\{branch_icon\}\}/${branch_icon}}
     tpl=${tpl//\{\{ upstream_icon \}\}/${upstream_icon}}
-    tpl=${tpl//\{\{ upstream \}\}/${upstream}}
-    tpl=${tpl//\{\{ upstream_url \}\}/${upstream_url}}
+    tpl=${tpl//\{\{upstream_icon\}\}/${upstream_icon}}
     tpl=${tpl//\{\{ branch \}\}/${branch}}
+    tpl=${tpl//\{\{branch\}\}/${branch}}
+
     print -r -- $tpl
   }
 
@@ -416,18 +491,83 @@ if [[ -o interactive ]]; then
   __cailoxo_status_item() {
     local name=$1 template count
     case $name in
-    ahead) template='⇡{{ count }}' ; count=${ahead} ;;
     behind) template='⇣{{ count }}' ; count=${behind} ;;
+    ahead) template='⇡{{ count }}' ; count=${ahead} ;;
+    stashed) template='#{{ count }}' ; count=${stashed} ;;
+    action) template='{{ action }}' ; count=${action} ;;
     conflicted) template='={{ count }}' ; count=${conflicted} ;;
-    untracked) template='?{{ count }}' ; count=${untracked} ;;
-    modified) template='!{{ count }}' ; count=${modified} ;;
     staged) template='+{{ count }}' ; count=${staged} ;;
+    modified) template='!{{ count }}' ; count=${modified} ;;
+    untracked) template='?{{ count }}' ; count=${untracked} ;;
     renamed) template='»{{ count }}' ; count=${renamed} ;;
     deleted) template='✘{{ count }}' ; count=${deleted} ;;
-    stashed) template='#{{ count }}' ; count=${stashed} ;;
     esac
+    if [[ $name == action ]]; then
+      [[ -n $action ]] || return
+      print -r -- ${template//\{\{ action \}\}/$action}
+      return
+    fi
     (( count > 0 )) || return
     print -r -- ${template//\{\{ count \}\}/$count}
+  }
+
+  __cailoxo_git_file() {
+    git rev-parse --git-path "$1" 2>/dev/null
+  }
+
+  __cailoxo_git_action_with_progress() {
+    local action=$1 dir=$2 next= last=
+    [[ -r $dir/msgnum ]] && next=$(<$dir/msgnum)
+    [[ -r $dir/end ]] && last=$(<$dir/end)
+    [[ -r $dir/next ]] && next=$(<$dir/next)
+    [[ -r $dir/last ]] && last=$(<$dir/last)
+    if [[ -n $next && -n $last ]]; then
+      print -r -- "$action $next/$last"
+    else
+      print -r -- "$action"
+    fi
+  }
+
+  __cailoxo_git_action() {
+    local path
+    path=$(__cailoxo_git_file rebase-merge)
+    if [[ -d $path ]]; then
+      if [[ -e $path/interactive ]]; then
+        __cailoxo_git_action_with_progress rebase-i "$path"
+      else
+        __cailoxo_git_action_with_progress rebase-m "$path"
+      fi
+      return
+    fi
+
+    path=$(__cailoxo_git_file rebase-apply)
+    if [[ -d $path ]]; then
+      if [[ -e $path/rebasing ]]; then
+        __cailoxo_git_action_with_progress rebase "$path"
+      elif [[ -e $path/applying ]]; then
+        __cailoxo_git_action_with_progress am "$path"
+      else
+        __cailoxo_git_action_with_progress am/rebase "$path"
+      fi
+      return
+    fi
+
+    path=$(__cailoxo_git_file MERGE_HEAD)
+    [[ -e $path ]] && { print -r -- merge; return; }
+    path=$(__cailoxo_git_file REVERT_HEAD)
+    if [[ -e $path ]]; then
+      path=$(__cailoxo_git_file sequencer)
+      [[ -d $path ]] && print -r -- revert-seq || print -r -- revert
+      return
+    fi
+    path=$(__cailoxo_git_file CHERRY_PICK_HEAD)
+    if [[ -e $path ]]; then
+      path=$(__cailoxo_git_file sequencer)
+      [[ -d $path ]] && print -r -- cherry-seq || print -r -- cherry
+      return
+    fi
+    path=$(__cailoxo_git_file BISECT_LOG)
+    [[ -e $path ]] && print -r -- bisect
   }
 
   __cailoxo_git_info() {
@@ -443,16 +583,20 @@ if [[ -o interactive ]]; then
 
     branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null) || branch=
     [[ -n $branch ]] || return
-    if (( __CAILOXO_FETCH_UPSTREAM_ICON )); then
+    if (( __CAILOXO_FETCH_UPSTREAM_ICON || __CAILOXO_GIT_URL )); then
       local remote
       remote=$(__cailoxo_remote_name)
       upstream_url=$(git config --get "remote.$remote.url" 2>/dev/null) || upstream_url=
       upstream=$(__cailoxo_upstream_provider "$upstream_url")
-      upstream_icon=$(__cailoxo_upstream_icon)
+      if (( __CAILOXO_FETCH_UPSTREAM_ICON )); then
+        upstream_icon=$(__cailoxo_upstream_icon)
+      fi
+      upstream_url=$(__cailoxo_clean_git_url "$upstream_url")
     fi
     __cailoxo_start_fetch
+    (( __CAILOXO_GIT_STATUS )) || return
 
-    local ahead=0 behind=0 conflicted=0 untracked=0 modified=0 staged=0 renamed=0 deleted=0 stashed=0
+    local ahead=0 behind=0 action= conflicted=0 untracked=0 modified=0 staged=0 renamed=0 deleted=0 stashed=0
     local out line code x y
     out=$(git status --porcelain=v1 2>/dev/null)
     while IFS= read -r line; do
@@ -475,11 +619,13 @@ if [[ -o interactive ]]; then
 
     ahead=$(git rev-list --count '@{upstream}..HEAD' 2>/dev/null || print -r -- 0)
     behind=$(git rev-list --count 'HEAD..@{upstream}' 2>/dev/null || print -r -- 0)
+    action=$(__cailoxo_git_action)
     stashed=$(git stash list 2>/dev/null | wc -l | tr -d ' ')
+    (( conflicted || untracked || modified || staged || renamed || deleted )) && git_dirty=1
 
     local -a items
     local item name
-    for name in ahead behind conflicted untracked modified staged renamed deleted stashed; do
+    for name in behind ahead stashed action conflicted staged modified untracked renamed deleted; do
       item=$(__cailoxo_status_item $name)
       [[ -n $item ]] && items+=("$item")
     done
@@ -491,7 +637,6 @@ if [[ -o interactive ]]; then
         git_status+="${__CAILOXO_STATUS_SEPARATOR}$item"
       fi
     done
-    (( ${#items} > 0 )) && git_dirty=1
   }
 
   __cailoxo_render_full_prompt() {
@@ -537,10 +682,10 @@ if [[ -o interactive ]]; then
     fi
 
     local first second prompt_style
-    first="$(__cailoxo_pansi "$__CAILOXO_OS_STYLE")$(__cailoxo_style_template "$os_text")$(__cailoxo_pansi "$__CAILOXO_RESET")$__CAILOXO_OS_TAIL"
-    first+="$(__cailoxo_pansi "$__CAILOXO_PATH_STYLE")$(__cailoxo_style_template "$path_text")$(__cailoxo_pansi "$__CAILOXO_RESET")$path_sep"
+    first="$(__cailoxo_osc7)$(__cailoxo_pansi "$__CAILOXO_OS_STYLE")$(__cailoxo_style_template "$os_text")$(__cailoxo_pansi "$__CAILOXO_RESET")$__CAILOXO_OS_TAIL"
+    first+="$(__cailoxo_pansi "$__CAILOXO_PATH_STYLE")$(__cailoxo_path_url_start)$(__cailoxo_style_template "$path_text")$(__cailoxo_path_url_end)$(__cailoxo_pansi "$__CAILOXO_RESET")$path_sep"
     if [[ -n $git_text ]]; then
-      first+="$(__cailoxo_pansi "$git_style")$(__cailoxo_style_template "$git_text")$(__cailoxo_pansi "$__CAILOXO_RESET")$git_sep"
+      first+="$(__cailoxo_pansi "$git_style")$(__cailoxo_git_url_start)$(__cailoxo_style_template "$git_text")$(__cailoxo_git_url_end)$(__cailoxo_pansi "$__CAILOXO_RESET")$git_sep"
     fi
 
     if (( last_status == 0 )); then
