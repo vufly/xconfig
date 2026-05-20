@@ -81,6 +81,9 @@ $script:CAILOXO_FETCH_EVENT = $null
 $script:CAILOXO_FETCH_LAST_KEY = ''
 $script:CAILOXO_FETCH_LAST_START_MS = 0
 $script:CAILOXO_FETCH_DEADLINE_MS = 0
+$script:CAILOXO_FETCH_ROOT = ''
+$script:CAILOXO_FETCH_UPSTREAM_REF = ''
+$script:CAILOXO_FETCH_BEFORE = ''
 $script:CAILOXO_FETCH_REPAINT_PENDING = $false
 $script:CAILOXO_RENDERING = $false
 $script:CAILOXO_FETCH_READY = $false
@@ -277,6 +280,7 @@ function Cailoxo-Poll-Fetch {
       try { $script:CAILOXO_FETCH_PROCESS.Kill($true) } catch { try { $script:CAILOXO_FETCH_PROCESS.Kill() } catch {} }
     }
     if ($script:CAILOXO_FETCH_PROCESS.HasExited) {
+      $exitCode = $script:CAILOXO_FETCH_PROCESS.ExitCode
       try { $script:CAILOXO_FETCH_PROCESS.Dispose() } catch {}
       $script:CAILOXO_FETCH_PROCESS = $null
       $script:CAILOXO_FETCH_DEADLINE_MS = 0
@@ -284,7 +288,14 @@ function Cailoxo-Poll-Fetch {
         try { Unregister-Event -SubscriptionId $script:CAILOXO_FETCH_EVENT.Id -ErrorAction SilentlyContinue } catch {}
         $script:CAILOXO_FETCH_EVENT = $null
       }
-      $script:CAILOXO_FETCH_REPAINT_PENDING = $true
+      if ($exitCode -eq 0 -and $script:CAILOXO_FETCH_UPSTREAM_REF -ne '') {
+        $after = (& git -C $script:CAILOXO_FETCH_ROOT rev-parse --verify $script:CAILOXO_FETCH_UPSTREAM_REF 2>$null) -join ''
+        if ($LASTEXITCODE -eq 0 -and $after.Trim() -ne '' -and $after.Trim() -ne $script:CAILOXO_FETCH_BEFORE) {
+          $script:CAILOXO_FETCH_REPAINT_PENDING = $true
+        }
+      }
+      $script:CAILOXO_FETCH_UPSTREAM_REF = ''
+      $script:CAILOXO_FETCH_BEFORE = ''
     }
   } else {
     if ($null -ne $script:CAILOXO_FETCH_EVENT) {
@@ -311,8 +322,16 @@ function Cailoxo-Start-Fetch {
   $now = Cailoxo-Now-Ms
   $key = "$root|$remote"
   if ($script:CAILOXO_FETCH_LAST_KEY -eq $key -and ($now - $script:CAILOXO_FETCH_LAST_START_MS) -lt $script:CAILOXO_FETCH_REMOTE_INTERVAL_MS) { return }
+  $upstreamRef = (& git -C $root rev-parse --symbolic-full-name "$Branch@{upstream}" 2>$null) -join ''
+  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($upstreamRef)) { return }
+  $upstreamRef = $upstreamRef.Trim()
+  $before = (& git -C $root rev-parse --verify $upstreamRef 2>$null) -join ''
+  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($before)) { $before = '' } else { $before = $before.Trim() }
   $script:CAILOXO_FETCH_LAST_KEY = $key
   $script:CAILOXO_FETCH_LAST_START_MS = $now
+  $script:CAILOXO_FETCH_ROOT = $root
+  $script:CAILOXO_FETCH_UPSTREAM_REF = $upstreamRef
+  $script:CAILOXO_FETCH_BEFORE = $before
 
   $psi = [System.Diagnostics.ProcessStartInfo]::new()
   $psi.FileName = 'git'
@@ -325,7 +344,7 @@ function Cailoxo-Start-Fetch {
   $psi.ArgumentList.Add('--quiet')
   $psi.ArgumentList.Add('--no-tags')
   $psi.ArgumentList.Add($remote)
-    try {
+  try {
     $script:CAILOXO_FETCH_PROCESS = [System.Diagnostics.Process]::Start($psi)
     $script:CAILOXO_FETCH_PROCESS.EnableRaisingEvents = $true
     try { $script:CAILOXO_FETCH_PROCESS.BeginOutputReadLine() } catch {}
@@ -333,8 +352,8 @@ function Cailoxo-Start-Fetch {
     $script:CAILOXO_FETCH_DEADLINE_MS = $now + $script:CAILOXO_FETCH_REMOTE_TIMEOUT_MS
     if ($null -ne $script:CAILOXO_FETCH_EVENT) { Unregister-Event -SubscriptionId $script:CAILOXO_FETCH_EVENT.Id -ErrorAction SilentlyContinue }
     $script:CAILOXO_FETCH_EVENT = Register-ObjectEvent -InputObject $script:CAILOXO_FETCH_PROCESS -EventName Exited -Action {
-      $script:CAILOXO_FETCH_REPAINT_PENDING = $true
-      if (-not $script:CAILOXO_RENDERING) {
+      Cailoxo-Poll-Fetch
+      if ($script:CAILOXO_FETCH_REPAINT_PENDING -and -not $script:CAILOXO_RENDERING) {
         try {
           $line = $null
           $cursor = $null
@@ -347,6 +366,8 @@ function Cailoxo-Start-Fetch {
   } catch {
     $script:CAILOXO_FETCH_PROCESS = $null
     $script:CAILOXO_FETCH_DEADLINE_MS = 0
+    $script:CAILOXO_FETCH_UPSTREAM_REF = ''
+    $script:CAILOXO_FETCH_BEFORE = ''
   }
 }
 

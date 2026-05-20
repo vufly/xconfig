@@ -253,11 +253,9 @@ if [[ -o interactive ]]; then
   __cailoxo_start_fetch() {
     (( __CAILOXO_FETCH_REMOTE )) || return
     [[ -n $branch ]] || return
-    if [[ -n $__CAILOXO_FETCH_PID && -n $__CAILOXO_FETCH_MARKER && ! -e $__CAILOXO_FETCH_MARKER ]]; then
-      kill -0 $__CAILOXO_FETCH_PID 2>/dev/null && return
-    fi
+    [[ -n $__CAILOXO_FETCH_FD ]] && return
 
-    local remote root key now marker
+    local remote root key now upstream_ref before fd
     remote=$(__cailoxo_remote_name)
     root=$(git rev-parse --show-toplevel 2>/dev/null) || return
     [[ -n $root && -n $remote ]] || return
@@ -267,30 +265,39 @@ if [[ -o interactive ]]; then
       return
     fi
 
-    marker="${TMPDIR:-/tmp}/cailoxo-fetch-${$}-${RANDOM}"
-    rm -f -- "$marker" 2>/dev/null
+    upstream_ref=$(git rev-parse --symbolic-full-name "${branch}@{upstream}" 2>/dev/null) || upstream_ref=
+    [[ -n $upstream_ref ]] || return
+    before=$(git rev-parse --verify "$upstream_ref" 2>/dev/null) || before=
+    zmodload zsh/system 2>/dev/null || return
     __CAILOXO_FETCH_LAST_KEY=$key
     __CAILOXO_FETCH_LAST_START_S=$now
-    __CAILOXO_FETCH_MARKER=$marker
-    (
+    sysopen -r -o cloexec -u fd <(
       cd "$root" || exit 0
       if (( __CAILOXO_FETCH_REMOTE_TIMEOUT_S > 0 )) && command -v timeout >/dev/null 2>&1; then
         command timeout "${__CAILOXO_FETCH_REMOTE_TIMEOUT_S}s" git fetch --quiet --no-tags "$remote" >/dev/null 2>&1
       else
         command git fetch --quiet --no-tags "$remote" >/dev/null 2>&1
       fi
-      : >| "$marker"
-    ) >/dev/null 2>&1 &
-    __CAILOXO_FETCH_PID=$!
+      local after
+      after=$(git rev-parse --verify "$upstream_ref" 2>/dev/null) || after=
+      [[ -n $after && $before != $after ]] && print -rn -- changed
+    ) || return
+    __CAILOXO_FETCH_FD=$fd
+    zle -F $fd __cailoxo_fetch_done 2>/dev/null || {
+      exec {fd}>&-
+      __CAILOXO_FETCH_FD=
+    }
   }
 
-  __cailoxo_chld() {
-    [[ -n $__CAILOXO_FETCH_PID && -n $__CAILOXO_FETCH_MARKER && -e $__CAILOXO_FETCH_MARKER ]] || return
-    wait $__CAILOXO_FETCH_PID 2>/dev/null || true
-    rm -f -- "$__CAILOXO_FETCH_MARKER" 2>/dev/null
-    __CAILOXO_FETCH_PID=
-    __CAILOXO_FETCH_MARKER=
-    __cailoxo_winch
+  __cailoxo_fetch_done() {
+    local fd=$1 buf=
+    [[ -n $fd ]] || fd=$__CAILOXO_FETCH_FD
+    [[ -n $fd ]] || return
+    zle -F $fd 2>/dev/null || true
+    sysread -i $fd 'buf[$#buf+1]' 2>/dev/null || true
+    exec {fd}>&- 2>/dev/null || true
+    __CAILOXO_FETCH_FD=
+    [[ $buf == *changed* ]] && __cailoxo_winch
   }
 
   __cailoxo_apply_template() {
@@ -580,6 +587,5 @@ if [[ -o interactive ]]; then
   zle -N zle-line-finish __cailoxo_zle_line_finish
   add-zsh-hook precmd __cailoxo_precmd
   TRAPWINCH() { __cailoxo_winch }
-  TRAPCHLD() { __cailoxo_chld }
   __cailoxo_precmd
 fi
