@@ -114,6 +114,10 @@ function Cailoxo-Home-Path {
   Cailoxo-Normalize-Path ([Environment]::GetFolderPath('UserProfile'))
 }
 
+function Cailoxo-Path-Separator {
+  if ($IsWindows) { '\' } else { '/' }
+}
+
 function Cailoxo-Git-Root-Name {
   $root = & git rev-parse --show-toplevel 2>$null
   if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($root -join ''))) { return '' }
@@ -122,6 +126,7 @@ function Cailoxo-Git-Root-Name {
 
 function Cailoxo-Format-Path {
   param([string]$Path, [string]$GitRoot)
+  $separator = Cailoxo-Path-Separator
   $prefix = ''
   $rest = $Path
   $absolute = $false
@@ -139,7 +144,7 @@ function Cailoxo-Format-Path {
   }
 
   $parts = @($rest.Split([char[]]@('/'), [StringSplitOptions]::RemoveEmptyEntries))
-  if ($absolute -and $parts.Count -eq 0) { return (Cailoxo-Format-Part '/' $script:CAILOXO_EDGE_FORMAT) }
+  if ($absolute -and $parts.Count -eq 0) { return (Cailoxo-Format-Part $separator $script:CAILOXO_EDGE_FORMAT) }
 
   $out = @()
   if ($prefix -ne '') {
@@ -154,8 +159,8 @@ function Cailoxo-Format-Path {
     $out += $part
   }
 
-  $joined = $out -join '/'
-  if ($absolute) { '/' + $joined } else { $joined }
+  $joined = $out -join $separator
+  if ($absolute) { $separator + $joined } else { $joined }
 }
 
 function Cailoxo-Shorten-Path {

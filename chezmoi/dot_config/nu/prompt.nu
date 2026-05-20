@@ -166,7 +166,17 @@ def cailoxo-git-root-name [] {
   if $root.exit_code == 0 { $root.stdout | str trim | path basename } else { "" }
 }
 
+def cailoxo-normalize-path [path: string] {
+  $path | str replace --all '\' '/'
+}
+
+def cailoxo-path-separator [] {
+  let os = (sys host | get name | str downcase)
+  if ($os | str contains "windows") { '\' } else { '/' }
+}
+
 def cailoxo-format-path [path: string, git_root: string] {
+  let separator = (cailoxo-path-separator)
   let parsed = if $path == "~" {
     {prefix: "~", rest: "", absolute: false}
   } else if ($path | str starts-with "~/") {
@@ -181,7 +191,7 @@ def cailoxo-format-path [path: string, git_root: string] {
 
   let parts = ($parsed.rest | split row "/" | where {|part| $part != "" })
   if $parsed.absolute and (($parts | length) == 0) {
-    return (cailoxo-format-part "/" $CAILOXO_EDGE_FORMAT)
+    return (cailoxo-format-part $separator $CAILOXO_EDGE_FORMAT)
   }
 
   mut out = []
@@ -203,8 +213,8 @@ def cailoxo-format-path [path: string, git_root: string] {
     $out = ($out | append $part)
   }
 
-  let joined = ($out | str join "/")
-  if $parsed.absolute { "/" + $joined } else { $joined }
+  let joined = ($out | str join $separator)
+  if $parsed.absolute { $separator + $joined } else { $joined }
 }
 
 def cailoxo-path-template [vars: record] {
@@ -226,8 +236,8 @@ def cailoxo-path-template [vars: record] {
 }
 
 def cailoxo-shorten-path [budget: int] {
-  let cwd = (pwd)
-  let home = ($nu.home-dir | path expand)
+  let cwd = (cailoxo-normalize-path (pwd))
+  let home = (cailoxo-normalize-path ($nu.home-dir | path expand))
   let display = if ($cwd | str starts-with $home) { "~" + ($cwd | str replace $home "") } else { $cwd }
   if (($display | str length --chars) <= $budget) { return $display }
 
