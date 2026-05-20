@@ -315,7 +315,7 @@ def cailoxo-git-info [] {
   {branch: $branch, status: ($items | str join $CAILOXO_STATUS_SEPARATOR), dirty: (($items | length) > 0), upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url}
 }
 
-def cailoxo-render-full [] {
+def cailoxo-render-main [] {
   let os_icon = (cailoxo-os-icon)
   let git = (cailoxo-git-info)
   let git_root = (cailoxo-git-root-name)
@@ -337,9 +337,17 @@ def cailoxo-render-full [] {
   let first = ($CAILOXO_OS_STYLE + (cailoxo-style-template $os_text) + $CAILOXO_RESET + $CAILOXO_OS_TAIL
     + $CAILOXO_PATH_STYLE + (cailoxo-style-template $path_text) + $CAILOXO_RESET + $path_sep
     + (if $git_text == "" { "" } else { $git_style + (cailoxo-style-template $git_text) + $CAILOXO_RESET + $git_sep }))
+  $first + "\n"
+}
+
+def cailoxo-render-indicator [] {
   let prompt_style = if (($env.LAST_EXIT_CODE? | default 0) == 0) { $CAILOXO_PROMPT_OK_STYLE } else { $CAILOXO_PROMPT_ERROR_STYLE }
   let suffix = if $CAILOXO_FINAL_SPACE { " " } else { "" }
-  $first + "\n" + $prompt_style + (cailoxo-style-template $CAILOXO_PROMPT_TEMPLATE) + $CAILOXO_RESET + $suffix
+  $prompt_style + (cailoxo-style-template $CAILOXO_PROMPT_TEMPLATE) + $CAILOXO_RESET + $suffix
+}
+
+def cailoxo-render-full [] {
+  (cailoxo-render-main) + (cailoxo-render-indicator)
 }
 
 def cailoxo-render-transient [] {
@@ -347,13 +355,13 @@ def cailoxo-render-transient [] {
   $prompt_style + (cailoxo-style-template $CAILOXO_TRANSIENT_TEMPLATE) + $CAILOXO_RESET
 }
 
-$env.PROMPT_COMMAND = {|| cailoxo-render-full }
-$env.PROMPT_INDICATOR = ""
+$env.PROMPT_COMMAND = {|| cailoxo-render-main }
+$env.PROMPT_INDICATOR = {|| cailoxo-render-indicator }
 $env.PROMPT_COMMAND_RIGHT = ""
 $env.PROMPT_INDICATOR_VI_INSERT = ""
 $env.PROMPT_INDICATOR_VI_NORMAL = ""
 $env.PROMPT_MULTILINE_INDICATOR = ""
-$env.TRANSIENT_PROMPT_COMMAND = {|| cailoxo-render-transient }
-$env.TRANSIENT_PROMPT_INDICATOR = ""
+$env.TRANSIENT_PROMPT_COMMAND = ""
+$env.TRANSIENT_PROMPT_INDICATOR = {|| cailoxo-render-transient }
 $env.TRANSIENT_PROMPT_COMMAND_RIGHT = ""
 $env.TRANSIENT_PROMPT_MULTILINE_INDICATOR = ""
