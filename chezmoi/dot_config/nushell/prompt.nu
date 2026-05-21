@@ -12,11 +12,15 @@ const CAILOXO_EDGE_FORMAT = "<b>%s</b>"
 const CAILOXO_GITDIR_FORMAT = "<b><i>%s</i></b>"
 const CAILOXO_BRANCH_ICON = " "
 const CAILOXO_STATUS_SEPARATOR = " "
+const CAILOXO_GIT_STATUS = true
 const CAILOXO_FETCH_UPSTREAM_ICON = true
+const CAILOXO_GIT_URL = true
 const CAILOXO_FETCH_REMOTE = true
-const CAILOXO_FETCH_REMOTE_INTERVAL_MS = 300000
+const CAILOXO_FETCH_REMOTE_INTERVAL_MS = 60000
 const CAILOXO_MIN_DIRS = 1
 const CAILOXO_FINAL_SPACE = true
+const CAILOXO_PATH_URL = true
+const CAILOXO_OSC7 = true
 const CAILOXO_OS_STYLE = "\u{1b}[38;5;0m\u{1b}[48;5;7m"
 const CAILOXO_PATH_STYLE = "\u{1b}[38;5;0m\u{1b}[48;5;4m"
 const CAILOXO_GIT_CLEAN_STYLE = "\u{1b}[38;5;0m\u{1b}[48;5;2m"
@@ -32,7 +36,7 @@ const CAILOXO_PROMPT_OK_STYLE = "\u{1b}[38;5;2m"
 const CAILOXO_PROMPT_ERROR_STYLE = "\u{1b}[38;5;1m"
 const CAILOXO_TRANSIENT_OK_STYLE = "\u{1b}[38;5;2m"
 const CAILOXO_TRANSIENT_ERROR_STYLE = "\u{1b}[38;5;1m"
-const CAILOXO_STATUS_TEMPLATES = {ahead: "⇡{{ count }}", behind: "⇣{{ count }}", conflicted: "={{ count }}", untracked: "?{{ count }}", modified: "!{{ count }}", staged: "+{{ count }}", renamed: "»{{ count }}", deleted: "✘{{ count }}", stashed: "#{{ count }}"}
+const CAILOXO_STATUS_TEMPLATES = {behind: "⇣{{ count }}", ahead: "⇡{{ count }}", stashed: "#{{ count }}", action: "{{ action }}", conflicted: "={{ count }}", staged: "+{{ count }}", modified: "!{{ count }}", untracked: "?{{ count }}", renamed: "»{{ count }}", deleted: "✘{{ count }}"}
 const CAILOXO_UPSTREAM_ICONS = {azure_devops: "󰿕 ", bitbucket: " ", codeberg: " ", gitea: "", github: " ", gitlab: " "}
 
 def cailoxo-os-icon [] {
@@ -43,6 +47,62 @@ def cailoxo-os-icon [] {
 def cailoxo-upstream-provider [url: string] {
   let normalized = ($url | str downcase)
   if ($normalized | str contains "github.com") { "github" } else if ($normalized | str contains "gitlab.com") { "gitlab" } else if ($normalized | str contains "bitbucket.org") { "bitbucket" } else if ($normalized | str contains "codeberg.org") { "codeberg" } else if ($normalized | str contains "gitea") { "gitea" } else if ($normalized | str contains "dev.azure.com") or ($normalized | str contains "visualstudio.com") { "azure_devops" } else { "" }
+}
+
+def cailoxo-clean-git-url [remote_url: string] {
+  let url = ($remote_url | str trim | str replace --regex '\.git/?$' '' | str replace --regex '/$' '')
+  if $url == "" { return "" }
+  if ($url | str starts-with "http://") or ($url | str starts-with "https://") { return $url }
+
+  if ($url | str starts-with "git@ssh.dev.azure.com:v3/") {
+    let path = ($url | str replace "git@ssh.dev.azure.com:v3/" "")
+    let parts = ($path | split row "/")
+    if (($parts | length) >= 3) {
+      let org = ($parts | get 0)
+      let project = ($parts | get 1)
+      let repo = ($parts | get 2)
+      return $"https://dev.azure.com/($org)/($project)/_git/($repo)"
+    }
+  }
+
+  if $url =~ '^[A-Za-z][A-Za-z0-9+.-]*://' {
+    mut rest = ($url | str replace --regex '^[A-Za-z][A-Za-z0-9+.-]*://' '')
+    if ($rest | str contains "@") { $rest = ($rest | split row "@" | last) }
+    let parts = ($rest | split row "/")
+    if (($parts | length) < 2) { return "" }
+    let host = (($parts | first) | split row ":" | first)
+    let path = ($parts | skip 1 | str join "/")
+    if $host == "ssh.dev.azure.com" and ($path | str starts-with "v3/") {
+      let azure = ($path | split row "/")
+      if (($azure | length) >= 4) {
+        let org = ($azure | get 1)
+        let project = ($azure | get 2)
+        let repo = ($azure | get 3)
+        return $"https://dev.azure.com/($org)/($project)/_git/($repo)"
+      }
+    }
+    if $host != "" and $path != "" { return $"https://($host)/($path)" }
+    return ""
+  }
+
+  if ($url | str contains "@") and ($url | str contains ":") {
+    let rest = ($url | split row "@" | last)
+    let parts = ($rest | split row ":")
+    if (($parts | length) >= 2) {
+      let host = ($parts | first)
+      let path = ($parts | skip 1 | str join ":")
+      if $host != "" and $path != "" { return $"https://($host)/($path)" }
+    }
+  }
+
+  if $url =~ '^[A-Za-z0-9.-]+:.+' {
+    let parts = ($url | split row ":")
+    let host = ($parts | first)
+    let path = ($parts | skip 1 | str join ":")
+    if $host != "" and $path != "" { return $"https://($host)/($path)" }
+  }
+
+  ""
 }
 
 def cailoxo-remote-name [branch: string] {
@@ -76,13 +136,13 @@ def cailoxo-start-fetch [branch: string] {
 }
 
 def cailoxo-upstream-info [branch: string] {
-  if not $CAILOXO_FETCH_UPSTREAM_ICON { return {upstream: "", upstream_icon: "", upstream_url: ""} }
+  if (not $CAILOXO_FETCH_UPSTREAM_ICON) and (not $CAILOXO_GIT_URL) { return {upstream: "", upstream_icon: "", upstream_url: ""} }
   let remote_name = (cailoxo-remote-name $branch)
   let url_out = (git config --get $"remote.($remote_name).url" | complete)
   let upstream_url = if $url_out.exit_code == 0 { $url_out.stdout | str trim } else { "" }
   let upstream = (cailoxo-upstream-provider $upstream_url)
   let upstream_icon = if $upstream != "" and ($upstream in ($CAILOXO_UPSTREAM_ICONS | columns)) { $CAILOXO_UPSTREAM_ICONS | get $upstream } else { "" }
-  {upstream: $upstream, upstream_icon: $upstream_icon, upstream_url: $upstream_url}
+  {upstream: $upstream, upstream_icon: $upstream_icon, upstream_url: (cailoxo-clean-git-url $upstream_url)}
 }
 
 def cailoxo-apply-template [template: string, vars: record] {
@@ -119,40 +179,16 @@ def cailoxo-style-template [text: string] {
   $text
   | str replace --all "<b>" "\u{1b}[1m"
   | str replace --all "</b>" "\u{1b}[22m"
-  | str replace --all "<u>" "\u{1b}[4m"
-  | str replace --all "</u>" "\u{1b}[24m"
-  | str replace --all "<o>" "\u{1b}[53m"
-  | str replace --all "</o>" "\u{1b}[55m"
   | str replace --all "<i>" "\u{1b}[3m"
   | str replace --all "</i>" "\u{1b}[23m"
-  | str replace --all "<s>" "\u{1b}[9m"
-  | str replace --all "</s>" "\u{1b}[29m"
-  | str replace --all "<d>" "\u{1b}[2m"
-  | str replace --all "</d>" "\u{1b}[22m"
-  | str replace --all "<f>" "\u{1b}[5m"
-  | str replace --all "</f>" "\u{1b}[25m"
-  | str replace --all "<r>" "\u{1b}[7m"
-  | str replace --all "</r>" "\u{1b}[27m"
 }
 
 def cailoxo-plain-template [text: string] {
   $text
   | str replace --all "<b>" ""
   | str replace --all "</b>" ""
-  | str replace --all "<u>" ""
-  | str replace --all "</u>" ""
-  | str replace --all "<o>" ""
-  | str replace --all "</o>" ""
   | str replace --all "<i>" ""
   | str replace --all "</i>" ""
-  | str replace --all "<s>" ""
-  | str replace --all "</s>" ""
-  | str replace --all "<d>" ""
-  | str replace --all "</d>" ""
-  | str replace --all "<f>" ""
-  | str replace --all "</f>" ""
-  | str replace --all "<r>" ""
-  | str replace --all "</r>" ""
 }
 
 def cailoxo-format-part [value: string, format: string] {
@@ -161,12 +197,82 @@ def cailoxo-format-part [value: string, format: string] {
   $value
 }
 
+def cailoxo-url-escape [value: string] {
+  $value
+  | str replace --all '\\' '/'
+  | str replace --all '%' '%25'
+  | str replace --all ' ' '%20'
+  | str replace --all '#' '%23'
+  | str replace --all '?' '%3F'
+  | str replace --all ';' '%3B'
+}
+
+def cailoxo-host-name [] {
+  let computer = ($env.COMPUTERNAME? | default "")
+  if $computer != "" { return $computer }
+  let hostname_env = ($env.HOSTNAME? | default "")
+  if $hostname_env != "" { return $hostname_env }
+  let hostname_out = (hostname | complete)
+  if $hostname_out.exit_code == 0 { $hostname_out.stdout | str trim } else { "" }
+}
+
+def cailoxo-wsl-distro [] {
+  let release = "/proc/sys/kernel/osrelease"
+  if not ($release | path exists) { return "" }
+  let text = (open --raw $release | str downcase)
+  if not ($text | str contains "microsoft") { return "" }
+  $env.WSL_DISTRO_NAME? | default ""
+}
+
+def cailoxo-file-url [] {
+  let path = (cailoxo-url-escape (pwd | path expand))
+  if $path =~ '^[A-Za-z]:/' { return $"file:///($path)" }
+  let distro = (cailoxo-wsl-distro)
+  if $distro != "" { return $"file://wsl.localhost/(cailoxo-url-escape $distro)($path)" }
+  $"file://(cailoxo-host-name)($path)"
+}
+
+def cailoxo-osc7 [] {
+  if not $CAILOXO_OSC7 { return "" }
+  "\u{1b}]7;" + (cailoxo-file-url) + "\u{1b}\\"
+}
+
+def cailoxo-path-url-start [] {
+  if not $CAILOXO_PATH_URL { return "" }
+  "\u{1b}]8;;" + (cailoxo-file-url) + "\u{1b}\\"
+}
+
+def cailoxo-path-url-end [] {
+  if not $CAILOXO_PATH_URL { return "" }
+  "\u{1b}]8;;\u{1b}\\"
+}
+
+def cailoxo-git-url-start [url: string] {
+  if (not $CAILOXO_GIT_URL) or $url == "" { return "" }
+  "\u{1b}]8;;" + $url + "\u{1b}\\"
+}
+
+def cailoxo-git-url-end [url: string] {
+  if (not $CAILOXO_GIT_URL) or $url == "" { return "" }
+  "\u{1b}]8;;\u{1b}\\"
+}
+
 def cailoxo-git-root-name [] {
   let root = (git rev-parse --show-toplevel | complete)
   if $root.exit_code == 0 { $root.stdout | str trim | path basename } else { "" }
 }
 
+def cailoxo-normalize-path [path: string] {
+  $path | str replace --all '\' '/'
+}
+
+def cailoxo-path-separator [] {
+  let os = (sys host | get name | str downcase)
+  if ($os | str contains "windows") { '\' } else { '/' }
+}
+
 def cailoxo-format-path [path: string, git_root: string] {
+  let separator = (cailoxo-path-separator)
   let parsed = if $path == "~" {
     {prefix: "~", rest: "", absolute: false}
   } else if ($path | str starts-with "~/") {
@@ -181,7 +287,7 @@ def cailoxo-format-path [path: string, git_root: string] {
 
   let parts = ($parsed.rest | split row "/" | where {|part| $part != "" })
   if $parsed.absolute and (($parts | length) == 0) {
-    return (cailoxo-format-part "/" $CAILOXO_EDGE_FORMAT)
+    return (cailoxo-format-part $separator $CAILOXO_EDGE_FORMAT)
   }
 
   mut out = []
@@ -203,8 +309,8 @@ def cailoxo-format-path [path: string, git_root: string] {
     $out = ($out | append $part)
   }
 
-  let joined = ($out | str join "/")
-  if $parsed.absolute { "/" + $joined } else { $joined }
+  let joined = ($out | str join $separator)
+  if $parsed.absolute { $separator + $joined } else { $joined }
 }
 
 def cailoxo-path-template [vars: record] {
@@ -226,8 +332,8 @@ def cailoxo-path-template [vars: record] {
 }
 
 def cailoxo-shorten-path [budget: int] {
-  let cwd = (pwd)
-  let home = ($nu.home-dir | path expand)
+  let cwd = (cailoxo-normalize-path (pwd))
+  let home = (cailoxo-normalize-path ($nu.home-dir | path expand))
   let display = if ($cwd | str starts-with $home) { "~" + ($cwd | str replace $home "") } else { $cwd }
   if (($display | str length --chars) <= $budget) { return $display }
 
@@ -247,10 +353,69 @@ def cailoxo-shorten-path [budget: int] {
   $"…/($current)"
 }
 
-def cailoxo-status-item [name: string, count: int] {
-  if $count <= 0 { return "" }
+def cailoxo-status-item [name: string, count: int, action: string] {
   let template = ($CAILOXO_STATUS_TEMPLATES | get $name)
+  if $name == "action" {
+    if $action == "" { return "" }
+    return ($template | str replace --all "{{ action }}" $action)
+  }
+  if $count <= 0 { return "" }
   $template | str replace --all "{{ count }}" ($count | into string)
+}
+
+def cailoxo-git-path [name: string] {
+  let out = (git rev-parse --git-path $name | complete)
+  if $out.exit_code == 0 { $out.stdout | str trim } else { "" }
+}
+
+def cailoxo-read-git-file [path: string] {
+  if $path != "" and ($path | path exists) { open --raw $path | str trim } else { "" }
+}
+
+def cailoxo-git-action-with-progress [action: string, dir: string] {
+  let msgnum = (cailoxo-read-git-file ($dir | path join "msgnum"))
+  let end = (cailoxo-read-git-file ($dir | path join "end"))
+  let next = if $msgnum != "" { $msgnum } else { cailoxo-read-git-file ($dir | path join "next") }
+  let last = if $end != "" { $end } else { cailoxo-read-git-file ($dir | path join "last") }
+  if $next != "" and $last != "" { $"($action) ($next)/($last)" } else { $action }
+}
+
+def cailoxo-git-action [] {
+  let rebase_merge = (cailoxo-git-path "rebase-merge")
+  if $rebase_merge != "" and ($rebase_merge | path exists) {
+    let interactive = ($rebase_merge | path join "interactive")
+    let action = if ($interactive | path exists) { "rebase-i" } else { "rebase-m" }
+    return (cailoxo-git-action-with-progress $action $rebase_merge)
+  }
+
+  let rebase_apply = (cailoxo-git-path "rebase-apply")
+  if $rebase_apply != "" and ($rebase_apply | path exists) {
+    let rebasing = ($rebase_apply | path join "rebasing")
+    let applying = ($rebase_apply | path join "applying")
+    let action = if ($rebasing | path exists) { "rebase" } else if ($applying | path exists) { "am" } else { "am/rebase" }
+    return (cailoxo-git-action-with-progress $action $rebase_apply)
+  }
+
+  let merge_head = (cailoxo-git-path "MERGE_HEAD")
+  if $merge_head != "" and ($merge_head | path exists) { return "merge" }
+
+  let revert_head = (cailoxo-git-path "REVERT_HEAD")
+  if $revert_head != "" and ($revert_head | path exists) {
+    let sequencer = (cailoxo-git-path "sequencer")
+    if $sequencer != "" and ($sequencer | path exists) { return "revert-seq" }
+    return "revert"
+  }
+
+  let cherry_head = (cailoxo-git-path "CHERRY_PICK_HEAD")
+  if $cherry_head != "" and ($cherry_head | path exists) {
+    let sequencer = (cailoxo-git-path "sequencer")
+    if $sequencer != "" and ($sequencer | path exists) { return "cherry-seq" }
+    return "cherry"
+  }
+
+  let bisect_log = (cailoxo-git-path "BISECT_LOG")
+  if $bisect_log != "" and ($bisect_log | path exists) { return "bisect" }
+  ""
 }
 
 def cailoxo-git-info [] {
@@ -268,8 +433,9 @@ def cailoxo-git-info [] {
   if $branch == "" { return {branch: "", status: "", dirty: false, upstream: "", upstream_icon: "", upstream_url: ""} }
   let upstream = (cailoxo-upstream-info $branch)
   cailoxo-start-fetch $branch
+  if not $CAILOXO_GIT_STATUS { return {branch: $branch, status: "", dirty: false, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url} }
 
-  mut counts = {ahead: 0, behind: 0, conflicted: 0, untracked: 0, modified: 0, staged: 0, renamed: 0, deleted: 0, stashed: 0}
+  mut counts = {ahead: 0, behind: 0, action: 0, conflicted: 0, untracked: 0, modified: 0, staged: 0, renamed: 0, deleted: 0, stashed: 0}
   let status_out = (git status --porcelain=v1 | complete)
   for line in ($status_out.stdout | lines) {
     if $line == "" { continue }
@@ -294,18 +460,20 @@ def cailoxo-git-info [] {
   if $ahead_out.exit_code == 0 { $counts = ($counts | upsert ahead (($ahead_out.stdout | str trim | into int) | default 0)) }
   let behind_out = (git rev-list --count 'HEAD..@{upstream}' | complete)
   if $behind_out.exit_code == 0 { $counts = ($counts | upsert behind (($behind_out.stdout | str trim | into int) | default 0)) }
+  let action = (cailoxo-git-action)
   let stash_out = (git stash list | complete)
   if $stash_out.exit_code == 0 { $counts = ($counts | upsert stashed (($stash_out.stdout | lines | length) | default 0)) }
+  let dirty = (($counts.conflicted + $counts.untracked + $counts.modified + $counts.staged + $counts.renamed + $counts.deleted) > 0)
 
   mut items = []
-  for name in [ahead behind conflicted untracked modified staged renamed deleted stashed] {
-    let item = (cailoxo-status-item $name ($counts | get $name))
+  for name in [behind ahead stashed action conflicted staged modified untracked renamed deleted] {
+    let item = (cailoxo-status-item $name ($counts | get $name) $action)
     if $item != "" { $items = ($items | append $item) }
   }
-  {branch: $branch, status: ($items | str join $CAILOXO_STATUS_SEPARATOR), dirty: (($items | length) > 0), upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url}
+  {branch: $branch, status: ($items | str join $CAILOXO_STATUS_SEPARATOR), dirty: $dirty, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url}
 }
 
-def cailoxo-render-full [] {
+def cailoxo-render-main [] {
   let os_icon = (cailoxo-os-icon)
   let git = (cailoxo-git-info)
   let git_root = (cailoxo-git-root-name)
@@ -324,12 +492,20 @@ def cailoxo-render-full [] {
   let git_style = if $git.dirty { $CAILOXO_GIT_DIRTY_STYLE } else { $CAILOXO_GIT_CLEAN_STYLE }
   let path_sep = if $git_text == "" { $CAILOXO_PATH_SEP_LAST } else if $git.dirty { $CAILOXO_PATH_SEP_DIRTY } else { $CAILOXO_PATH_SEP_CLEAN }
   let git_sep = if $git.dirty { $CAILOXO_GIT_SEP_DIRTY } else { $CAILOXO_GIT_SEP_CLEAN }
-  let first = ($CAILOXO_OS_STYLE + (cailoxo-style-template $os_text) + $CAILOXO_RESET + $CAILOXO_OS_TAIL
-    + $CAILOXO_PATH_STYLE + (cailoxo-style-template $path_text) + $CAILOXO_RESET + $path_sep
-    + (if $git_text == "" { "" } else { $git_style + (cailoxo-style-template $git_text) + $CAILOXO_RESET + $git_sep }))
+  let first = ((cailoxo-osc7) + $CAILOXO_OS_STYLE + (cailoxo-style-template $os_text) + $CAILOXO_RESET + $CAILOXO_OS_TAIL
+    + $CAILOXO_PATH_STYLE + (cailoxo-path-url-start) + (cailoxo-style-template $path_text) + (cailoxo-path-url-end) + $CAILOXO_RESET + $path_sep
+    + (if $git_text == "" { "" } else { $git_style + (cailoxo-git-url-start $git.upstream_url) + (cailoxo-style-template $git_text) + (cailoxo-git-url-end $git.upstream_url) + $CAILOXO_RESET + $git_sep }))
+  $first + "\n"
+}
+
+def cailoxo-render-indicator [] {
   let prompt_style = if (($env.LAST_EXIT_CODE? | default 0) == 0) { $CAILOXO_PROMPT_OK_STYLE } else { $CAILOXO_PROMPT_ERROR_STYLE }
   let suffix = if $CAILOXO_FINAL_SPACE { " " } else { "" }
-  $first + "\n" + $prompt_style + (cailoxo-style-template $CAILOXO_PROMPT_TEMPLATE) + $CAILOXO_RESET + $suffix
+  $prompt_style + (cailoxo-style-template $CAILOXO_PROMPT_TEMPLATE) + $CAILOXO_RESET + $suffix
+}
+
+def cailoxo-render-full [] {
+  (cailoxo-render-main) + (cailoxo-render-indicator)
 }
 
 def cailoxo-render-transient [] {
@@ -337,13 +513,13 @@ def cailoxo-render-transient [] {
   $prompt_style + (cailoxo-style-template $CAILOXO_TRANSIENT_TEMPLATE) + $CAILOXO_RESET
 }
 
-$env.PROMPT_COMMAND = {|| cailoxo-render-full }
-$env.PROMPT_INDICATOR = ""
+$env.PROMPT_COMMAND = {|| cailoxo-render-main }
+$env.PROMPT_INDICATOR = {|| cailoxo-render-indicator }
 $env.PROMPT_COMMAND_RIGHT = ""
 $env.PROMPT_INDICATOR_VI_INSERT = ""
 $env.PROMPT_INDICATOR_VI_NORMAL = ""
 $env.PROMPT_MULTILINE_INDICATOR = ""
-$env.TRANSIENT_PROMPT_COMMAND = {|| cailoxo-render-transient }
-$env.TRANSIENT_PROMPT_INDICATOR = ""
+$env.TRANSIENT_PROMPT_COMMAND = ""
+$env.TRANSIENT_PROMPT_INDICATOR = {|| cailoxo-render-transient }
 $env.TRANSIENT_PROMPT_COMMAND_RIGHT = ""
 $env.TRANSIENT_PROMPT_MULTILINE_INDICATOR = ""

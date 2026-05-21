@@ -1,7 +1,7 @@
 # Windsurf Config Summary
 
 - One script: `others/generate-windsurf-opencode-zed-config.mjs`.
-- Fetches Windsurf model ids from `http://localhost:50731/v1/models`.
+- Fetches Windsurf model ids from `http://localhost:50731/v1/models` with `Authorization: Bearer <WINDSURF_PROXY_API_KEY>`.
 - Fetches CLI Proxy model ids from `http://localhost:61144/v1/models` with `Authorization: Bearer <CLI_PROXY_API_KEY>`.
 - Fetches limits and base names from `https://models.dev/api.json`.
 - Writes `chezmoi/dot_config/opencode/opencode.json` and `zed_config.json`.

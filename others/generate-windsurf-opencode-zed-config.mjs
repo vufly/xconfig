@@ -12,7 +12,7 @@ const DEFAULTS = {
   cliProxyBaseUrl: 'http://localhost:61144/v1',
   cliProxyApiKey: 'sk-BQ3vyrNgzGah4o6Cf',
   modelsDevUrl: 'https://models.dev/api.json',
-  configPath: new URL('../chezmoi/dot_config/opencode/opencode.json', import.meta.url),
+  configPath: new URL('../chezmoi/.chezmoitemplates/opencode.json', import.meta.url),
   zedConfigPath: new URL('../zed_config.json', import.meta.url),
 };
 
