@@ -193,9 +193,9 @@ if (Test-Path $LSColorsPath) {
 # oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
 
 # --- Cailoxo prompt initialization ---
-$CailoxoPromptPath = Join-Path $HOME ".config/powershell/prompt.ps1"
+$CailoxoPromptPath = Join-Path $HOME ".config/powershell/prompt.txt"
 if (Test-Path $CailoxoPromptPath) {
-    . $CailoxoPromptPath
+    Get-Content $CailoxoPromptPath -Raw | Invoke-Expression
 }
 
 # --- Zoxide integration ---
