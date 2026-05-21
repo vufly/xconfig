@@ -1,5 +1,5 @@
 {{ if eq .chezmoi.os "windows" -}}
-default_shell "pwsh"
+default_shell "nu"
 {{ end -}}
 default_mode "locked"
 // default_layout "compact" // replaced by zjstatus
@@ -233,12 +233,14 @@ keybinds {
         bind "Enter" { SwitchToMode "Search"; }
     }
     renametab {
-        bind "Ctrl c" { SwitchToMode "Normal"; }
+        bind "Ctrl c" { SwitchToMode "Locked"; }
         bind "Esc" { UndoRenameTab; SwitchToMode "Tab"; }
+        bind "Enter" { SwitchToMode "Locked"; }
     }
     renamepane {
-        bind "Ctrl c" { SwitchToMode "Normal"; }
+        bind "Ctrl c" { SwitchToMode "Locked"; }
         bind "Esc" { UndoRenamePane; SwitchToMode "Pane"; }
+        bind "Enter" { SwitchToMode "Locked"; }
     }
     session {
         bind "Ctrl o" { SwitchToMode "Normal"; }
