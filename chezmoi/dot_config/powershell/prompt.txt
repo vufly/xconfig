@@ -47,7 +47,7 @@ $script:CAILOXO_STATUS_TEMPLATES = @{
   'modified' = '!{{ count }}'
   'untracked' = '?{{ count }}'
   'renamed' = '»{{ count }}'
-  'deleted' = '✘{{ count }}'
+  'deleted' = '-{{ count }}'
 }
 $script:CAILOXO_OS_ICONS = @{
   'alpine' = ''

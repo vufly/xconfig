@@ -500,7 +500,7 @@ if [[ -o interactive ]]; then
     modified) template='!{{ count }}' ; count=${modified} ;;
     untracked) template='?{{ count }}' ; count=${untracked} ;;
     renamed) template='»{{ count }}' ; count=${renamed} ;;
-    deleted) template='✘{{ count }}' ; count=${deleted} ;;
+    deleted) template='-{{ count }}' ; count=${deleted} ;;
     esac
     if [[ $name == action ]]; then
       [[ -n $action ]] || return

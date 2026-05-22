@@ -36,7 +36,7 @@ const CAILOXO_PROMPT_OK_STYLE = "\u{1b}[38;5;2m"
 const CAILOXO_PROMPT_ERROR_STYLE = "\u{1b}[38;5;1m"
 const CAILOXO_TRANSIENT_OK_STYLE = "\u{1b}[38;5;2m"
 const CAILOXO_TRANSIENT_ERROR_STYLE = "\u{1b}[38;5;1m"
-const CAILOXO_STATUS_TEMPLATES = {behind: "⇣{{ count }}", ahead: "⇡{{ count }}", stashed: "#{{ count }}", action: "{{ action }}", conflicted: "={{ count }}", staged: "+{{ count }}", modified: "!{{ count }}", untracked: "?{{ count }}", renamed: "»{{ count }}", deleted: "✘{{ count }}"}
+const CAILOXO_STATUS_TEMPLATES = {behind: "⇣{{ count }}", ahead: "⇡{{ count }}", stashed: "#{{ count }}", action: "{{ action }}", conflicted: "={{ count }}", staged: "+{{ count }}", modified: "!{{ count }}", untracked: "?{{ count }}", renamed: "»{{ count }}", deleted: "-{{ count }}"}
 const CAILOXO_UPSTREAM_ICONS = {azure_devops: "󰿕 ", bitbucket: " ", codeberg: " ", gitea: "", github: " ", gitlab: " "}
 
 def cailoxo-os-icon [] {
@@ -472,6 +472,7 @@ def cailoxo-git-info [] {
   }
   {branch: $branch, status: ($items | str join $CAILOXO_STATUS_SEPARATOR), dirty: $dirty, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url}
 }
+
 
 def cailoxo-render-main [] {
   let os_icon = (cailoxo-os-icon)
