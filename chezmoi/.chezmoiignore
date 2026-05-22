@@ -10,6 +10,7 @@ scripts/set-theme.ps1
 .p10k.zsh
 .config/helix
 .config/lazygit
+.config/powershell/Microsoft.PowerShell_profile.ps1
 scripts/set-theme.sh
 {{ end }}
 

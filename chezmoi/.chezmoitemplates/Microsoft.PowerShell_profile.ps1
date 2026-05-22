@@ -1,15 +1,3 @@
-# function Invoke-Starship-PreCommand {
-#   $title = "PS "
-#   $title += Split-Path -Leaf $pwd
-#   $host.ui.RawUI.WindowTitle = $title
-# }
-# Invoke-Expression (&starship init powershell)
-
-# --- Chocolatey tab completion ---
-# $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-# if (Test-Path($ChocolateyProfile)) {
-#   Import-Module "$ChocolateyProfile"
-# }
 function choco {
     if (-not (Get-Module -Name chocolateyProfile -ListAvailable)) {
         $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
