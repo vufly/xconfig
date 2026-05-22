@@ -21,6 +21,8 @@ zellij = "github:zellij-org/zellij"
 [settings]
 [settings.npm]
 package_manager = "pnpm"
+[settings.cargo]
+binstall = true
 
 [tools]
 # JavaScript / TypeScript ecosystem
@@ -34,6 +36,7 @@ go = "latest"
 python = "3.13"
 rust = "latest"
 uv = "latest"
+cargo-binstall = "latest"
 
 # Vibe coding
 codex = "latest"
