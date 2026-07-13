@@ -112,7 +112,7 @@ alias gitzip="git archive HEAD -o ${PWD##*/}.zip"
 alias gitsf="git submodule update --init --recursive"
 alias gitsp="git submodule foreach --recursive 'git pull origin master'"
 alias theme="$HOME/scripts/set-theme.sh"
-alias hm="nix run home-manager/master -- switch --flake ~/xconfig#${USER}@$(hostname)"
+alias xpack="$HOME/scripts/xpack.sh"
 
 ilias() {
   local selected alias_name
@@ -153,8 +153,10 @@ bwload() {
 
 precmd_functions+=(bwload)
 
-export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev )
-alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/current/Fork.exe $(wslpath -w $@) };load_fork'
+if [[ -r /proc/version ]] && grep -qi microsoft /proc/version; then
+  export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev )
+  alias fork='load_fork() { /mnt/c/Users/$WINUSER/AppData/Local/Fork/current/Fork.exe $(wslpath -w $@) };load_fork'
+fi
 
 gac() {
   if [ -z "$1" ]; then
@@ -186,12 +188,11 @@ gact() {
 
 export GPG_TTY=$TTY
 export PATH="$HOME/.local/bin:$PATH"
-#export PATH="$HOME/.nix-profile/bin:$PATH"
 # export ANDROID_HOME=~/Android/Sdk
 # export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 
 # pnpm
-export PNPM_HOME="/home/${USER}/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;

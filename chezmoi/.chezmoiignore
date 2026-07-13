@@ -3,6 +3,8 @@ Documents/PowerShell
 AppData/Local/lazygit/config.yml.tmpl
 AppData/Roaming/helix
 scripts/set-theme.ps1
+scripts/xpack.ps1
+scripts/xpack.d/*.ps1
 {{ end }}
 
 {{ if eq .chezmoi.os "windows" -}}
@@ -12,6 +14,8 @@ scripts/set-theme.ps1
 .config/lazygit
 .config/powershell/Microsoft.PowerShell_profile.ps1
 scripts/set-theme.sh
+scripts/xpack.sh
+scripts/xpack.d/*.sh
 {{ end }}
 
 .config/nushell/mise.nu

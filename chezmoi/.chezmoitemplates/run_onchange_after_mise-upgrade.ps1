@@ -14,7 +14,13 @@ Set-Location $HOME
 Write-Host "$prefix $mise config changed; updating tools in $HOME."
 Write-Host "$prefix Running $mise upgrade..."
 mise upgrade
+if ($LASTEXITCODE -ne 0) {
+  throw "mise upgrade failed with exit code $LASTEXITCODE"
+}
 Write-Host "$prefix Running $mise prune --yes..."
 mise prune --yes
+if ($LASTEXITCODE -ne 0) {
+  throw "mise prune failed with exit code $LASTEXITCODE"
+}
 Write-Host "$prefix $mise update completed."
 {{- end -}}

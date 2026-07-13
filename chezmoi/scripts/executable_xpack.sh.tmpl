@@ -1,0 +1,449 @@
+#!/bin/sh
+
+set -u
+
+PACKAGES=$(cat <<'XPACK'
+{{ includeTemplate ".chezmoitemplates/xpack-records" . -}}
+XPACK
+)
+
+STATE_DIR=${XDG_STATE_HOME:-"$HOME/.local/state"}/xconfig
+STATE_FILE=$STATE_DIR/packages.psv
+SEP='|'
+APT_UPDATED=0
+
+usage() {
+  cat <<'EOF'
+Usage: xpack <command> [--yes]
+
+Commands:
+  status   Show declared package state
+  sync     Install missing packages
+  upgrade  Upgrade manager-owned packages
+  prune    Uninstall packages removed from declaration
+  doctor   Validate managers and custom scripts
+EOF
+}
+
+package_key() {
+  if [ "$1" = "script" ]; then
+    printf 'script|%s' "$4"
+  else
+    printf '%s|%s|%s' "$1" "$2" "$3"
+  fi
+}
+
+is_desired() {
+  desired_key=$(package_key "$1" "$2" "$3" "$4")
+  printf '%s\n' "$PACKAGES" |
+    awk -F '[|]' -v key="$desired_key" '{ target = $3 == "script" ? "script|" $8 : $3 "|" $4 "|" $5 } target == key { found = 1 } END { exit !found }'
+}
+
+state_contains() {
+  state_path=$1
+  state_key=$(package_key "$2" "$3" "$4" "$5")
+  [ -f "$state_path" ] || return 1
+  awk -F '[|]' -v key="$state_key" '{ target = $3 == "script" ? "script|" $8 : $3 "|" $4 "|" $5 } target == key { found = 1 } END { exit !found }' "$state_path"
+}
+
+run_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    printf 'sudo is required to run %s.\n' "$1" >&2
+    return 1
+  fi
+}
+
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    printf 'Required command not found: %s\n' "$1" >&2
+    return 1
+  fi
+}
+
+script_path() {
+  printf '%s/scripts/%s' "$HOME" "$1"
+}
+
+run_prepare() {
+  prepare=$1
+  [ -z "$prepare" ] && return 0
+
+  path=$(script_path "$prepare")
+  if [ ! -x "$path" ]; then
+    printf 'Prepare script is missing or not executable: %s\n' "$path" >&2
+    return 1
+  fi
+  "$path"
+}
+
+run_script_driver() {
+  script=$1
+  action=$2
+  path=$(script_path "$script")
+  if [ ! -x "$path" ]; then
+    printf 'Package script is missing or not executable: %s\n' "$path" >&2
+    return 1
+  fi
+  "$path" "$action"
+}
+
+check_package() {
+  driver=$1
+  id=$2
+  kind=$3
+  script=$4
+
+  case "$driver" in
+    apt)
+      require_command dpkg-query || return 2
+      dpkg-query -W -f='${Status}' "$id" 2>/dev/null | grep -q '^install ok installed$'
+      [ $? -eq 0 ] && return 0 || return 10
+      ;;
+    dnf)
+      require_command rpm || return 2
+      rpm -q "$id" >/dev/null 2>&1
+      [ $? -eq 0 ] && return 0 || return 10
+      ;;
+    brew)
+      require_command brew || return 2
+      if [ "$kind" = "cask" ]; then
+        brew list --cask "$id" >/dev/null 2>&1
+      else
+        brew list --formula "$id" >/dev/null 2>&1
+      fi
+      [ $? -eq 0 ] && return 0 || return 10
+      ;;
+    script)
+      run_script_driver "$script" check
+      result=$?
+      [ "$result" -eq 0 ] && return 0
+      [ "$result" -eq 10 ] && return 10
+      return "$result"
+      ;;
+    *)
+      printf 'Backend driver %s is unsupported on this platform.\n' "$driver" >&2
+      return 2
+      ;;
+  esac
+}
+
+refresh_apt() {
+  if [ "$APT_UPDATED" -eq 0 ]; then
+    run_root apt-get update || return 1
+    APT_UPDATED=1
+  fi
+}
+
+install_package() {
+  name=$1
+  driver=$2
+  id=$3
+  kind=$4
+  prepare=$5
+  script=$6
+
+  printf 'Installing %s through %s...\n' "$name" "$driver"
+  run_prepare "$prepare" || return 1
+
+  case "$driver" in
+    apt)
+      require_command apt-get || return 1
+      refresh_apt && run_root apt-get install -y "$id"
+      ;;
+    dnf)
+      require_command dnf || return 1
+      run_root dnf install -y "$id"
+      ;;
+    brew)
+      require_command brew || return 1
+      if [ "$kind" = "cask" ]; then brew install --cask "$id"; else brew install "$id"; fi
+      ;;
+    script) run_script_driver "$script" install ;;
+    *) return 1 ;;
+  esac
+}
+
+upgrade_package() {
+  name=$1
+  driver=$2
+  id=$3
+  kind=$4
+  prepare=$5
+  script=$6
+
+  printf 'Upgrading %s through %s...\n' "$name" "$driver"
+  run_prepare "$prepare" || return 1
+
+  case "$driver" in
+    apt)
+      require_command apt-get || return 1
+      refresh_apt && run_root apt-get install --only-upgrade -y "$id"
+      ;;
+    dnf)
+      require_command dnf || return 1
+      run_root dnf upgrade -y "$id"
+      ;;
+    brew)
+      require_command brew || return 1
+      if [ "$kind" = "cask" ]; then brew upgrade --cask "$id"; else brew upgrade "$id"; fi
+      ;;
+    script) run_script_driver "$script" upgrade ;;
+    *) return 1 ;;
+  esac
+}
+
+uninstall_package() {
+  name=$1
+  driver=$2
+  id=$3
+  kind=$4
+  script=$5
+
+  printf 'Uninstalling %s through %s...\n' "$name" "$driver"
+  case "$driver" in
+    apt) run_root apt-get remove -y "$id" ;;
+    dnf) run_root dnf remove -y "$id" ;;
+    brew)
+      if [ "$kind" = "cask" ]; then brew uninstall --cask "$id"; else brew uninstall "$id"; fi
+      ;;
+    script) run_script_driver "$script" uninstall ;;
+    *) return 1 ;;
+  esac
+}
+
+save_sync_state() {
+  installed_file=$1
+  mkdir -p "$STATE_DIR" || return 1
+  temp_state=$(mktemp "$STATE_DIR/packages.XXXXXX") || return 1
+
+  if [ -f "$STATE_FILE" ]; then
+    while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+      [ -z "$name" ] && continue
+      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$temp_state" || {
+          rm -f "$temp_state"
+          return 1
+        }
+    done <"$STATE_FILE"
+  fi
+
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    if ! state_contains "$temp_state" "$driver" "$id" "$kind" "$script"; then
+      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$temp_state" || {
+          rm -f "$temp_state"
+          return 1
+        }
+    fi
+  done <"$installed_file"
+
+  chmod 600 "$temp_state" || { rm -f "$temp_state"; return 1; }
+  mv "$temp_state" "$STATE_FILE" || { rm -f "$temp_state"; return 1; }
+}
+
+status_packages() {
+  failures=0
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    check_package "$driver" "$id" "$kind" "$script"
+    result=$?
+    case "$result" in
+      0) printf 'present  %-20s %s:%s\n' "$name" "$backend" "$id" ;;
+      10) printf 'missing  %-20s %s:%s\n' "$name" "$backend" "$id"; failures=1 ;;
+      *) printf 'error    %-20s %s:%s\n' "$name" "$backend" "$id"; failures=1 ;;
+    esac
+  done <<EOF
+$PACKAGES
+EOF
+  return "$failures"
+}
+
+sync_packages() {
+  failures=0
+  installed_file=$(mktemp) || return 1
+  trap 'rm -f "$installed_file"' EXIT HUP INT TERM
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    check_package "$driver" "$id" "$kind" "$script"
+    result=$?
+    if [ "$result" -eq 0 ]; then
+      printf 'Already present: %s\n' "$name"
+    elif [ "$result" -eq 10 ]; then
+      if install_package "$name" "$driver" "$id" "$kind" "$prepare" "$script"; then
+        if ! printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+          "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$installed_file"; then
+          printf 'Installed %s, but could not record ownership.\n' "$name" >&2
+          failures=1
+          break
+        fi
+      else
+        failures=1
+      fi
+    else
+      failures=1
+    fi
+  done <<EOF
+$PACKAGES
+EOF
+
+  if [ -s "$installed_file" ] && ! save_sync_state "$installed_file"; then
+    printf 'Packages were installed, but ownership state could not be saved.\n' >&2
+    failures=1
+  fi
+  rm -f "$installed_file"
+  trap - EXIT HUP INT TERM
+  return "$failures"
+}
+
+upgrade_packages() {
+  failures=0
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    if [ "$updates" != "manager" ]; then
+      printf 'Skipping %s updates (%s).\n' "$name" "$updates"
+      continue
+    fi
+
+    check_package "$driver" "$id" "$kind" "$script"
+    result=$?
+    if [ "$result" -eq 0 ]; then
+      upgrade_package "$name" "$driver" "$id" "$kind" "$prepare" "$script" || failures=1
+    elif [ "$result" -eq 10 ]; then
+      printf 'Missing %s; run xpack sync first.\n' "$name" >&2
+      failures=1
+    else
+      failures=1
+    fi
+  done <<EOF
+$PACKAGES
+EOF
+  return "$failures"
+}
+
+prune_packages() {
+  assume_yes=$1
+  if [ ! -f "$STATE_FILE" ]; then
+    printf 'No package state exists; run xpack sync first.\n'
+    return 0
+  fi
+
+  mkdir -p "$STATE_DIR" || return 1
+  candidates=$(mktemp) || return 1
+  next_state=$(mktemp "$STATE_DIR/packages.XXXXXX") || { rm -f "$candidates"; return 1; }
+  trap 'rm -f "$candidates" "$next_state"' EXIT HUP INT TERM
+  state_write_failed=0
+
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    if ! is_desired "$driver" "$id" "$kind" "$script"; then
+      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$candidates" || {
+          state_write_failed=1
+          break
+        }
+    fi
+  done <"$STATE_FILE"
+
+  if [ "$state_write_failed" -eq 1 ]; then
+    printf 'Could not prepare package prune state.\n' >&2
+    return 1
+  fi
+
+  if [ ! -s "$candidates" ]; then
+    printf 'Nothing to prune.\n'
+    return 0
+  fi
+
+  printf 'Packages marked for removal:\n'
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    printf '  %s (%s:%s)\n' "$name" "$backend" "$id"
+  done <"$candidates"
+
+  if [ "$assume_yes" -ne 1 ]; then
+    printf 'Continue? [y/N] '
+    read -r answer
+    case "$answer" in y|Y|yes|YES) ;; *) printf 'Cancelled.\n'; return 0 ;; esac
+  fi
+
+  failures=0
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    if is_desired "$driver" "$id" "$kind" "$script"; then
+      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$next_state" || {
+          state_write_failed=1
+          break
+        }
+    elif ! uninstall_package "$name" "$driver" "$id" "$kind" "$script"; then
+      failures=1
+      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$next_state" || {
+          state_write_failed=1
+          break
+        }
+    fi
+  done <"$STATE_FILE"
+
+  state_saved=0
+  if [ "$state_write_failed" -eq 0 ] && chmod 600 "$next_state" && mv "$next_state" "$STATE_FILE"; then
+    state_saved=1
+  else
+    printf 'Package removals completed, but ownership state could not be saved.\n' >&2
+    failures=1
+  fi
+  rm -f "$candidates"
+  if [ "$state_saved" -eq 1 ]; then
+    trap - EXIT HUP INT TERM
+  fi
+  return "$failures"
+}
+
+doctor_packages() {
+  failures=0
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    [ -z "$name" ] && continue
+    case "$driver" in
+      apt) command -v apt-get >/dev/null 2>&1 || { printf '%s requires apt-get.\n' "$name" >&2; failures=1; } ;;
+      dnf) command -v dnf >/dev/null 2>&1 || { printf '%s requires dnf.\n' "$name" >&2; failures=1; } ;;
+      brew) command -v brew >/dev/null 2>&1 || { printf '%s requires brew.\n' "$name" >&2; failures=1; } ;;
+      script) [ -n "$script" ] || { printf '%s has no package script.\n' "$name" >&2; failures=1; } ;;
+      *) printf '%s uses unsupported driver %s.\n' "$name" "$driver" >&2; failures=1 ;;
+    esac
+    if [ -n "$prepare" ] && [ ! -x "$(script_path "$prepare")" ]; then
+      printf '%s prepare script is missing: %s\n' "$name" "$prepare" >&2
+      failures=1
+    fi
+    if [ -n "$script" ] && [ ! -x "$(script_path "$script")" ]; then
+      printf '%s package script is missing: %s\n' "$name" "$script" >&2
+      failures=1
+    fi
+    case "$updates" in
+      manager|self|manual) ;;
+      *) printf '%s has invalid update policy %s.\n' "$name" "$updates" >&2; failures=1 ;;
+    esac
+  done <<EOF
+$PACKAGES
+EOF
+
+  [ "$failures" -eq 0 ] && printf 'Package configuration is valid.\n'
+  return "$failures"
+}
+
+command=${1:-help}
+assume_yes=0
+[ "${2:-}" = "--yes" ] && assume_yes=1
+
+case "$command" in
+  status) status_packages ;;
+  sync) sync_packages ;;
+  upgrade) upgrade_packages ;;
+  prune) prune_packages "$assume_yes" ;;
+  doctor) doctor_packages ;;
+  help|-h|--help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

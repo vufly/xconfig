@@ -63,7 +63,6 @@ let runtime_dir = ($env.TEMP? | default ($env.TMP? | default ($home_dir | path j
 {{- else }}
 let home_dir = ($env.HOME? | default $nu.default-config-dir)
 let runtime_dir = ($env.XDG_RUNTIME_DIR? | default ($home_dir | path join ".cache"))
-let user_name = ($env.USER? | default "")
 {{- end }}
 
 let ls_colors_path = ($home_dir | path join ".config/LS_COLORS")
@@ -146,11 +145,13 @@ def --env --wrapped theme [...args: string] {
 
 }
 
-{{- if not $isWindows }}
-def hm [] {
-  nix run home-manager/master -- switch --flake $"($home_dir)/xconfig#($user_name)@(hostname)"
-}
+def --wrapped xpack [...args: string] {
+{{- if $isWindows }}
+  run-external "pwsh" "-NoProfile" "-File" ($home_dir | path join "scripts/xpack.ps1") ...$args
+{{- else }}
+  run-external ($home_dir | path join "scripts/xpack.sh") ...$args
 {{- end }}
+}
 
 def ilias [] {
   let picked = (

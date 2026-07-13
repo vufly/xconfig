@@ -1,0 +1,5 @@
+scripts/xpackages.ps1
+scripts/xpackages.sh
+scripts/xpackages.d/prepare-powershell-apt.sh
+scripts/xpackages.d/prepare-vscode-apt.sh
+scripts/xpackages.d/prepare-vscode-dnf.sh

@@ -1,0 +1,6 @@
+- chezmoi
+- curl
+- git
+- mise: { updates: self }
+- powershell
+- wget

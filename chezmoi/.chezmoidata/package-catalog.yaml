@@ -1,0 +1,139 @@
+packageCatalog:
+  7zip:
+    chocolatey: 7zip
+    winget: 7zip.7zip
+
+  chezmoi:
+    chocolatey: chezmoi
+    winget: twpayne.chezmoi
+
+  curl:
+    chocolatey: curl
+    winget: cURL.cURL
+
+  firefox:
+    chocolatey: firefox
+    winget: Mozilla.Firefox
+    brew: { id: firefox, kind: cask }
+
+  firefox-dev:
+    chocolatey: { id: firefox-dev, kind: prerelease }
+    winget: Mozilla.Firefox.DeveloperEdition
+    brew: { id: firefox@developer-edition, kind: cask }
+
+  gcc:
+    chocolatey: mingw
+    winget: BrechtSanders.WinLibs.MCF.UCRT
+
+  git:
+    chocolatey: git
+    winget: Git.Git
+
+  gimp:
+    chocolatey: gimp
+    winget: GIMP.GIMP.3
+    brew: { id: gimp, kind: cask }
+
+  gnupg:
+    chocolatey: gnupg
+    winget: GnuPG.GnuPG
+    dnf: gnupg2
+
+  gsudo:
+    chocolatey: gsudo
+    winget: gerardog.gsudo
+
+  inkscape:
+    chocolatey: inkscape
+    winget: Inkscape.Inkscape
+    brew: { id: inkscape, kind: cask }
+
+  kicad:
+    chocolatey: kicad
+    winget: KiCad.KiCad
+    brew: { id: kicad, kind: cask }
+
+  mise:
+    chocolatey: mise
+    winget: jdx.mise
+
+  openscad:
+    chocolatey: openscad
+    winget: OpenSCAD.OpenSCAD
+    brew: { id: openscad, kind: cask }
+
+  openssh:
+    chocolatey: openssh
+    winget: Microsoft.OpenSSH.Preview
+    apt: openssh-client
+    dnf: openssh-clients
+    brew: openssh
+
+  postman:
+    chocolatey: postman
+    winget: Postman.Postman
+    brew: { id: postman, kind: cask }
+
+  powershell:
+    chocolatey: powershell-core
+    winget: Microsoft.PowerShell
+    brew: { id: powershell, kind: cask }
+    apt:
+      id: powershell
+      prepare: xpack.d/prepare-powershell-apt.sh
+
+  powertoys:
+    chocolatey: powertoys
+    winget: Microsoft.PowerToys
+
+  sharex:
+    chocolatey: sharex
+    winget: ShareX.ShareX
+
+  spotify:
+    chocolatey: spotify
+    winget: Spotify.Spotify
+    brew: { id: spotify, kind: cask }
+
+  sumatrapdf:
+    chocolatey: sumatrapdf
+    winget: SumatraPDF.SumatraPDF
+
+  thunderbird:
+    chocolatey: thunderbird
+    winget: Mozilla.Thunderbird
+    brew: { id: thunderbird, kind: cask }
+
+  vlc:
+    chocolatey: vlc
+    winget: VideoLAN.VLC
+    brew: { id: vlc, kind: cask }
+
+  vscode:
+    chocolatey: vscode
+    winget: Microsoft.VisualStudioCode
+    brew: { id: visual-studio-code, kind: cask }
+    apt:
+      id: code
+      prepare: xpack.d/prepare-vscode-apt.sh
+    dnf:
+      id: code
+      prepare: xpack.d/prepare-vscode-dnf.sh
+
+  wget:
+    chocolatey: wget
+    winget: JernejSimoncic.Wget
+
+  windhawk:
+    chocolatey: windhawk
+    winget: RamenSoftware.Windhawk
+
+  wezterm:
+    chocolatey: wezterm
+    winget: wez.wezterm
+    brew: { id: wezterm, kind: cask }
+
+  zed:
+    chocolatey: zed-editor
+    winget: ZedIndustries.Zed
+    brew: { id: zed, kind: cask }

@@ -3,6 +3,7 @@
 claude-code = "npm:@anthropic-ai/claude-code"
 cliproxy = "github:router-for-me/CLIProxyAPI"
 codex = "aqua:openai/codex"
+codex-acp = "github:zed-industries/codex-acp"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
 graphify = "pipx:graphifyy"
@@ -41,6 +42,7 @@ cargo-binstall = "latest"
 
 # Vibe coding
 codex = "latest"
+codex-acp = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 cliproxy = "latest"
 graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }

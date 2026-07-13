@@ -1,0 +1,88 @@
+{{- $packages := includeTemplate ".chezmoitemplates/packages.yaml" . | fromYaml -}}
+{{- if not (kindIs "slice" $packages) -}}
+  {{- fail "package declaration must be a YAML list" -}}
+{{- end -}}
+{{- $defaultBackend := "" -}}
+{{- if eq .chezmoi.os "windows" -}}
+  {{- $defaultBackend = "chocolatey" -}}
+{{- else if eq .chezmoi.os "darwin" -}}
+  {{- $defaultBackend = "brew" -}}
+{{- else if eq .chezmoi.os "linux" -}}
+  {{- if lookPath "apt-get" -}}
+    {{- $defaultBackend = "apt" -}}
+  {{- else if lookPath "dnf" -}}
+    {{- $defaultBackend = "dnf" -}}
+  {{- else -}}
+    {{- fail "no supported Linux package manager found (apt-get or dnf)" -}}
+  {{- end -}}
+{{- else -}}
+  {{- fail (printf "unsupported package platform %q" .chezmoi.os) -}}
+{{- end -}}
+{{- $catalog := .packageCatalog -}}
+{{- $seen := dict -}}
+{{- range $index, $entry := $packages -}}
+  {{- $name := "" -}}
+  {{- $options := dict -}}
+  {{- if kindIs "string" $entry -}}
+    {{- $name = $entry -}}
+  {{- else if kindIs "map" $entry -}}
+    {{- $names := keys $entry -}}
+    {{- if ne (len $names) 1 -}}
+      {{- fail (printf "package entry %d must contain exactly one package name" $index) -}}
+    {{- end -}}
+    {{- $name = index $names 0 -}}
+    {{- $options = index $entry $name -}}
+    {{- if not (kindIs "map" $options) -}}
+      {{- fail (printf "package %q options must be a map" $name) -}}
+    {{- end -}}
+  {{- else -}}
+    {{- fail (printf "package entry %d must be a name or single-key map" $index) -}}
+  {{- end -}}
+  {{- if eq $name "" -}}
+    {{- fail (printf "package entry %d has an empty name" $index) -}}
+  {{- end -}}
+  {{- if hasKey $seen $name -}}
+    {{- fail (printf "package %q is declared more than once" $name) -}}
+  {{- end -}}
+  {{- $_ := set $seen $name true -}}
+  {{- range $option := keys $options -}}
+    {{- if not (has $option (list "backend" "updates")) -}}
+      {{- fail (printf "package %q has unsupported option %q" $name $option) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $backend := $defaultBackend -}}
+  {{- $updates := "manager" -}}
+  {{- if hasKey $options "backend" -}}
+    {{- $backend = index $options "backend" -}}
+  {{- end -}}
+  {{- if hasKey $options "updates" -}}
+    {{- $updates = index $options "updates" -}}
+  {{- end -}}
+  {{- if not (has $backend (list "apt" "dnf" "brew" "chocolatey" "winget" "script")) -}}
+    {{- fail (printf "package %q has unsupported backend %q" $name $backend) -}}
+  {{- end -}}
+  {{- if not (has $updates (list "manager" "self" "manual")) -}}
+    {{- fail (printf "package %q has unsupported update policy %q" $name $updates) -}}
+  {{- end -}}
+  {{- $driver := $backend -}}
+  {{- $id := $name -}}
+  {{- $kind := "" -}}
+  {{- $prepare := "" -}}
+  {{- $script := "" -}}
+  {{- if hasKey $catalog $name -}}
+    {{- $packageCatalog := index $catalog $name -}}
+    {{- if hasKey $packageCatalog $backend -}}
+      {{- $override := index $packageCatalog $backend -}}
+      {{- if kindIs "string" $override -}}
+        {{- $id = $override -}}
+      {{- else -}}
+        {{- if hasKey $override "id" -}}{{- $id = index $override "id" -}}{{- end -}}
+        {{- if hasKey $override "kind" -}}{{- $kind = index $override "kind" -}}{{- end -}}
+        {{- if hasKey $override "prepare" -}}{{- $prepare = index $override "prepare" -}}{{- end -}}
+        {{- if hasKey $override "driver" -}}{{- $driver = index $override "driver" -}}{{- end -}}
+        {{- if hasKey $override "path" -}}{{- $script = index $override "path" -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- printf "%s|%s|%s|%s|%s|%s|%s|%s\n" $name $backend $driver $id $kind $updates $prepare $script -}}
+{{- end -}}

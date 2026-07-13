@@ -1,0 +1,27 @@
+{{- if not (has .chezmoi.os (list "windows" "linux" "darwin")) -}}
+  {{- fail (printf "unsupported package platform %q" .chezmoi.os) -}}
+{{- end -}}
+{{- $isWSL := false -}}
+{{- if eq .chezmoi.os "linux" -}}
+  {{- $kernelRelease := "" -}}
+  {{- if hasKey .chezmoi.kernel "osrelease" -}}
+    {{- $kernelRelease = index .chezmoi.kernel "osrelease" -}}
+  {{- end -}}
+  {{- $isWSL = contains "microsoft" (lower $kernelRelease) -}}
+{{- end -}}
+{{ includeTemplate ".chezmoitemplates/packages/common.yaml" . }}
+{{- if not $isWSL }}
+{{ includeTemplate ".chezmoitemplates/packages/common-gui.yaml" . }}
+{{- end }}
+{{- if eq .chezmoi.os "windows" }}
+{{ includeTemplate ".chezmoitemplates/packages/windows-gui.yaml" . }}
+{{ includeTemplate ".chezmoitemplates/packages/windows-cli.yaml" . }}
+{{- else if eq .chezmoi.os "linux" }}
+  {{- if not $isWSL }}
+{{ includeTemplate ".chezmoitemplates/packages/linux-gui.yaml" . }}
+  {{- end }}
+{{ includeTemplate ".chezmoitemplates/packages/linux-cli.yaml" . }}
+{{- else if eq .chezmoi.os "darwin" }}
+{{ includeTemplate ".chezmoitemplates/packages/macos-gui.yaml" . }}
+{{ includeTemplate ".chezmoitemplates/packages/macos-cli.yaml" . }}
+{{- end }}

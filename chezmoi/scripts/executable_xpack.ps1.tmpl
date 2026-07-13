@@ -1,0 +1,372 @@
+$ErrorActionPreference = "Stop"
+
+$manifest = @'
+{{ includeTemplate ".chezmoitemplates/xpack-records" . -}}
+'@
+
+$packages = @(
+    $manifest -split '\r?\n' |
+        Where-Object { $_ } |
+        ForEach-Object {
+            $fields = $_ -split '\|', 8
+            [PSCustomObject]@{
+                Name    = $fields[0]
+                Backend = $fields[1]
+                Driver  = $fields[2]
+                Id      = $fields[3]
+                Kind    = $fields[4]
+                Updates = $fields[5]
+                Prepare = $fields[6]
+                Script  = $fields[7]
+            }
+        }
+)
+
+$stateRoot = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME ".local/state" }
+$stateDir = Join-Path $stateRoot "xconfig"
+$stateFile = Join-Path $stateDir "packages.json"
+$wingetNoUpgrade = -1978335189
+
+function Show-Usage {
+    Write-Host @"
+Usage: xpack <command> [--yes]
+
+Commands:
+  status   Show declared package state
+  sync     Install missing packages
+  upgrade  Upgrade manager-owned packages
+  prune    Uninstall packages removed from declaration
+  doctor   Validate managers and custom scripts
+"@
+}
+
+function Write-Failure([string]$Message) {
+    [Console]::Error.WriteLine($Message)
+}
+
+function Get-PackageKey($Package) {
+    if ($Package.Driver -eq "script") {
+        return "script|$($Package.Script)"
+    }
+    "$($Package.Driver)|$($Package.Id)|$($Package.Kind)"
+}
+
+function Get-ScriptPath([string]$RelativePath) {
+    Join-Path (Join-Path $HOME "scripts") $RelativePath
+}
+
+function Invoke-ScriptFile([string]$Path, [string[]]$Arguments) {
+    if ([System.IO.Path]::GetExtension($Path) -eq ".ps1") {
+        $hostExecutable = (Get-Process -Id $PID).Path
+        & $hostExecutable -NoProfile -File $Path @Arguments | Out-Host
+    } else {
+        & $Path @Arguments | Out-Host
+    }
+    return $LASTEXITCODE
+}
+
+function Invoke-Prepare($Package) {
+    if (-not $Package.Prepare) { return }
+    $path = Get-ScriptPath $Package.Prepare
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Prepare script is missing: $path"
+    }
+    $result = Invoke-ScriptFile $path @()
+    if ($result -ne 0) { throw "Prepare script failed for $($Package.Name)." }
+}
+
+function Invoke-PackageScript($Package, [string]$Action) {
+    $path = Get-ScriptPath $Package.Script
+    if (-not $Package.Script -or -not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Package script is missing for $($Package.Name): $path"
+    }
+    Invoke-ScriptFile $path @($Action)
+}
+
+function Test-Package($Package) {
+    switch ($Package.Driver) {
+        "winget" {
+            if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "winget is not installed." }
+            & winget list --id $Package.Id --exact --accept-source-agreements --disable-interactivity | Out-Null
+            return $LASTEXITCODE -eq 0
+        }
+        "chocolatey" {
+            if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) { throw "Chocolatey is not installed." }
+            $installed = @(& choco.exe list --local-only --exact $Package.Id --limit-output)
+            if ($LASTEXITCODE -ne 0) { throw "Chocolatey query failed for $($Package.Name)." }
+            return [bool]($installed -match "^$([regex]::Escape($Package.Id))\|")
+        }
+        "script" {
+            $result = Invoke-PackageScript $Package "check"
+            if ($result -eq 0) { return $true }
+            if ($result -eq 10) { return $false }
+            throw "Package check failed for $($Package.Name) with exit code $result."
+        }
+        default { throw "Backend driver $($Package.Driver) is unsupported on Windows." }
+    }
+}
+
+function Install-Package($Package) {
+    Write-Host "Installing $($Package.Name) through $($Package.Driver)..."
+    Invoke-Prepare $Package
+    switch ($Package.Driver) {
+        "winget" {
+            & winget install --id $Package.Id --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity | Out-Host
+        }
+        "chocolatey" {
+            $arguments = @("install", $Package.Id, "--yes")
+            if ($Package.Kind -eq "prerelease") { $arguments += "--pre" }
+            & choco.exe @arguments | Out-Host
+        }
+        "script" {
+            $result = Invoke-PackageScript $Package "install"
+            if ($result -ne 0) { throw "Package install failed for $($Package.Name)." }
+            return
+        }
+    }
+    if ($LASTEXITCODE -ne 0) { throw "Package install failed for $($Package.Name)." }
+}
+
+function Upgrade-Package($Package) {
+    Write-Host "Upgrading $($Package.Name) through $($Package.Driver)..."
+    Invoke-Prepare $Package
+    switch ($Package.Driver) {
+        "winget" {
+            & winget upgrade --id $Package.Id --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity | Out-Host
+            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $wingetNoUpgrade) {
+                throw "Package upgrade failed for $($Package.Name)."
+            }
+        }
+        "chocolatey" {
+            $arguments = @("upgrade", $Package.Id, "--yes")
+            if ($Package.Kind -eq "prerelease") { $arguments += "--pre" }
+            & choco.exe @arguments | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "Package upgrade failed for $($Package.Name)." }
+        }
+        "script" {
+            $result = Invoke-PackageScript $Package "upgrade"
+            if ($result -ne 0) { throw "Package upgrade failed for $($Package.Name)." }
+        }
+    }
+}
+
+function Uninstall-Package($Package) {
+    Write-Host "Uninstalling $($Package.Name) through $($Package.Driver)..."
+    switch ($Package.Driver) {
+        "winget" {
+            & winget uninstall --id $Package.Id --exact --source winget --disable-interactivity | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
+        }
+        "chocolatey" {
+            & choco.exe uninstall $Package.Id --yes | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
+        }
+        "script" {
+            $result = Invoke-PackageScript $Package "uninstall"
+            if ($result -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
+        }
+    }
+}
+
+function Read-State {
+    if (-not (Test-Path -LiteralPath $stateFile)) { return @() }
+    $content = Get-Content -LiteralPath $stateFile -Raw
+    if (-not $content.Trim()) { return @() }
+    @($content | ConvertFrom-Json)
+}
+
+function Write-State($Items) {
+    New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+    $json = ConvertTo-Json -InputObject @($Items) -Depth 4
+    $tempFile = Join-Path $stateDir ("packages.{0}.tmp" -f [guid]::NewGuid().ToString("N"))
+    try {
+        [System.IO.File]::WriteAllText($tempFile, $json, [System.Text.UTF8Encoding]::new($false))
+        Move-Item -LiteralPath $tempFile -Destination $stateFile -Force
+    } finally {
+        if (Test-Path -LiteralPath $tempFile) { Remove-Item -LiteralPath $tempFile -Force }
+    }
+}
+
+function Save-SyncState($InstalledPackages) {
+    $nextState = [System.Collections.Generic.List[object]]::new()
+    $knownKeys = @{}
+    foreach ($oldPackage in (Read-State)) {
+        $nextState.Add($oldPackage)
+        $knownKeys[(Get-PackageKey $oldPackage)] = $true
+    }
+    foreach ($package in $InstalledPackages) {
+        $key = Get-PackageKey $package
+        if (-not $knownKeys.ContainsKey($key)) {
+            $nextState.Add($package)
+            $knownKeys[$key] = $true
+        }
+    }
+    Write-State $nextState
+}
+
+function Show-Status {
+    $failed = $false
+    foreach ($package in $packages) {
+        try {
+            if (Test-Package $package) {
+                Write-Host ("present  {0,-20} {1}:{2}" -f $package.Name, $package.Backend, $package.Id)
+            } else {
+                Write-Host ("missing  {0,-20} {1}:{2}" -f $package.Name, $package.Backend, $package.Id)
+                $failed = $true
+            }
+        } catch {
+            Write-Failure ("error    {0,-20} {1}" -f $package.Name, $_.Exception.Message)
+            $failed = $true
+        }
+    }
+    if ($failed) { return 1 }
+    0
+}
+
+function Sync-Packages {
+    $failed = $false
+    $installedPackages = [System.Collections.Generic.List[object]]::new()
+    foreach ($package in $packages) {
+        try {
+            if (Test-Package $package) {
+                Write-Host "Already present: $($package.Name)"
+            } else {
+                Install-Package $package
+                $installedPackages.Add($package)
+            }
+        } catch {
+            Write-Failure $_.Exception.Message
+            $failed = $true
+        }
+    }
+    if ($installedPackages.Count -gt 0) { Save-SyncState $installedPackages }
+    if ($failed) { return 1 }
+    0
+}
+
+function Upgrade-Packages {
+    $failed = $false
+    foreach ($package in $packages) {
+        if ($package.Updates -ne "manager") {
+            Write-Host "Skipping $($package.Name) updates ($($package.Updates))."
+            continue
+        }
+        try {
+            if (Test-Package $package) {
+                Upgrade-Package $package
+            } else {
+                Write-Failure "Missing $($package.Name); run xpack sync first."
+                $failed = $true
+            }
+        } catch {
+            Write-Failure $_.Exception.Message
+            $failed = $true
+        }
+    }
+    if ($failed) { return 1 }
+    0
+}
+
+function Prune-Packages([bool]$AssumeYes) {
+    $state = @(Read-State)
+    if ($state.Count -eq 0) {
+        Write-Host "No package state exists; run xpack sync first."
+        return 0
+    }
+
+    $desiredKeys = @{}
+    foreach ($package in $packages) { $desiredKeys[(Get-PackageKey $package)] = $true }
+    $candidates = @($state | Where-Object { -not $desiredKeys.ContainsKey((Get-PackageKey $_)) })
+    if ($candidates.Count -eq 0) {
+        Write-Host "Nothing to prune."
+        return 0
+    }
+
+    Write-Host "Packages marked for removal:"
+    foreach ($package in $candidates) {
+        Write-Host "  $($package.Name) ($($package.Backend):$($package.Id))"
+    }
+
+    if (-not $AssumeYes) {
+        $answer = Read-Host "Continue? [y/N]"
+        if ($answer -notmatch '^(?i:y|yes)$') {
+            Write-Host "Cancelled."
+            return 0
+        }
+    }
+
+    $failed = $false
+    $nextState = [System.Collections.Generic.List[object]]::new()
+    foreach ($package in $state) {
+        if ($desiredKeys.ContainsKey((Get-PackageKey $package))) {
+            $nextState.Add($package)
+            continue
+        }
+        try {
+            Uninstall-Package $package
+        } catch {
+            Write-Failure $_.Exception.Message
+            $nextState.Add($package)
+            $failed = $true
+        }
+    }
+    Write-State $nextState
+    if ($failed) { return 1 }
+    0
+}
+
+function Test-Configuration {
+    $failed = $false
+    foreach ($package in $packages) {
+        switch ($package.Driver) {
+            "winget" {
+                if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+                    Write-Failure "$($package.Name) requires winget."
+                    $failed = $true
+                }
+            }
+            "chocolatey" {
+                if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) {
+                    Write-Failure "$($package.Name) requires Chocolatey."
+                    $failed = $true
+                }
+            }
+            "script" {
+                if (-not $package.Script -or -not (Test-Path -LiteralPath (Get-ScriptPath $package.Script))) {
+                    Write-Failure "$($package.Name) package script is missing."
+                    $failed = $true
+                }
+            }
+            default {
+                Write-Failure "$($package.Name) uses unsupported driver $($package.Driver)."
+                $failed = $true
+            }
+        }
+        if ($package.Prepare -and -not (Test-Path -LiteralPath (Get-ScriptPath $package.Prepare))) {
+            Write-Failure "$($package.Name) prepare script is missing: $($package.Prepare)"
+            $failed = $true
+        }
+        if ($package.Updates -notin @("manager", "self", "manual")) {
+            Write-Failure "$($package.Name) has invalid update policy $($package.Updates)."
+            $failed = $true
+        }
+    }
+    if (-not $failed) { Write-Host "Package configuration is valid." }
+    if ($failed) { return 1 }
+    0
+}
+
+$command = if ($args.Count -gt 0) { $args[0] } else { "help" }
+$assumeYes = $args -contains "--yes"
+
+$exitCode = switch ($command) {
+    "status" { Show-Status }
+    "sync" { Sync-Packages }
+    "upgrade" { Upgrade-Packages }
+    "prune" { Prune-Packages $assumeYes }
+    "doctor" { Test-Configuration }
+    { $_ -in @("help", "-h", "--help") } { Show-Usage; 0 }
+    default { Show-Usage; 2 }
+}
+
+exit $exitCode
