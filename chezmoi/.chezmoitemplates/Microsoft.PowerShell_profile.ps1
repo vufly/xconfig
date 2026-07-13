@@ -62,7 +62,7 @@ function theme {
     & "$HOME/scripts/set-theme.ps1" @args
 }
 
-$global:BW_SESSION_FILE = Join-Path ([System.IO.Path]::GetTempPath()) "bw-session.txt"
+$global:BW_SESSION_FILE = Join-Path ([System.IO.Path]::GetTempPath()) "bw-session"
 
 function bwu {
     $session = bw unlock --raw

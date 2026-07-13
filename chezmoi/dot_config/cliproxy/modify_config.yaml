@@ -1,0 +1,178 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $secretKey := `""` -}}
+{{- range (splitList "\n" .chezmoi.stdin) -}}
+{{- $line := trim . -}}
+{{- if hasPrefix "secret-key:" $line -}}
+{{- $secretKey = trim (trimPrefix "secret-key:" $line) -}}
+{{- end -}}
+{{- end -}}
+# Server host/interface to bind to. Default is empty ("") to bind all interfaces (IPv4 + IPv6).
+
+# Use "127.0.0.1" or "localhost" to restrict access to local machine only.
+
+host: ""
+# Server port
+port: 61144
+# TLS settings for HTTPS. When enabled, the server listens with the provided certificate and key.
+tls:
+  enable: false
+  cert: ""
+  key: ""
+# Management API settings
+remote-management:
+# Whether to allow remote (non-localhost) management access.
+
+# When false, only localhost can access management endpoints (a key is still required).
+  allow-remote: false
+# Management key. If a plaintext value is provided here, it will be hashed on startup.
+
+# All management requests (even from localhost) require this key.
+
+# Leave empty to disable the Management API entirely (404 for all /v0/management routes).
+  secret-key: {{ $secretKey }}
+# Disable the bundled management control panel asset download and HTTP route when true.
+  disable-control-panel: false
+# GitHub repository for the management control panel. Accepts a repository URL or releases API URL.
+  panel-github-repository: "https://github.com/router-for-me/Cli-Proxy-API-Management-Center"
+# Authentication directory (supports ~ for home directory)
+auth-dir: "{{ replace "/" "\\\\" .chezmoi.homeDir }}\\.cli-proxy-api"
+# API keys for authentication
+api-keys:
+  - "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").apiKey.value }}{{ end }}"
+# Enable debug logging
+debug: false
+# When true, disable high-overhead HTTP middleware features to reduce per-request memory usage under high concurrency.
+commercial-mode: false
+# When true, write application logs to rotating files instead of stdout
+logging-to-file: false
+# Maximum total size (MB) of log files under the logs directory. When exceeded, the oldest log
+
+# files are deleted until within the limit. Set to 0 to disable.
+logs-max-total-size-mb: 0
+# When false, disable in-memory usage statistics aggregation
+usage-statistics-enabled: false
+# Proxy URL. Supports socks5/http/https protocols. Example: socks5://user:pass@192.168.1.1:1080/
+proxy-url: ""
+# When true, unprefixed model requests only use credentials without a prefix (except when prefix == model name).
+force-model-prefix: false
+# Number of times to retry a request. Retries will occur if the HTTP response code is 403, 408, 500, 502, 503, or 504.
+request-retry: 3
+# Maximum wait time in seconds for a cooled-down credential before triggering a retry.
+max-retry-interval: 30
+# disable-image-generation supports: false (default), true, or "chat".
+
+# - true: disable image_generation everywhere (also returns 404 for /v1/images/generations and /v1/images/edits).
+
+# - "chat": disable image_generation injection on non-images endpoints, but keep /v1/images/generations and /v1/images/edits enabled.
+disable-image-generation: false
+# Quota exceeded behavior
+quota-exceeded:
+  switch-project: true # Whether to automatically switch to another project when a quota is exceeded
+  switch-preview-model: true # Whether to automatically switch to a preview model when a quota is exceeded
+  antigravity-credits: true # Whether to use credits as last-resort fallback when all free-tier auths are exhausted for Claude models
+# Routing strategy for selecting credentials when multiple match.
+routing:
+  strategy: "round-robin" # round-robin (default), fill-first
+# Enable universal session-sticky routing for all clients.
+
+# Session IDs are extracted from: metadata.user_id (Claude Code session format),
+
+# X-Session-ID, Session_id (Codex),
+
+# X-Client-Request-Id (PI), conversation_id, or first few messages hash.
+
+# Automatic failover is always enabled when bound auth becomes unavailable.
+  session-affinity: false # default: false
+# How long session-to-auth bindings are retained. Default: 1h
+
+  session-affinity-ttl: "1h"
+# When true, enable authentication for the WebSocket API (/v1/ws).
+ws-auth: false
+# When > 0, emit blank lines every N seconds for non-streaming responses to prevent idle timeouts.
+nonstream-keepalive-interval: 0
+# When true, enable official Codex instructions injection for Codex API requests.
+
+# When false (default), CodexInstructionsForModel returns immediately without modification.
+codex-instructions-enabled: false
+# Streaming behavior (SSE keep-alives + safe bootstrap retries).
+streaming:
+  keepalive-seconds: 15 # Default: 0 (disabled). <= 0 disables keep-alives.
+  bootstrap-retries: 1 # Default: 0 (disabled). Retries before first byte is sent.
+# Gemini API keys
+gemini-api-key: []
+# Codex API keys
+codex-api-key: []
+# Claude API keys
+claude-api-key: []
+# OpenAI compatibility providers
+openai-compatibility: []
+# Vertex API keys (Vertex-compatible endpoints, use API key + base URL)
+vertex-api-key: []
+# Global OAuth model name aliases (per channel)
+
+# These aliases rename model IDs for both model listing and request routing.
+
+# Supported channels: vertex, aistudio, antigravity, claude, codex.
+
+# NOTE: Aliases do not apply to gemini-api-key, codex-api-key, claude-api-key, openai-compatibility, or vertex-api-key.
+
+# You can repeat the same name with different aliases to expose multiple client model names.
+oauth-model-alias: {}
+#   vertex:
+
+# Optional payload configuration
+payload:
+  default:
+# Default rules only set parameters when they are missing in the payload.
+    - models:
+        - name: gemini-2.5-pro
+          protocol: gemini
+          headers: {}
+          from-protocol: ""
+          match: []
+          not-match: []
+          exist: []
+          not-exist: []
+      params:
+        generationConfig.thinkingConfig.thinkingBudget: 32768
+  default-raw:
+# Default raw rules set parameters using raw JSON when missing (must be valid JSON).
+    - models:
+        - name: gemini-2.5-pro
+          protocol: gemini
+          headers: {}
+          from-protocol: ""
+          match: []
+          not-match: []
+          exist: []
+          not-exist: []
+      params:
+        generationConfig.responseJsonSchema: '{"type":"object","properties":{"answer":{"type":"string"}}}'
+  override:
+# Override rules always set parameters, overwriting any existing values.
+    - models:
+        - name: gpt-*
+          protocol: codex
+          headers: {}
+          from-protocol: ""
+          match: []
+          not-match: []
+          exist: []
+          not-exist: []
+      params:
+        reasoning.effort: high
+  filter:
+# Filter rules remove specified parameters from the payload.
+    - models:
+        - name: gemini-2.5-pro
+          protocol: gemini
+          headers: {}
+          from-protocol: ""
+          match: []
+          not-match: []
+          exist: []
+          not-exist: []
+      params:
+        - generationConfig.thinkingConfig.thinkingBudget
+        - generationConfig.responseJsonSchema
+redis-usage-queue-retention-seconds: 60
