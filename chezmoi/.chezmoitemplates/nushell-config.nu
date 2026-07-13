@@ -49,8 +49,8 @@ if ((which carapace | length) > 0) {
 
 {{- if lookPath "bw" }}
 # Claude code
-$env.ANTHROPIC_BASE_URL = "{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}"
-$env.ANTHROPIC_AUTH_TOKEN = "{{ (bitwardenFields "item" "cliproxy").apiKey.value }}"
+$env.ANTHROPIC_BASE_URL = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}"
+$env.ANTHROPIC_AUTH_TOKEN = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").apiKey.value }}{{ end }}"
 {{- end }}
 $env.ANTHROPIC_DEFAULT_OPUS_MODEL = "gpt-5.5(high)"
 $env.ANTHROPIC_DEFAULT_SONNET_MODEL = "gpt-5.4(high)"
