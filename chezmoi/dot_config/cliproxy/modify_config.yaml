@@ -3,8 +3,14 @@
 {{- range (splitList "\n" .chezmoi.stdin) -}}
 {{- $line := trim . -}}
 {{- if hasPrefix "secret-key:" $line -}}
-{{- $secretKey = trim (trimPrefix "secret-key:" $line) -}}
+{{- $currentSecretKey := trim (trimPrefix "secret-key:" $line) -}}
+{{- if ne $currentSecretKey `""` -}}
+{{- $secretKey = $currentSecretKey -}}
 {{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if and (eq $secretKey `""`) (lookPath "bw") -}}
+{{- $secretKey = printf "%q" ((bitwardenFields "item" "cliproxy").managementKey.value) -}}
 {{- end -}}
 # Server host/interface to bind to. Default is empty ("") to bind all interfaces (IPv4 + IPv6).
 
