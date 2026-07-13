@@ -10,6 +10,9 @@
   {{- $isWSL = contains "microsoft" (lower $kernelRelease) -}}
 {{- end -}}
 {{ includeTemplate ".chezmoitemplates/packages/common.yaml" . }}
+{{- if has .chezmoi.os (list "linux" "darwin") }}
+{{ includeTemplate ".chezmoitemplates/packages/posix-cli.yaml" . }}
+{{- end }}
 {{- if not $isWSL }}
 {{ includeTemplate ".chezmoitemplates/packages/common-gui.yaml" . }}
 {{- end }}

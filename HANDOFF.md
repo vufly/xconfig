@@ -24,6 +24,7 @@ Main composition template:
 Reusable package groups:
 
 - `chezmoi/.chezmoitemplates/packages/common.yaml`
+- `chezmoi/.chezmoitemplates/packages/posix-cli.yaml`
 - `chezmoi/.chezmoitemplates/packages/common-gui.yaml`
 - `chezmoi/.chezmoitemplates/packages/windows-cli.yaml`
 - `chezmoi/.chezmoitemplates/packages/windows-gui.yaml`
@@ -53,6 +54,9 @@ Current groups:
 ```text
 common:
   chezmoi, curl, git, mise (self-update), powershell, wget
+
+POSIX CLI:
+  tmux, zsh
 
 common GUI:
   firefox, firefox-dev, gimp, inkscape, kicad, openscad,

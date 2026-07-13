@@ -74,6 +74,7 @@ Native packages are split into flat YAML lists under `chezmoi/.chezmoitemplates/
 `packages.yaml` composes these groups:
 
 - `common.yaml`: baseline CLI packages for every platform.
+- `posix-cli.yaml`: shared Linux and macOS CLI packages.
 - `common-gui.yaml`: GUI applications for desktop platforms.
 - `windows-gui.yaml`, `linux-gui.yaml`, `macos-gui.yaml`: platform GUI additions.
 - `windows-cli.yaml`, `linux-cli.yaml`, `macos-cli.yaml`: platform CLI additions.
