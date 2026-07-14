@@ -144,6 +144,11 @@ packageCatalog:
     winget: wez.wezterm
     brew: { id: wezterm, kind: cask }
 
+  zalo:
+    chocolatey: zalopc
+    winget: VNGCorp.Zalo
+    brew: { id: zalo, kind: cask }
+
   zed:
     chocolatey: zed-editor
     winget: ZedIndustries.Zed
