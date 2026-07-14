@@ -14,6 +14,7 @@ Replace Nix/Home Manager with declarative native package management across Windo
   - Windows: `%LOCALAPPDATA%\xconfig\packages.json`
   - Unix: `${XDG_STATE_HOME:-$HOME/.local/state}/xconfig/packages.psv`
 - `prune` only removes packages previously installed and recorded by `xpack`.
+- `status`, `sync`, and `upgrade` cache one installed-package inventory per backend. Winget uses a temporary bulk export that is deleted immediately after parsing.
 
 ## Package Declarations
 

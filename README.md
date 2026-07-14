@@ -179,6 +179,8 @@ xpack doctor
 - `prune`: asks before uninstalling entries removed from the machine declaration.
 - `doctor`: validates package managers and custom scripts.
 
+`status`, `sync`, and `upgrade` load installed-package inventories once per backend. Winget uses a temporary bulk export, which is deleted immediately after parsing.
+
 Use `xpack prune --yes` only when non-interactive removal is intended.
 
 Package ownership state is local:

@@ -11,6 +11,13 @@ STATE_DIR=${XDG_STATE_HOME:-"$HOME/.local/state"}/xconfig
 STATE_FILE=$STATE_DIR/packages.psv
 SEP='|'
 APT_UPDATED=0
+APT_INVENTORY_LOADED=0
+APT_INVENTORY=
+DNF_INVENTORY_LOADED=0
+DNF_INVENTORY=
+BREW_INVENTORY_LOADED=0
+BREW_FORMULA_INVENTORY=
+BREW_CASK_INVENTORY=
 
 usage() {
   cat <<'EOF'
@@ -64,6 +71,105 @@ require_command() {
   fi
 }
 
+inventory_contains() {
+  _xpack_inventory=$1
+  _xpack_package_id=$2
+  printf '%s\n' "$_xpack_inventory" | grep -F -x "$_xpack_package_id" >/dev/null 2>&1
+}
+
+load_inventory() {
+  _xpack_driver=$1
+  case "$_xpack_driver" in
+    apt)
+      [ "$APT_INVENTORY_LOADED" -eq 1 ] && return 0
+      [ "$APT_INVENTORY_LOADED" -eq -1 ] && return 2
+      require_command dpkg-query || { APT_INVENTORY_LOADED=-1; return 2; }
+      if ! raw_inventory=$(dpkg-query -W -f='${binary:Package}|${Status}\n' 2>/dev/null); then
+        APT_INVENTORY_LOADED=-1
+        return 2
+      fi
+      APT_INVENTORY=$(printf '%s\n' "$raw_inventory" | awk -F '[|]' '$2 == "install ok installed" { package = $1; print package; sub(/:[^:]+$/, "", package); if (package != $1) print package }')
+      APT_INVENTORY_LOADED=1
+      ;;
+    dnf)
+      [ "$DNF_INVENTORY_LOADED" -eq 1 ] && return 0
+      [ "$DNF_INVENTORY_LOADED" -eq -1 ] && return 2
+      require_command rpm || { DNF_INVENTORY_LOADED=-1; return 2; }
+      if ! DNF_INVENTORY=$(rpm -qa --qf '%{NAME}\n%{NAME}.%{ARCH}\n%{NAME}-%{VERSION}\n%{NAME}-%{VERSION}-%{RELEASE}\n%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' 2>/dev/null); then
+        DNF_INVENTORY_LOADED=-1
+        return 2
+      fi
+      DNF_INVENTORY_LOADED=1
+      ;;
+    brew)
+      [ "$BREW_INVENTORY_LOADED" -eq 1 ] && return 0
+      [ "$BREW_INVENTORY_LOADED" -eq -1 ] && return 2
+      require_command brew || return 2
+      if ! _xpack_raw_inventory=$(brew list --formula -1 --full-name 2>/dev/null); then
+        BREW_INVENTORY_LOADED=-1
+        return 2
+      fi
+      BREW_FORMULA_INVENTORY=$(printf '%s\n' "$_xpack_raw_inventory" | awk '{ full = $0; print full; sub(/^.*\//, "", full); if (full != $0) print full }')
+      if ! _xpack_raw_inventory=$(brew list --cask -1 --full-name 2>/dev/null); then
+        BREW_INVENTORY_LOADED=-1
+        return 2
+      fi
+      BREW_CASK_INVENTORY=$(printf '%s\n' "$_xpack_raw_inventory" | awk '{ full = $0; print full; sub(/^.*\//, "", full); if (full != $0) print full }')
+      BREW_INVENTORY_LOADED=1
+      ;;
+    *) return 2 ;;
+  esac
+}
+
+add_inventory_package() {
+  _xpack_driver=$1
+  _xpack_id=$2
+  _xpack_kind=$3
+  case "$_xpack_driver" in
+    apt)
+      [ "$APT_INVENTORY_LOADED" -eq 1 ] || return 0
+      inventory_contains "$APT_INVENTORY" "$_xpack_id" || APT_INVENTORY=$(printf '%s\n%s\n' "$APT_INVENTORY" "$_xpack_id" | sed '/^$/d')
+      ;;
+    dnf)
+      [ "$DNF_INVENTORY_LOADED" -eq 1 ] || return 0
+      inventory_contains "$DNF_INVENTORY" "$_xpack_id" || DNF_INVENTORY=$(printf '%s\n%s\n' "$DNF_INVENTORY" "$_xpack_id" | sed '/^$/d')
+      ;;
+    brew)
+      [ "$BREW_INVENTORY_LOADED" -eq 1 ] || return 0
+      if [ "$_xpack_kind" = "cask" ]; then
+        inventory_contains "$BREW_CASK_INVENTORY" "$_xpack_id" || BREW_CASK_INVENTORY=$(printf '%s\n%s\n' "$BREW_CASK_INVENTORY" "$_xpack_id" | sed '/^$/d')
+      else
+        inventory_contains "$BREW_FORMULA_INVENTORY" "$_xpack_id" || BREW_FORMULA_INVENTORY=$(printf '%s\n%s\n' "$BREW_FORMULA_INVENTORY" "$_xpack_id" | sed '/^$/d')
+      fi
+      ;;
+  esac
+}
+
+remove_inventory_package() {
+  _xpack_driver=$1
+  _xpack_id=$2
+  _xpack_kind=$3
+  case "$_xpack_driver" in
+    apt)
+      [ "$APT_INVENTORY_LOADED" -eq 1 ] && APT_INVENTORY=$(printf '%s\n' "$APT_INVENTORY" | awk -v id="$_xpack_id" '$0 != id')
+      ;;
+    dnf)
+      [ "$DNF_INVENTORY_LOADED" -eq 1 ] && DNF_INVENTORY=$(printf '%s\n' "$DNF_INVENTORY" | awk -v id="$_xpack_id" '$0 != id')
+      ;;
+    brew)
+      if [ "$_xpack_kind" = "cask" ]; then
+        if [ "$BREW_INVENTORY_LOADED" -eq 1 ]; then
+          BREW_CASK_INVENTORY=$(printf '%s\n' "$BREW_CASK_INVENTORY" | awk -v id="$_xpack_id" '$0 != id')
+        fi
+      else
+        if [ "$BREW_INVENTORY_LOADED" -eq 1 ]; then
+          BREW_FORMULA_INVENTORY=$(printf '%s\n' "$BREW_FORMULA_INVENTORY" | awk -v id="$_xpack_id" '$0 != id')
+        fi
+      fi
+      ;;
+  esac
+}
+
 script_path() {
   printf '%s/scripts/%s' "$HOME" "$1"
 }
@@ -99,21 +205,21 @@ check_package() {
 
   case "$driver" in
     apt)
-      require_command dpkg-query || return 2
-      dpkg-query -W -f='${Status}' "$id" 2>/dev/null | grep -q '^install ok installed$'
+      load_inventory apt || return 2
+      inventory_contains "$APT_INVENTORY" "$id"
       [ $? -eq 0 ] && return 0 || return 10
       ;;
     dnf)
-      require_command rpm || return 2
-      rpm -q "$id" >/dev/null 2>&1
+      load_inventory dnf || return 2
+      inventory_contains "$DNF_INVENTORY" "$id"
       [ $? -eq 0 ] && return 0 || return 10
       ;;
     brew)
-      require_command brew || return 2
+      load_inventory brew || return 2
       if [ "$kind" = "cask" ]; then
-        brew list --cask "$id" >/dev/null 2>&1
+        inventory_contains "$BREW_CASK_INVENTORY" "$id"
       else
-        brew list --formula "$id" >/dev/null 2>&1
+        inventory_contains "$BREW_FORMULA_INVENTORY" "$id"
       fi
       [ $? -eq 0 ] && return 0 || return 10
       ;;
@@ -165,6 +271,9 @@ install_package() {
     script) run_script_driver "$script" install ;;
     *) return 1 ;;
   esac
+  result=$?
+  [ "$result" -eq 0 ] && add_inventory_package "$driver" "$id" "$kind"
+  return "$result"
 }
 
 upgrade_package() {
@@ -213,6 +322,9 @@ uninstall_package() {
     script) run_script_driver "$script" uninstall ;;
     *) return 1 ;;
   esac
+  result=$?
+  [ "$result" -eq 0 ] && remove_inventory_package "$driver" "$id" "$kind"
+  return "$result"
 }
 
 save_sync_state() {

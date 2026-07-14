@@ -26,6 +26,8 @@ $stateRoot = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME
 $stateDir = Join-Path $stateRoot "xconfig"
 $stateFile = Join-Path $stateDir "packages.json"
 $wingetNoUpgrade = -1978335189
+$packageInventories = @{}
+$packageInventoryFailures = @{}
 
 function Show-Usage {
     Write-Host @"
@@ -83,18 +85,75 @@ function Invoke-PackageScript($Package, [string]$Action) {
     Invoke-ScriptFile $path @($Action)
 }
 
+function Initialize-PackageInventory([string]$Driver) {
+    if ($script:packageInventoryFailures.ContainsKey($Driver)) {
+        throw $script:packageInventoryFailures[$Driver]
+    }
+    if ($script:packageInventories.ContainsKey($Driver)) { return }
+
+    try {
+        $comparer = if ($Driver -eq "winget") {
+            [System.StringComparer]::Ordinal
+        } else {
+            [System.StringComparer]::OrdinalIgnoreCase
+        }
+        $inventory = [System.Collections.Generic.HashSet[string]]::new($comparer)
+        switch ($Driver) {
+            "chocolatey" {
+                if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) { throw "Chocolatey is not installed." }
+                $installed = @(& choco.exe list --local-only --limit-output)
+                if ($LASTEXITCODE -ne 0) { throw "Chocolatey package inventory failed." }
+                foreach ($line in $installed) {
+                    if ($line -match '^([^|]+)\|') { [void]$inventory.Add($Matches[1]) }
+                }
+            }
+            "winget" {
+                if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "winget is not installed." }
+                $tempFile = Join-Path ([System.IO.Path]::GetTempPath()) ("xpack-winget-{0}.json" -f [guid]::NewGuid().ToString("N"))
+                try {
+                    & winget export --output $tempFile --include-versions --accept-source-agreements --disable-interactivity | Out-Null
+                    if ($LASTEXITCODE -ne 0) { throw "winget package inventory failed." }
+                    $document = Get-Content -LiteralPath $tempFile -Raw | ConvertFrom-Json
+                    foreach ($source in @($document.Sources)) {
+                        foreach ($package in @($source.Packages)) {
+                            if ($package.PackageIdentifier) { [void]$inventory.Add([string]$package.PackageIdentifier) }
+                        }
+                    }
+                } finally {
+                    if (Test-Path -LiteralPath $tempFile) { Remove-Item -LiteralPath $tempFile -Force }
+                }
+            }
+            default { throw "Backend inventory $Driver is unsupported on Windows." }
+        }
+        $script:packageInventories[$Driver] = $inventory
+    } catch {
+        $message = $_.Exception.Message
+        $script:packageInventoryFailures[$Driver] = $message
+        throw $message
+    }
+}
+
+function Add-PackageToInventory($Package) {
+    if ($script:packageInventories.ContainsKey($Package.Driver)) {
+        [void]$script:packageInventories[$Package.Driver].Add([string]$Package.Id)
+    }
+}
+
+function Remove-PackageFromInventory($Package) {
+    if ($script:packageInventories.ContainsKey($Package.Driver)) {
+        [void]$script:packageInventories[$Package.Driver].Remove([string]$Package.Id)
+    }
+}
+
 function Test-Package($Package) {
     switch ($Package.Driver) {
         "winget" {
-            if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "winget is not installed." }
-            & winget list --id $Package.Id --exact --accept-source-agreements --disable-interactivity | Out-Null
-            return $LASTEXITCODE -eq 0
+            Initialize-PackageInventory "winget"
+            return $script:packageInventories["winget"].Contains([string]$Package.Id)
         }
         "chocolatey" {
-            if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) { throw "Chocolatey is not installed." }
-            $installed = @(& choco.exe list --local-only --exact $Package.Id --limit-output)
-            if ($LASTEXITCODE -ne 0) { throw "Chocolatey query failed for $($Package.Name)." }
-            return [bool]($installed -match "^$([regex]::Escape($Package.Id))\|")
+            Initialize-PackageInventory "chocolatey"
+            return $script:packageInventories["chocolatey"].Contains([string]$Package.Id)
         }
         "script" {
             $result = Invoke-PackageScript $Package "check"
@@ -125,6 +184,7 @@ function Install-Package($Package) {
         }
     }
     if ($LASTEXITCODE -ne 0) { throw "Package install failed for $($Package.Name)." }
+    Add-PackageToInventory $Package
 }
 
 function Upgrade-Package($Package) {
@@ -166,6 +226,7 @@ function Uninstall-Package($Package) {
             if ($result -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
         }
     }
+    Remove-PackageFromInventory $Package
 }
 
 function Read-State {
