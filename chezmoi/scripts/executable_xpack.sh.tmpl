@@ -19,17 +19,48 @@ BREW_INVENTORY_LOADED=0
 BREW_FORMULA_INVENTORY=
 BREW_CASK_INVENTORY=
 
-usage() {
-  cat <<'EOF'
-Usage: xpack <command> [--yes]
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  STYLE_RESET=$(printf '\033[0m')
+  STYLE_BOLD=$(printf '\033[1m')
+  STYLE_RED=$(printf '\033[31m')
+  STYLE_GREEN=$(printf '\033[32m')
+  STYLE_YELLOW=$(printf '\033[33m')
+  STYLE_CYAN=$(printf '\033[36m')
+else
+  STYLE_RESET=
+  STYLE_BOLD=
+  STYLE_RED=
+  STYLE_GREEN=
+  STYLE_YELLOW=
+  STYLE_CYAN=
+fi
 
-Commands:
-  status   Show declared package state
-  sync     Install missing packages
-  upgrade  Upgrade manager-owned packages
-  prune    Uninstall packages removed from declaration
-  doctor   Validate managers and custom scripts
-EOF
+if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
+  ERROR_RESET=$(printf '\033[0m')
+  ERROR_BOLD=$(printf '\033[1m')
+  ERROR_RED=$(printf '\033[31m')
+else
+  ERROR_RESET=
+  ERROR_BOLD=
+  ERROR_RED=
+fi
+
+usage() {
+  printf '%s%sUsage:%s xpack <command> [--yes]\n\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
+  printf '%sCommands:%s\n' "$STYLE_BOLD" "$STYLE_RESET"
+  printf '  %s%sstatus%s   Show declared package state\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
+  printf '  %s%ssync%s     Install missing packages\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
+  printf '  %s%supgrade%s  Upgrade manager-owned packages\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
+  printf '  %s%sprune%s    Uninstall packages removed from declaration\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
+  printf '  %s%sdoctor%s   Validate managers and custom scripts\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
+}
+
+print_error() {
+  _xpack_error_format=$1
+  shift
+  printf '%s%s' "$ERROR_BOLD" "$ERROR_RED" >&2
+  printf "$_xpack_error_format" "$@" >&2
+  printf '%s' "$ERROR_RESET" >&2
 }
 
 package_key() {
@@ -59,14 +90,14 @@ run_root() {
   elif command -v sudo >/dev/null 2>&1; then
     sudo "$@"
   else
-    printf 'sudo is required to run %s.\n' "$1" >&2
+    print_error 'sudo is required to run %s.\n' "$1"
     return 1
   fi
 }
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
-    printf 'Required command not found: %s\n' "$1" >&2
+    print_error 'Required command not found: %s\n' "$1"
     return 1
   fi
 }
@@ -180,7 +211,7 @@ run_prepare() {
 
   path=$(script_path "$prepare")
   if [ ! -x "$path" ]; then
-    printf 'Prepare script is missing or not executable: %s\n' "$path" >&2
+    print_error 'Prepare script is missing or not executable: %s\n' "$path"
     return 1
   fi
   "$path"
@@ -191,7 +222,7 @@ run_script_driver() {
   action=$2
   path=$(script_path "$script")
   if [ ! -x "$path" ]; then
-    printf 'Package script is missing or not executable: %s\n' "$path" >&2
+    print_error 'Package script is missing or not executable: %s\n' "$path"
     return 1
   fi
   "$path" "$action"
@@ -231,7 +262,7 @@ check_package() {
       return "$result"
       ;;
     *)
-      printf 'Backend driver %s is unsupported on this platform.\n' "$driver" >&2
+      print_error 'Backend driver %s is unsupported on this platform.\n' "$driver"
       return 2
       ;;
   esac
@@ -252,7 +283,7 @@ install_package() {
   prepare=$5
   script=$6
 
-  printf 'Installing %s through %s...\n' "$name" "$driver"
+  printf '%s%sInstalling%s %s through %s...\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET" "$name" "$driver"
   run_prepare "$prepare" || return 1
 
   case "$driver" in
@@ -284,7 +315,7 @@ upgrade_package() {
   prepare=$5
   script=$6
 
-  printf 'Upgrading %s through %s...\n' "$name" "$driver"
+  printf '%s%sUpgrading%s %s through %s...\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET" "$name" "$driver"
   run_prepare "$prepare" || return 1
 
   case "$driver" in
@@ -312,7 +343,7 @@ uninstall_package() {
   kind=$4
   script=$5
 
-  printf 'Uninstalling %s through %s...\n' "$name" "$driver"
+  printf '%s%sUninstalling%s %s through %s...\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET" "$name" "$driver"
   case "$driver" in
     apt) run_root apt-get remove -y "$id" ;;
     dnf) run_root dnf remove -y "$id" ;;
@@ -365,9 +396,9 @@ status_packages() {
     check_package "$driver" "$id" "$kind" "$script"
     result=$?
     case "$result" in
-      0) printf 'present  %-20s %s:%s\n' "$name" "$backend" "$id" ;;
-      10) printf 'missing  %-20s %s:%s\n' "$name" "$backend" "$id"; failures=1 ;;
-      *) printf 'error    %-20s %s:%s\n' "$name" "$backend" "$id"; failures=1 ;;
+      0) printf '%s%s%-7s%s  %-20s %s:%s\n' "$STYLE_BOLD" "$STYLE_GREEN" present "$STYLE_RESET" "$name" "$backend" "$id" ;;
+      10) printf '%s%s%-7s%s  %-20s %s:%s\n' "$STYLE_BOLD" "$STYLE_YELLOW" missing "$STYLE_RESET" "$name" "$backend" "$id"; failures=1 ;;
+      *) printf '%s%s%-7s%s  %-20s %s:%s\n' "$STYLE_BOLD" "$STYLE_RED" error "$STYLE_RESET" "$name" "$backend" "$id"; failures=1 ;;
     esac
   done <<EOF
 $PACKAGES
@@ -384,12 +415,12 @@ sync_packages() {
     check_package "$driver" "$id" "$kind" "$script"
     result=$?
     if [ "$result" -eq 0 ]; then
-      printf 'Already present: %s\n' "$name"
+      printf '%s%sAlready present:%s %s\n' "$STYLE_BOLD" "$STYLE_GREEN" "$STYLE_RESET" "$name"
     elif [ "$result" -eq 10 ]; then
       if install_package "$name" "$driver" "$id" "$kind" "$prepare" "$script"; then
         if ! printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
           "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$installed_file"; then
-          printf 'Installed %s, but could not record ownership.\n' "$name" >&2
+          print_error 'Installed %s, but could not record ownership.\n' "$name"
           failures=1
           break
         fi
@@ -404,7 +435,7 @@ $PACKAGES
 EOF
 
   if [ -s "$installed_file" ] && ! save_sync_state "$installed_file"; then
-    printf 'Packages were installed, but ownership state could not be saved.\n' >&2
+    print_error 'Packages were installed, but ownership state could not be saved.\n'
     failures=1
   fi
   rm -f "$installed_file"
@@ -417,7 +448,7 @@ upgrade_packages() {
   while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
     [ -z "$name" ] && continue
     if [ "$updates" != "manager" ]; then
-      printf 'Skipping %s updates (%s).\n' "$name" "$updates"
+      printf '%s%sSkipping%s %s updates (%s).\n' "$STYLE_BOLD" "$STYLE_YELLOW" "$STYLE_RESET" "$name" "$updates"
       continue
     fi
 
@@ -426,7 +457,7 @@ upgrade_packages() {
     if [ "$result" -eq 0 ]; then
       upgrade_package "$name" "$driver" "$id" "$kind" "$prepare" "$script" || failures=1
     elif [ "$result" -eq 10 ]; then
-      printf 'Missing %s; run xpack sync first.\n' "$name" >&2
+      print_error 'Missing %s; run xpack sync first.\n' "$name"
       failures=1
     else
       failures=1
@@ -440,7 +471,7 @@ EOF
 prune_packages() {
   assume_yes=$1
   if [ ! -f "$STATE_FILE" ]; then
-    printf 'No package state exists; run xpack sync first.\n'
+    printf '%s%sNo package state exists; run xpack sync first.%s\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET"
     return 0
   fi
 
@@ -462,24 +493,24 @@ prune_packages() {
   done <"$STATE_FILE"
 
   if [ "$state_write_failed" -eq 1 ]; then
-    printf 'Could not prepare package prune state.\n' >&2
+    print_error 'Could not prepare package prune state.\n'
     return 1
   fi
 
   if [ ! -s "$candidates" ]; then
-    printf 'Nothing to prune.\n'
+    printf '%s%sNothing to prune.%s\n' "$STYLE_BOLD" "$STYLE_GREEN" "$STYLE_RESET"
     return 0
   fi
 
-  printf 'Packages marked for removal:\n'
+  printf '%s%sPackages marked for removal:%s\n' "$STYLE_BOLD" "$STYLE_YELLOW" "$STYLE_RESET"
   while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
     printf '  %s (%s:%s)\n' "$name" "$backend" "$id"
   done <"$candidates"
 
   if [ "$assume_yes" -ne 1 ]; then
-    printf 'Continue? [y/N] '
+    printf '%s%sContinue? [y/N]%s ' "$STYLE_BOLD" "$STYLE_YELLOW" "$STYLE_RESET"
     read -r answer
-    case "$answer" in y|Y|yes|YES) ;; *) printf 'Cancelled.\n'; return 0 ;; esac
+    case "$answer" in y|Y|yes|YES) ;; *) printf '%s%sCancelled.%s\n' "$STYLE_BOLD" "$STYLE_YELLOW" "$STYLE_RESET"; return 0 ;; esac
   fi
 
   failures=0
@@ -505,7 +536,7 @@ prune_packages() {
   if [ "$state_write_failed" -eq 0 ] && chmod 600 "$next_state" && mv "$next_state" "$STATE_FILE"; then
     state_saved=1
   else
-    printf 'Package removals completed, but ownership state could not be saved.\n' >&2
+    print_error 'Package removals completed, but ownership state could not be saved.\n'
     failures=1
   fi
   rm -f "$candidates"
@@ -520,29 +551,29 @@ doctor_packages() {
   while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
     [ -z "$name" ] && continue
     case "$driver" in
-      apt) command -v apt-get >/dev/null 2>&1 || { printf '%s requires apt-get.\n' "$name" >&2; failures=1; } ;;
-      dnf) command -v dnf >/dev/null 2>&1 || { printf '%s requires dnf.\n' "$name" >&2; failures=1; } ;;
-      brew) command -v brew >/dev/null 2>&1 || { printf '%s requires brew.\n' "$name" >&2; failures=1; } ;;
-      script) [ -n "$script" ] || { printf '%s has no package script.\n' "$name" >&2; failures=1; } ;;
-      *) printf '%s uses unsupported driver %s.\n' "$name" "$driver" >&2; failures=1 ;;
+      apt) command -v apt-get >/dev/null 2>&1 || { print_error '%s requires apt-get.\n' "$name"; failures=1; } ;;
+      dnf) command -v dnf >/dev/null 2>&1 || { print_error '%s requires dnf.\n' "$name"; failures=1; } ;;
+      brew) command -v brew >/dev/null 2>&1 || { print_error '%s requires brew.\n' "$name"; failures=1; } ;;
+      script) [ -n "$script" ] || { print_error '%s has no package script.\n' "$name"; failures=1; } ;;
+      *) print_error '%s uses unsupported driver %s.\n' "$name" "$driver"; failures=1 ;;
     esac
     if [ -n "$prepare" ] && [ ! -x "$(script_path "$prepare")" ]; then
-      printf '%s prepare script is missing: %s\n' "$name" "$prepare" >&2
+      print_error '%s prepare script is missing: %s\n' "$name" "$prepare"
       failures=1
     fi
     if [ -n "$script" ] && [ ! -x "$(script_path "$script")" ]; then
-      printf '%s package script is missing: %s\n' "$name" "$script" >&2
+      print_error '%s package script is missing: %s\n' "$name" "$script"
       failures=1
     fi
     case "$updates" in
       manager|self|manual) ;;
-      *) printf '%s has invalid update policy %s.\n' "$name" "$updates" >&2; failures=1 ;;
+      *) print_error '%s has invalid update policy %s.\n' "$name" "$updates"; failures=1 ;;
     esac
   done <<EOF
 $PACKAGES
 EOF
 
-  [ "$failures" -eq 0 ] && printf 'Package configuration is valid.\n'
+  [ "$failures" -eq 0 ] && printf '%s%sPackage configuration is valid.%s\n' "$STYLE_BOLD" "$STYLE_GREEN" "$STYLE_RESET"
   return "$failures"
 }
 
@@ -557,5 +588,11 @@ case "$command" in
   prune) prune_packages "$assume_yes" ;;
   doctor) doctor_packages ;;
   help|-h|--help) usage ;;
-  *) usage >&2; exit 2 ;;
+  *)
+    STYLE_RESET=$ERROR_RESET
+    STYLE_BOLD=$ERROR_BOLD
+    STYLE_CYAN=$ERROR_RED
+    usage >&2
+    exit 2
+    ;;
 esac

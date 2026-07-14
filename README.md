@@ -181,6 +181,8 @@ xpack doctor
 
 `status`, `sync`, and `upgrade` load installed-package inventories once per backend. Winget uses a temporary bulk export, which is deleted immediately after parsing.
 
+Interactive `xpack` output uses ANSI colors and bold labels. Set `NO_COLOR=1` to disable styling; redirected output remains plain text.
+
 Use `xpack prune --yes` only when non-interactive removal is intended.
 
 Package ownership state is local:
