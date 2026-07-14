@@ -7,6 +7,11 @@ packageCatalog:
     chocolatey: chezmoi
     winget: twpayne.chezmoi
 
+  copyq:
+    chocolatey: copyq
+    winget: hluk.CopyQ
+    brew: { id: copyq, kind: cask }
+
   curl:
     chocolatey: curl
     winget: cURL.cURL

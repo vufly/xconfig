@@ -61,7 +61,7 @@ POSIX CLI:
   tmux, zsh
 
 common GUI:
-  firefox, firefox-dev, gimp, inkscape, kicad, openscad,
+  copyq, firefox, firefox-dev, gimp, inkscape, kicad, openscad,
   postman, spotify, thunderbird, vlc, vscode, wezterm, zed
 
 Windows CLI:
