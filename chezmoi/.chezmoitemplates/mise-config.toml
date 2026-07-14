@@ -74,6 +74,7 @@ zellij = "latest"
 # Source control helpers
 delta = "latest"
 gh = "latest"
+glab = "latest"
 lazygit = "latest"
 tig = { version = "latest", version_prefix = "tig-" }
 
