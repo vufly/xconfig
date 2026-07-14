@@ -57,6 +57,12 @@ packageCatalog:
     chocolatey: mise
     winget: jdx.mise
 
+  nushell:
+    winget: Nushell.Nushell
+    brew: nushell
+    apt: { driver: script, path: xpack.d/manage-nushell.sh }
+    dnf: { driver: script, path: xpack.d/manage-nushell.sh }
+
   openscad:
     chocolatey: openscad
     winget: OpenSCAD.OpenSCAD

@@ -14,7 +14,7 @@ Replace Nix/Home Manager with declarative native package management across Windo
   - Windows: `%LOCALAPPDATA%\xconfig\packages.json`
   - Unix: `${XDG_STATE_HOME:-$HOME/.local/state}/xconfig/packages.psv`
 - `prune` only removes packages previously installed and recorded by `xpack`.
-- `status`, `sync`, and `upgrade` cache one installed-package inventory per backend. Winget uses a temporary bulk export that is deleted immediately after parsing.
+- `status`, `sync`, and `upgrade` cache installed-package checks. Winget uses a temporary bulk export for unscoped entries and cached exact queries for `scope: user|machine` entries.
 
 ## Package Declarations
 
@@ -40,6 +40,7 @@ Rendered entries use a flat YAML list:
 - git
 - mise: { updates: self }
 - firefox: { backend: winget, updates: manual }
+- nushell: { backend: winget, scope: machine }
 ```
 
 Platform backend defaults:
@@ -64,18 +65,21 @@ common GUI:
   postman, spotify, thunderbird, vlc, vscode, wezterm, zed
 
 Windows CLI:
-  7zip, gsudo
+  7zip, gsudo, nushell
 
 Windows GUI:
   powertoys, sharex, sumatrapdf, windhawk
 
 Linux CLI:
-  gcc, gnupg, openssh, unzip
+  gcc, gnupg, nushell, openssh, unzip
 
 Linux GUI:
   TBD
 
-macOS CLI/GUI:
+macOS CLI:
+  nushell
+
+macOS GUI:
   TBD
 ```
 

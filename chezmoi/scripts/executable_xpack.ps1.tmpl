@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
 $manifest = @'
 {{ includeTemplate ".chezmoitemplates/xpack-records" . -}}
@@ -8,7 +9,7 @@ $packages = @(
     $manifest -split '\r?\n' |
         Where-Object { $_ } |
         ForEach-Object {
-            $fields = $_ -split '\|', 8
+            $fields = $_ -split '\|', 9
             [PSCustomObject]@{
                 Name    = $fields[0]
                 Backend = $fields[1]
@@ -18,6 +19,7 @@ $packages = @(
                 Updates = $fields[5]
                 Prepare = $fields[6]
                 Script  = $fields[7]
+                Scope   = $fields[8]
             }
         }
 )
@@ -26,8 +28,10 @@ $stateRoot = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME
 $stateDir = Join-Path $stateRoot "xconfig"
 $stateFile = Join-Path $stateDir "packages.json"
 $wingetNoUpgrade = -1978335189
+$wingetPackageNotFound = -1978335212
 $packageInventories = @{}
 $packageInventoryFailures = @{}
+$wingetPackageStatus = [System.Collections.Generic.Dictionary[string, bool]]::new([System.StringComparer]::Ordinal)
 $supportsAnsi = $PSVersionTable.PSVersion -ge [version]"7.2" -and $Host.UI.SupportsVirtualTerminal
 if ($supportsAnsi) { $PSStyle.OutputRendering = "Host" }
 $stdoutAnsi = $supportsAnsi -and -not $env:NO_COLOR -and -not [Console]::IsOutputRedirected
@@ -65,7 +69,17 @@ function Get-PackageKey($Package) {
     if ($Package.Driver -eq "script") {
         return "script|$($Package.Script)"
     }
+    "$($Package.Driver)|$($Package.Id)|$($Package.Kind)|$($Package.Scope)"
+}
+
+function Get-PackageKeyWithoutScope($Package) {
     "$($Package.Driver)|$($Package.Id)|$($Package.Kind)"
+}
+
+function Get-PackageDisplay($Package) {
+    $display = "$($Package.Backend):$($Package.Id)"
+    if ($Package.Scope) { $display += " [$($Package.Scope)]" }
+    $display
 }
 
 function Get-ScriptPath([string]$RelativePath) {
@@ -126,7 +140,7 @@ function Initialize-PackageInventory([string]$Driver) {
                 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "winget is not installed." }
                 $tempFile = Join-Path ([System.IO.Path]::GetTempPath()) ("xpack-winget-{0}.json" -f [guid]::NewGuid().ToString("N"))
                 try {
-                    & winget export --output $tempFile --include-versions --accept-source-agreements --disable-interactivity | Out-Null
+                    & winget export --output $tempFile --source winget --include-versions --accept-source-agreements --disable-interactivity | Out-Null
                     if ($LASTEXITCODE -ne 0) { throw "winget package inventory failed." }
                     $document = Get-Content -LiteralPath $tempFile -Raw | ConvertFrom-Json
                     foreach ($source in @($document.Sources)) {
@@ -149,20 +163,47 @@ function Initialize-PackageInventory([string]$Driver) {
 }
 
 function Add-PackageToInventory($Package) {
+    if ($Package.Driver -eq "winget" -and $Package.Scope) {
+        $script:wingetPackageStatus["$($Package.Id)|$($Package.Scope)"] = $true
+        return
+    }
     if ($script:packageInventories.ContainsKey($Package.Driver)) {
         [void]$script:packageInventories[$Package.Driver].Add([string]$Package.Id)
     }
 }
 
 function Remove-PackageFromInventory($Package) {
+    if ($Package.Driver -eq "winget" -and $Package.Scope) {
+        $script:wingetPackageStatus["$($Package.Id)|$($Package.Scope)"] = $false
+        return
+    }
     if ($script:packageInventories.ContainsKey($Package.Driver)) {
         [void]$script:packageInventories[$Package.Driver].Remove([string]$Package.Id)
     }
 }
 
+function Get-WingetPackageStatus([string]$PackageId, [string]$Scope, [string]$Name) {
+    $key = "$PackageId|$Scope"
+    if ($script:wingetPackageStatus.ContainsKey($key)) { return $script:wingetPackageStatus[$key] }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "winget is not installed." }
+    & winget list --id $PackageId --exact --source winget --scope $Scope --accept-source-agreements --disable-interactivity | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        $script:wingetPackageStatus[$key] = $true
+        return $true
+    }
+    if ($LASTEXITCODE -eq $wingetPackageNotFound) {
+        $script:wingetPackageStatus[$key] = $false
+        return $false
+    }
+    throw "winget query failed for $Name."
+}
+
 function Test-Package($Package) {
     switch ($Package.Driver) {
         "winget" {
+            if ($Package.Scope) {
+                return Get-WingetPackageStatus $Package.Id $Package.Scope $Package.Name
+            }
             Initialize-PackageInventory "winget"
             return $script:packageInventories["winget"].Contains([string]$Package.Id)
         }
@@ -185,7 +226,9 @@ function Install-Package($Package) {
     Invoke-Prepare $Package
     switch ($Package.Driver) {
         "winget" {
-            & winget install --id $Package.Id --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity | Out-Host
+            $arguments = @("install", "--id", $Package.Id, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
+            if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
+            & winget @arguments | Out-Host
         }
         "chocolatey" {
             $arguments = @("install", $Package.Id, "--yes")
@@ -207,7 +250,9 @@ function Upgrade-Package($Package) {
     Invoke-Prepare $Package
     switch ($Package.Driver) {
         "winget" {
-            & winget upgrade --id $Package.Id --exact --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity | Out-Host
+            $arguments = @("upgrade", "--id", $Package.Id, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
+            if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
+            & winget @arguments | Out-Host
             if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $wingetNoUpgrade) {
                 throw "Package upgrade failed for $($Package.Name)."
             }
@@ -229,7 +274,9 @@ function Uninstall-Package($Package) {
     Write-Host "$(Format-Output 'Uninstalling' 36 $true) $($Package.Name) through $($Package.Driver)..."
     switch ($Package.Driver) {
         "winget" {
-            & winget uninstall --id $Package.Id --exact --source winget --disable-interactivity | Out-Host
+            $arguments = @("uninstall", "--id", $Package.Id, "--exact", "--source", "winget", "--disable-interactivity")
+            if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
+            & winget @arguments | Out-Host
             if ($LASTEXITCODE -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
         }
         "chocolatey" {
@@ -263,6 +310,40 @@ function Write-State($Items) {
     }
 }
 
+function Resolve-OwnedPackageScope($Package) {
+    if ($Package.Driver -ne "winget" -or -not $Package.Scope) { return }
+    $legacyKey = Get-PackageKeyWithoutScope $Package
+    $state = @(Read-State)
+    $legacyPackages = @($state | Where-Object {
+        $_.Driver -eq "winget" -and -not $_.Scope -and (Get-PackageKeyWithoutScope $_) -eq $legacyKey
+    })
+    if ($legacyPackages.Count -eq 0) { return }
+
+    $userInstalled = Get-WingetPackageStatus $Package.Id "user" $Package.Name
+    $machineInstalled = Get-WingetPackageStatus $Package.Id "machine" $Package.Name
+    if ($userInstalled -and $machineInstalled) {
+        throw "Cannot migrate ownership scope for $($Package.Name): both user and machine installations exist."
+    }
+
+    $resolvedScope = if ($userInstalled) { "user" } elseif ($machineInstalled) { "machine" } else { "" }
+    $nextState = [System.Collections.Generic.List[object]]::new()
+    foreach ($oldPackage in $state) {
+        if ($oldPackage.Driver -eq "winget" -and -not $oldPackage.Scope -and (Get-PackageKeyWithoutScope $oldPackage) -eq $legacyKey) {
+            continue
+        }
+        $nextState.Add($oldPackage)
+    }
+    if ($resolvedScope) {
+        $resolvedPackage = $legacyPackages[0].PSObject.Copy()
+        $resolvedPackage | Add-Member -MemberType NoteProperty -Name Scope -Value $resolvedScope -Force
+        $resolvedKey = Get-PackageKey $resolvedPackage
+        if (-not @($nextState | Where-Object { (Get-PackageKey $_) -eq $resolvedKey }).Count) {
+            $nextState.Add($resolvedPackage)
+        }
+    }
+    Write-State $nextState
+}
+
 function Save-SyncState($InstalledPackages) {
     $nextState = [System.Collections.Generic.List[object]]::new()
     $knownKeys = @{}
@@ -286,10 +367,10 @@ function Show-Status {
         try {
             if (Test-Package $package) {
                 $label = Format-Output ("{0,-7}" -f "present") 32 $true
-                Write-Host ("{0}  {1,-20} {2}:{3}" -f $label, $package.Name, $package.Backend, $package.Id)
+                Write-Host ("{0}  {1,-20} {2}" -f $label, $package.Name, (Get-PackageDisplay $package))
             } else {
                 $label = Format-Output ("{0,-7}" -f "missing") 33 $true
-                Write-Host ("{0}  {1,-20} {2}:{3}" -f $label, $package.Name, $package.Backend, $package.Id)
+                Write-Host ("{0}  {1,-20} {2}" -f $label, $package.Name, (Get-PackageDisplay $package))
                 $failed = $true
             }
         } catch {
@@ -307,6 +388,7 @@ function Sync-Packages {
     $installedPackages = [System.Collections.Generic.List[object]]::new()
     foreach ($package in $packages) {
         try {
+            Resolve-OwnedPackageScope $package
             if (Test-Package $package) {
                 Write-Host "$(Format-Output 'Already present:' 32 $true) $($package.Name)"
             } else {
@@ -347,6 +429,12 @@ function Upgrade-Packages {
 }
 
 function Prune-Packages([bool]$AssumeYes) {
+    try {
+        foreach ($package in $packages) { Resolve-OwnedPackageScope $package }
+    } catch {
+        Write-Failure $_.Exception.Message
+        return 1
+    }
     $state = @(Read-State)
     if ($state.Count -eq 0) {
         Write-Host (Format-Output "No package state exists; run xpack sync first." 36 $true)
@@ -363,7 +451,7 @@ function Prune-Packages([bool]$AssumeYes) {
 
     Write-Host (Format-Output "Packages marked for removal:" 33 $true)
     foreach ($package in $candidates) {
-        Write-Host "  $($package.Name) ($($package.Backend):$($package.Id))"
+        Write-Host "  $($package.Name) ($(Get-PackageDisplay $package))"
     }
 
     if (-not $AssumeYes) {
@@ -427,6 +515,10 @@ function Test-Configuration {
         }
         if ($package.Updates -notin @("manager", "self", "manual")) {
             Write-Failure "$($package.Name) has invalid update policy $($package.Updates)."
+            $failed = $true
+        }
+        if ($package.Scope -and ($package.Driver -ne "winget" -or $package.Scope -notin @("user", "machine"))) {
+            Write-Failure "$($package.Name) has invalid package scope $($package.Scope)."
             $failed = $true
         }
     }

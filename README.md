@@ -91,9 +91,12 @@ An override entry is a single-key map:
 
 ```yaml
 - firefox: { backend: winget, updates: manual }
+- nushell: { backend: winget, scope: machine }
 ```
 
 Default backends are Chocolatey on Windows, Homebrew on macOS, and `apt` or `dnf` on Linux based on the available manager. An explicit `backend` overrides the platform default.
+
+Winget entries can set `scope: user` or `scope: machine`. Scope participates in ownership state, so changing it allows the previous installation scope to be pruned explicitly.
 
 Use normal Chezmoi conditions in `packages.yaml` or package-list templates for platform or machine differences. Package names must be unique in the rendered list.
 
@@ -179,7 +182,7 @@ xpack doctor
 - `prune`: asks before uninstalling entries removed from the machine declaration.
 - `doctor`: validates package managers and custom scripts.
 
-`status`, `sync`, and `upgrade` load installed-package inventories once per backend. Winget uses a temporary bulk export, which is deleted immediately after parsing.
+`status`, `sync`, and `upgrade` load installed-package inventories once per backend. Winget uses a temporary bulk export for unscoped entries and cached exact queries for scoped entries.
 
 Interactive `xpack` output uses ANSI colors and bold labels. Set `NO_COLOR=1` to disable styling; redirected output remains plain text.
 

@@ -1,2 +1,3 @@
 - 7zip
 - gsudo
+- nushell: { backend: winget, scope: machine }

@@ -67,21 +67,21 @@ package_key() {
   if [ "$1" = "script" ]; then
     printf 'script|%s' "$4"
   else
-    printf '%s|%s|%s' "$1" "$2" "$3"
+    printf '%s|%s|%s|%s' "$1" "$2" "$3" "$5"
   fi
 }
 
 is_desired() {
-  desired_key=$(package_key "$1" "$2" "$3" "$4")
+  desired_key=$(package_key "$1" "$2" "$3" "$4" "$5")
   printf '%s\n' "$PACKAGES" |
-    awk -F '[|]' -v key="$desired_key" '{ target = $3 == "script" ? "script|" $8 : $3 "|" $4 "|" $5 } target == key { found = 1 } END { exit !found }'
+    awk -F '[|]' -v key="$desired_key" '{ target = $3 == "script" ? "script|" $8 : $3 "|" $4 "|" $5 "|" $9 } target == key { found = 1 } END { exit !found }'
 }
 
 state_contains() {
   state_path=$1
-  state_key=$(package_key "$2" "$3" "$4" "$5")
+  state_key=$(package_key "$2" "$3" "$4" "$5" "$6")
   [ -f "$state_path" ] || return 1
-  awk -F '[|]' -v key="$state_key" '{ target = $3 == "script" ? "script|" $8 : $3 "|" $4 "|" $5 } target == key { found = 1 } END { exit !found }' "$state_path"
+  awk -F '[|]' -v key="$state_key" '{ target = $3 == "script" ? "script|" $8 : $3 "|" $4 "|" $5 "|" $9 } target == key { found = 1 } END { exit !found }' "$state_path"
 }
 
 run_root() {
@@ -364,21 +364,21 @@ save_sync_state() {
   temp_state=$(mktemp "$STATE_DIR/packages.XXXXXX") || return 1
 
   if [ -f "$STATE_FILE" ]; then
-    while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+    while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
       [ -z "$name" ] && continue
-      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$temp_state" || {
+      printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" "$scope" >>"$temp_state" || {
           rm -f "$temp_state"
           return 1
         }
     done <"$STATE_FILE"
   fi
 
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
-    if ! state_contains "$temp_state" "$driver" "$id" "$kind" "$script"; then
-      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$temp_state" || {
+    if ! state_contains "$temp_state" "$driver" "$id" "$kind" "$script" "$scope"; then
+      printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" "$scope" >>"$temp_state" || {
           rm -f "$temp_state"
           return 1
         }
@@ -391,7 +391,7 @@ save_sync_state() {
 
 status_packages() {
   failures=0
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
     check_package "$driver" "$id" "$kind" "$script"
     result=$?
@@ -410,7 +410,7 @@ sync_packages() {
   failures=0
   installed_file=$(mktemp) || return 1
   trap 'rm -f "$installed_file"' EXIT HUP INT TERM
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
     check_package "$driver" "$id" "$kind" "$script"
     result=$?
@@ -418,8 +418,8 @@ sync_packages() {
       printf '%s%sAlready present:%s %s\n' "$STYLE_BOLD" "$STYLE_GREEN" "$STYLE_RESET" "$name"
     elif [ "$result" -eq 10 ]; then
       if install_package "$name" "$driver" "$id" "$kind" "$prepare" "$script"; then
-        if ! printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-          "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$installed_file"; then
+        if ! printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+          "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" "$scope" >>"$installed_file"; then
           print_error 'Installed %s, but could not record ownership.\n' "$name"
           failures=1
           break
@@ -445,7 +445,7 @@ EOF
 
 upgrade_packages() {
   failures=0
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
     if [ "$updates" != "manager" ]; then
       printf '%s%sSkipping%s %s updates (%s).\n' "$STYLE_BOLD" "$STYLE_YELLOW" "$STYLE_RESET" "$name" "$updates"
@@ -481,11 +481,11 @@ prune_packages() {
   trap 'rm -f "$candidates" "$next_state"' EXIT HUP INT TERM
   state_write_failed=0
 
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
-    if ! is_desired "$driver" "$id" "$kind" "$script"; then
-      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$candidates" || {
+    if ! is_desired "$driver" "$id" "$kind" "$script" "$scope"; then
+      printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" "$scope" >>"$candidates" || {
           state_write_failed=1
           break
         }
@@ -503,7 +503,7 @@ prune_packages() {
   fi
 
   printf '%s%sPackages marked for removal:%s\n' "$STYLE_BOLD" "$STYLE_YELLOW" "$STYLE_RESET"
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     printf '  %s (%s:%s)\n' "$name" "$backend" "$id"
   done <"$candidates"
 
@@ -514,18 +514,18 @@ prune_packages() {
   fi
 
   failures=0
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
-    if is_desired "$driver" "$id" "$kind" "$script"; then
-      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$next_state" || {
+    if is_desired "$driver" "$id" "$kind" "$script" "$scope"; then
+      printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" "$scope" >>"$next_state" || {
           state_write_failed=1
           break
         }
     elif ! uninstall_package "$name" "$driver" "$id" "$kind" "$script"; then
       failures=1
-      printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" >>"$next_state" || {
+      printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$name" "$backend" "$driver" "$id" "$kind" "$updates" "$prepare" "$script" "$scope" >>"$next_state" || {
           state_write_failed=1
           break
         }
@@ -548,7 +548,7 @@ prune_packages() {
 
 doctor_packages() {
   failures=0
-  while IFS="$SEP" read -r name backend driver id kind updates prepare script; do
+  while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
     case "$driver" in
       apt) command -v apt-get >/dev/null 2>&1 || { print_error '%s requires apt-get.\n' "$name"; failures=1; } ;;

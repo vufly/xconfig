@@ -46,7 +46,7 @@
   {{- end -}}
   {{- $_ := set $seen $name true -}}
   {{- range $option := keys $options -}}
-    {{- if not (has $option (list "backend" "updates")) -}}
+    {{- if not (has $option (list "backend" "scope" "updates")) -}}
       {{- fail (printf "package %q has unsupported option %q" $name $option) -}}
     {{- end -}}
   {{- end -}}
@@ -67,6 +67,7 @@
   {{- $driver := $backend -}}
   {{- $id := $name -}}
   {{- $kind := "" -}}
+  {{- $scope := "" -}}
   {{- $prepare := "" -}}
   {{- $script := "" -}}
   {{- if hasKey $catalog $name -}}
@@ -78,11 +79,21 @@
       {{- else -}}
         {{- if hasKey $override "id" -}}{{- $id = index $override "id" -}}{{- end -}}
         {{- if hasKey $override "kind" -}}{{- $kind = index $override "kind" -}}{{- end -}}
+        {{- if hasKey $override "scope" -}}{{- $scope = index $override "scope" -}}{{- end -}}
         {{- if hasKey $override "prepare" -}}{{- $prepare = index $override "prepare" -}}{{- end -}}
         {{- if hasKey $override "driver" -}}{{- $driver = index $override "driver" -}}{{- end -}}
         {{- if hasKey $override "path" -}}{{- $script = index $override "path" -}}{{- end -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
-  {{- printf "%s|%s|%s|%s|%s|%s|%s|%s\n" $name $backend $driver $id $kind $updates $prepare $script -}}
+  {{- if hasKey $options "scope" -}}
+    {{- $scope = index $options "scope" -}}
+  {{- end -}}
+  {{- if and (ne $scope "") (ne $driver "winget") -}}
+    {{- fail (printf "package %q sets scope for non-Winget driver %q" $name $driver) -}}
+  {{- end -}}
+  {{- if not (has $scope (list "" "user" "machine")) -}}
+    {{- fail (printf "package %q has unsupported scope %q" $name $scope) -}}
+  {{- end -}}
+  {{- printf "%s|%s|%s|%s|%s|%s|%s|%s|%s\n" $name $backend $driver $id $kind $updates $prepare $script $scope -}}
 {{- end -}}
