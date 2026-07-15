@@ -21,6 +21,7 @@ wakatime = "github:wakatime/wakatime-cli"
 zellij = "github:zellij-org/zellij"
 
 [settings]
+minimum_release_age = "0h" # default is 24h
 [settings.npm]
 package_manager = "pnpm"
 [settings.cargo]
