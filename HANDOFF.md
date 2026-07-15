@@ -68,7 +68,7 @@ Windows CLI:
   7zip, gsudo, nushell
 
 Windows GUI:
-  powertoys, sharex, sumatrapdf, windhawk, zalo
+  chatgpt, powertoys, sharex, sumatrapdf, windhawk, zalo
 
 Linux CLI:
   gcc, gnupg, nushell, openssh, unzip
@@ -80,7 +80,7 @@ macOS CLI:
   nushell
 
 macOS GUI:
-  zalo
+  chatgpt, zalo
 ```
 
 ## Package Catalog

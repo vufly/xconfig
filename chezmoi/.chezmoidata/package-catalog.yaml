@@ -3,6 +3,10 @@ packageCatalog:
     chocolatey: 7zip
     winget: 7zip.7zip
 
+  chatgpt:
+    script: { path: xpack.d/manage-chatgpt.ps1 }
+    brew: { id: chatgpt, kind: cask }
+
   chezmoi:
     chocolatey: chezmoi
     winget: twpayne.chezmoi
