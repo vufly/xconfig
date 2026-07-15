@@ -3,4 +3,5 @@
 - git
 - mise: { updates: self }
 - powershell
+- tailscale
 - wget

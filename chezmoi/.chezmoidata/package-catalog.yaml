@@ -110,6 +110,17 @@ packageCatalog:
     chocolatey: sumatrapdf
     winget: SumatraPDF.SumatraPDF
 
+  tailscale:
+    chocolatey: tailscale
+    winget: Tailscale.Tailscale
+    brew: { id: tailscale-app, kind: cask }
+    apt:
+      id: tailscale
+      prepare: xpack.d/prepare-tailscale-apt.sh
+    dnf:
+      id: tailscale
+      prepare: xpack.d/prepare-tailscale-dnf.sh
+
   thunderbird:
     chocolatey: thunderbird
     winget: Mozilla.Thunderbird

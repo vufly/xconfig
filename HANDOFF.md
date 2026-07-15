@@ -55,7 +55,7 @@ Current groups:
 
 ```text
 common:
-  chezmoi, curl, git, mise (self-update), powershell, wget
+  chezmoi, curl, git, mise (self-update), powershell, tailscale, wget
 
 POSIX CLI:
   tmux, zsh
