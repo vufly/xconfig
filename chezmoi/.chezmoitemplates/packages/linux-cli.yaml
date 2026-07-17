@@ -2,7 +2,12 @@
 - gnupg
 - nushell
 - openssh
+- pkg-config
 {{- if lookPath "apt-get" }}
+- libssl-dev
 - pinentry-gtk2
+{{- end }}
+{{- if lookPath "dnf" }}
+- openssl-devel
 {{- end }}
 - unzip
