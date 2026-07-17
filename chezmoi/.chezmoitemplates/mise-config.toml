@@ -1,5 +1,6 @@
 [tool_alias]
 9router = "npm:9router"
+agent-browser = "npm:agent-browser"
 claude-code = "npm:@anthropic-ai/claude-code"
 cliproxy = "github:router-for-me/CLIProxyAPI"
 codex = "aqua:openai/codex"
@@ -42,6 +43,9 @@ uv = "latest"
 cargo-binstall = "latest"
 
 # Vibe coding
+{{ if eq .machine "ohp360-wsl" -}}
+agent-browser = { version = "latest", allowBuilds = "agent-browser" }
+{{ end -}}
 codex = "latest"
 codex-acp = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }

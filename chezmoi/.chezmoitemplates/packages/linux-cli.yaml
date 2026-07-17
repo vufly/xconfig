@@ -2,4 +2,7 @@
 - gnupg
 - nushell
 - openssh
+{{- if lookPath "apt-get" }}
+- pinentry-gtk2
+{{- end }}
 - unzip
