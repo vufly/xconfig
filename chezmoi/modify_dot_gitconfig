@@ -20,6 +20,9 @@ path = ~/o24/.gitconfig
 [push]
   autoSetupRemote = true
 
+[alias]
+  ff-default = "!f() { remote_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) || { echo 'origin/HEAD is not set; run: git remote set-head origin --auto' >&2; return 1; }; branch=${remote_branch#origin/}; git fetch origin \"$branch:$branch\"; }; f"
+
 [core]
   pager = delta
 

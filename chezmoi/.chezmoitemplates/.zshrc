@@ -86,6 +86,7 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --icons=auto --color=always $re
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza --icons=auto --color=always $realpath'
 
 # Aliases
+alias gffd='git ff-default'
 alias ls='eza'
 alias lsi='eza --icons=auto'
 alias vim='nvim'

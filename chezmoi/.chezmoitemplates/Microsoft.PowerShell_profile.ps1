@@ -158,6 +158,10 @@ function zka {
 }
 
 # --- git aliases ---
+function gffd {
+    git ff-default
+}
+
 function gitzip {
     $name = Split-Path -Leaf (Get-Location)
     git archive HEAD -o "$name.zip"

@@ -137,6 +137,7 @@ export alias gdw = git diff --word-diff
 
 export alias gf = git fetch
 export alias gfa = git fetch --all --tags --prune --jobs=10
+export alias gffd = git ff-default
 export alias gfo = git fetch origin
 
 export alias gg = git gui citool
