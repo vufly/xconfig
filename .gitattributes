@@ -1,3 +1,5 @@
+.gitattributes text eol=lf
 graphify-out/graph.json merge=graphify-merge
+chezmoi/** text=auto eol=lf
 *.sh text eol=lf
 *.sh.tmpl text eol=lf

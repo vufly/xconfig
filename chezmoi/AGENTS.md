@@ -74,6 +74,18 @@ When Windows and Unix paths diverge:
 3. gate opposite-platform targets in `.chezmoiignore`
 4. update helper scripts to write live path for each platform
 
+## Line Endings
+
+Use LF for Chezmoi source and rendered text on every platform, including PowerShell files. PowerShell Core and Windows PowerShell accept LF.
+
+- Root `.gitattributes` enforces `chezmoi/** text=auto eol=lf`; keep binary detection enabled with `text=auto`.
+- Add `{{/* chezmoi:template:line-endings=lf */}}` on its own line in target templates whose output can inherit inconsistent endings from `includeTemplate`, template functions, or `modify_` input.
+- Put the directive in the target wrapper. Template directives are file-specific and are not inherited by called templates.
+- Do not use `native` or `crlf` unless a consumer is proven to require CRLF.
+- Live-state writers must write UTF-8 without BOM using LF and must preserve canonical ordering and blank lines from the matching `modify_` template.
+
+After changing a live-state writer, run `chezmoi apply`, exercise each state such as `theme dark` and `theme light`, and confirm `chezmoi diff` remains empty. Also run `chezmoi verify` and `git diff --check`.
+
 ## Change Rules
 
 When changing theme-managed config:

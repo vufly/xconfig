@@ -65,7 +65,13 @@ function Write-Lines {
     }
 
     $encoding = [System.Text.UTF8Encoding]::new($false)
-    [System.IO.File]::WriteAllLines($Path, $Lines, $encoding)
+    $content = if ($Lines.Count -gt 0) {
+        [string]::Join("`n", $Lines) + "`n"
+    }
+    else {
+        ""
+    }
+    [System.IO.File]::WriteAllText($Path, $content, $encoding)
 }
 
 function Update-BatConfig {
@@ -162,13 +168,19 @@ function Update-GitConfig {
             $foundDelta = $true
             $inDelta = $true
             $updatedLines.Add($line)
-            $updatedLines.Add($deltaComment)
-            $updatedLines.Add("  $ModeKey = true")
-            $updatedLines.Add('  syntax-theme = "' + $ThemeName + '"')
             continue
         }
 
         if ($line -match '^\[.*\]$') {
+            if ($inDelta) {
+                while ($updatedLines.Count -gt 0 -and $updatedLines[$updatedLines.Count - 1] -eq "") {
+                    $updatedLines.RemoveAt($updatedLines.Count - 1)
+                }
+                $updatedLines.Add($deltaComment)
+                $updatedLines.Add("  $ModeKey = true")
+                $updatedLines.Add('  syntax-theme = "' + $ThemeName + '"')
+                $updatedLines.Add("")
+            }
             $inDelta = $false
         }
 
@@ -184,6 +196,15 @@ function Update-GitConfig {
         }
 
         $updatedLines.Add($line)
+    }
+
+    if ($inDelta) {
+        while ($updatedLines.Count -gt 0 -and $updatedLines[$updatedLines.Count - 1] -eq "") {
+            $updatedLines.RemoveAt($updatedLines.Count - 1)
+        }
+        $updatedLines.Add($deltaComment)
+        $updatedLines.Add("  $ModeKey = true")
+        $updatedLines.Add('  syntax-theme = "' + $ThemeName + '"')
     }
 
     if (-not $foundDelta) {

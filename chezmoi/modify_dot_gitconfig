@@ -1,3 +1,4 @@
+{{/* chezmoi:template:line-endings=lf */}}
 {{- /* chezmoi:modify-template */ -}}
 {{- $isLight := or (contains "light = true" .chezmoi.stdin) (contains "syntax-theme = \"bearded-theme-milkshake-vanilla\"" .chezmoi.stdin) (contains "syntax-theme = bearded-theme-milkshake-vanilla" .chezmoi.stdin) (contains "syntax-theme = \"Bearded Theme Milkshake Vanilla\"" .chezmoi.stdin) (contains "syntax-theme = Bearded Theme Milkshake Vanilla" .chezmoi.stdin) -}}
 {{- $deltaModeKey := ternary "light" "dark" $isLight -}}
@@ -21,7 +22,7 @@ path = ~/o24/.gitconfig
   autoSetupRemote = true
 
 [alias]
-  ff-default = "!f() { remote_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) || { echo 'origin/HEAD is not set; run: git remote set-head origin --auto' >&2; return 1; }; branch=${remote_branch#origin/}; git fetch origin \"$branch:$branch\"; }; f"
+  ff-default = "!f() { remote_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) || { echo 'origin/HEAD is not set; run: git remote set-head origin --auto' >&2; return 1; }; branch=${remote_branch#origin/}; current_branch=$(git symbolic-ref --quiet --short HEAD); if [ \"$current_branch\" = \"$branch\" ]; then git pull --no-rebase --ff-only origin \"$branch\"; else git fetch origin \"$branch:$branch\"; fi; }; f"
 
 [core]
   pager = delta

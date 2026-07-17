@@ -1,2 +1,3 @@
+{{/* chezmoi:template:line-endings=lf */}}
 {{- /* chezmoi:modify-template */ -}}
 {{- includeTemplate ".chezmoitemplates/helix-config.toml" . -}}
