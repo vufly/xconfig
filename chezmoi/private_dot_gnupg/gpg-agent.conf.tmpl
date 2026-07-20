@@ -1,0 +1,9 @@
+{{- $pinentry := "/usr/bin/pinentry-qt" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{- if eq .chezmoi.arch "arm64" -}}
+{{- $pinentry = "/opt/homebrew/bin/pinentry-mac" -}}
+{{- else -}}
+{{- $pinentry = "/usr/local/bin/pinentry-mac" -}}
+{{- end -}}
+{{- end -}}
+pinentry-program {{ $pinentry }}

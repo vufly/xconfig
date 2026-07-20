@@ -2,6 +2,7 @@
 Documents/PowerShell
 AppData/Local/lazygit/config.yml.tmpl
 AppData/Roaming/helix
+AppData/Roaming/gnupg
 scripts/set-theme.ps1
 scripts/xpack.ps1
 scripts/xpack.d/*.ps1
@@ -13,6 +14,7 @@ scripts/xpack.d/*.ps1
 .config/helix
 .config/lazygit
 .config/powershell/Microsoft.PowerShell_profile.ps1
+.gnupg/gpg-agent.conf
 scripts/set-theme.sh
 scripts/xpack.sh
 scripts/xpack.d/*.sh

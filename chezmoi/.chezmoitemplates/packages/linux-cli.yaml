@@ -3,9 +3,9 @@
 - nushell
 - openssh
 - pkg-config
+- pinentry-qt
 {{- if lookPath "apt-get" }}
 - libssl-dev
-- pinentry-gtk2
 {{- end }}
 {{- if lookPath "dnf" }}
 - openssl-devel

@@ -43,6 +43,10 @@ packageCatalog:
     winget: GIMP.GIMP.3
     brew: { id: gimp, kind: cask }
 
+  gpg4win:
+    chocolatey: gpg4win
+    winget: GnuPG.Gpg4win
+
   gnupg:
     chocolatey: gnupg
     winget: GnuPG.GnuPG
