@@ -1,3 +1,4 @@
 - 7zip
+- choco-cleaner
 - gsudo
 - nushell: { backend: winget, scope: machine }

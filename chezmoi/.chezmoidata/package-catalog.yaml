@@ -30,6 +30,10 @@ packageCatalog:
     winget: Mozilla.Firefox.DeveloperEdition
     brew: { id: firefox@developer-edition, kind: cask }
 
+  fork:
+    winget: Fork.Fork
+    brew: { id: fork, kind: cask }
+
   gcc:
     chocolatey: mingw
     winget: BrechtSanders.WinLibs.MCF.UCRT

@@ -1,6 +1,6 @@
 - copyq
 - firefox
-- firefox-dev
+- firefox-dev: { updates: self }
 - gimp
 - inkscape
 - kicad
@@ -9,6 +9,6 @@
 - spotify
 - thunderbird
 - vlc
-- vscode
+- vscode: { updates: self }
 - wezterm
-- zed
+- zed: { updates: self }

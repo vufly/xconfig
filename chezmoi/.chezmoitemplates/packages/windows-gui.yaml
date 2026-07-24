@@ -1,4 +1,5 @@
 - chatgpt: { backend: script }
+- fork: { backend: winget, updates: self }
 - gpg4win
 - powertoys
 - sharex
