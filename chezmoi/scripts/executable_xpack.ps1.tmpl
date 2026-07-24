@@ -86,6 +86,23 @@ function Get-ScriptPath([string]$RelativePath) {
     Join-Path (Join-Path $HOME "scripts") $RelativePath
 }
 
+function Invoke-NativeHostProcess([string]$FilePath, [string[]]$Arguments) {
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $FilePath
+    $startInfo.UseShellExecute = $false
+    foreach ($argument in $Arguments) { [void]$startInfo.ArgumentList.Add($argument) }
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    try {
+        if (-not $process.Start()) { throw "Failed to start $FilePath." }
+        $process.WaitForExit()
+        $process.ExitCode
+    } finally {
+        $process.Dispose()
+    }
+}
+
 function Invoke-ScriptFile([string]$Path, [string[]]$Arguments) {
     if ([System.IO.Path]::GetExtension($Path) -eq ".ps1") {
         $hostExecutable = (Get-Process -Id $PID).Path
@@ -228,12 +245,13 @@ function Install-Package($Package) {
         "winget" {
             $arguments = @("install", "--id", $Package.Id, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
             if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
-            & winget @arguments | Out-Host
+            $exitCode = Invoke-NativeHostProcess "winget" $arguments
         }
         "chocolatey" {
             $arguments = @("install", $Package.Id, "--yes")
             if ($Package.Kind -eq "prerelease") { $arguments += "--pre" }
-            & choco.exe @arguments | Out-Host
+            if ([Console]::IsOutputRedirected) { $arguments += "--no-progress" }
+            $exitCode = Invoke-NativeHostProcess "choco.exe" $arguments
         }
         "script" {
             $result = Invoke-PackageScript $Package "install"
@@ -241,7 +259,7 @@ function Install-Package($Package) {
             return
         }
     }
-    if ($LASTEXITCODE -ne 0) { throw "Package install failed for $($Package.Name)." }
+    if ($exitCode -ne 0) { throw "Package install failed for $($Package.Name)." }
     Add-PackageToInventory $Package
 }
 
@@ -252,16 +270,17 @@ function Upgrade-Package($Package) {
         "winget" {
             $arguments = @("upgrade", "--id", $Package.Id, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
             if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
-            & winget @arguments | Out-Host
-            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $wingetNoUpgrade) {
+            $exitCode = Invoke-NativeHostProcess "winget" $arguments
+            if ($exitCode -ne 0 -and $exitCode -ne $wingetNoUpgrade) {
                 throw "Package upgrade failed for $($Package.Name)."
             }
         }
         "chocolatey" {
             $arguments = @("upgrade", $Package.Id, "--yes")
             if ($Package.Kind -eq "prerelease") { $arguments += "--pre" }
-            & choco.exe @arguments | Out-Host
-            if ($LASTEXITCODE -ne 0) { throw "Package upgrade failed for $($Package.Name)." }
+            if ([Console]::IsOutputRedirected) { $arguments += "--no-progress" }
+            $exitCode = Invoke-NativeHostProcess "choco.exe" $arguments
+            if ($exitCode -ne 0) { throw "Package upgrade failed for $($Package.Name)." }
         }
         "script" {
             $result = Invoke-PackageScript $Package "upgrade"
@@ -276,12 +295,14 @@ function Uninstall-Package($Package) {
         "winget" {
             $arguments = @("uninstall", "--id", $Package.Id, "--exact", "--source", "winget", "--disable-interactivity")
             if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
-            & winget @arguments | Out-Host
-            if ($LASTEXITCODE -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
+            $exitCode = Invoke-NativeHostProcess "winget" $arguments
+            if ($exitCode -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
         }
         "chocolatey" {
-            & choco.exe uninstall $Package.Id --yes | Out-Host
-            if ($LASTEXITCODE -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
+            $arguments = @("uninstall", $Package.Id, "--yes")
+            if ([Console]::IsOutputRedirected) { $arguments += "--no-progress" }
+            $exitCode = Invoke-NativeHostProcess "choco.exe" $arguments
+            if ($exitCode -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
         }
         "script" {
             $result = Invoke-PackageScript $Package "uninstall"
