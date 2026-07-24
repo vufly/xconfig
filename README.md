@@ -178,7 +178,7 @@ xpack doctor
 
 - `status`: reports present, missing, and invalid package entries.
 - `sync`: installs missing packages without upgrading existing ones.
-- `upgrade`: upgrades entries with `updates: manager`.
+- `upgrade`: upgrades entries with `updates: manager`, batching compatible packages into one command per backend.
 - `prune`: asks before uninstalling entries removed from the machine declaration.
 - `doctor`: validates package managers and custom scripts.
 

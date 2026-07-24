@@ -336,6 +336,47 @@ upgrade_package() {
   esac
 }
 
+upgrade_group() {
+  driver=$1
+  packages_file=$2
+  failures=0
+  set --
+
+  while IFS="$SEP" read -r name id kind prepare script; do
+    [ -z "$name" ] && continue
+    if run_prepare "$prepare"; then
+      set -- "$@" "$id"
+    else
+      print_error 'Prepare failed for %s.\n' "$name"
+      failures=1
+    fi
+  done <"$packages_file"
+
+  if [ "$#" -eq 0 ]; then
+    return "$failures"
+  fi
+
+  printf '%s%sUpgrading%s %s packages through %s...\n' "$STYLE_BOLD" "$STYLE_CYAN" "$STYLE_RESET" "$#" "$driver"
+  case "$driver" in
+    apt)
+      require_command apt-get || return 1
+      refresh_apt && run_root apt-get install --only-upgrade -y "$@"
+      ;;
+    dnf)
+      require_command dnf || return 1
+      run_root dnf upgrade -y "$@"
+      ;;
+    brew)
+      require_command brew || return 1
+      brew upgrade "$@"
+      ;;
+    *) return 1 ;;
+  esac
+  result=$?
+  [ "$result" -eq 0 ] || failures=1
+  return "$failures"
+}
+
 uninstall_package() {
   name=$1
   driver=$2
@@ -445,6 +486,12 @@ EOF
 
 upgrade_packages() {
   failures=0
+  upgrade_dir=$(mktemp -d) || return 1
+  trap 'rm -rf "$upgrade_dir"' EXIT HUP INT TERM
+  : >"$upgrade_dir/apt"
+  : >"$upgrade_dir/dnf"
+  : >"$upgrade_dir/brew"
+
   while IFS="$SEP" read -r name backend driver id kind updates prepare script scope; do
     [ -z "$name" ] && continue
     if [ "$updates" != "manager" ]; then
@@ -455,7 +502,15 @@ upgrade_packages() {
     check_package "$driver" "$id" "$kind" "$script"
     result=$?
     if [ "$result" -eq 0 ]; then
-      upgrade_package "$name" "$driver" "$id" "$kind" "$prepare" "$script" || failures=1
+      case "$driver" in
+        apt|dnf|brew)
+          printf '%s|%s|%s|%s|%s\n' "$name" "$id" "$kind" "$prepare" "$script" >>"$upgrade_dir/$driver" || failures=1
+          ;;
+        script)
+          upgrade_package "$name" "$driver" "$id" "$kind" "$prepare" "$script" || failures=1
+          ;;
+        *) failures=1 ;;
+      esac
     elif [ "$result" -eq 10 ]; then
       print_error 'Missing %s; run xpack sync first.\n' "$name"
       failures=1
@@ -465,6 +520,13 @@ upgrade_packages() {
   done <<EOF
 $PACKAGES
 EOF
+
+  for driver in apt dnf brew; do
+    [ -s "$upgrade_dir/$driver" ] || continue
+    upgrade_group "$driver" "$upgrade_dir/$driver" || failures=1
+  done
+  rm -rf "$upgrade_dir"
+  trap - EXIT HUP INT TERM
   return "$failures"
 }
 

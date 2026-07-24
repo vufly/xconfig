@@ -289,6 +289,52 @@ function Upgrade-Package($Package) {
     }
 }
 
+function Upgrade-PackageGroup([string]$Driver, [object[]]$GroupPackages) {
+    $prereleasePackages = @($GroupPackages | Where-Object Kind -eq "prerelease")
+    $canBatch = $Driver -eq "chocolatey" -and ($prereleasePackages.Count -eq 0 -or $prereleasePackages.Count -eq $GroupPackages.Count)
+    if (-not $canBatch) {
+        $failed = $false
+        foreach ($package in $GroupPackages) {
+            try {
+                Upgrade-Package $package
+            } catch {
+                Write-Failure $_.Exception.Message
+                $failed = $true
+            }
+        }
+        if ($failed) { return 1 }
+        return 0
+    }
+
+    $readyPackages = [System.Collections.Generic.List[object]]::new()
+    $failed = $false
+    foreach ($package in $GroupPackages) {
+        try {
+            Invoke-Prepare $package
+            $readyPackages.Add($package)
+        } catch {
+            Write-Failure $_.Exception.Message
+            $failed = $true
+        }
+    }
+    if ($readyPackages.Count -eq 0) {
+        if ($failed) { return 1 }
+        return 0
+    }
+
+    Write-Host "$(Format-Output 'Upgrading' 36 $true) $($readyPackages.Count) packages through chocolatey: $($readyPackages.Name -join ', ')"
+    $arguments = @("upgrade") + @($readyPackages.Id) + @("--yes", "--only-upgrade-installed")
+    if ($prereleasePackages.Count -gt 0) { $arguments += "--pre" }
+    if ([Console]::IsOutputRedirected) { $arguments += "--no-progress" }
+    $exitCode = Invoke-NativeHostProcess "choco.exe" $arguments
+    if ($exitCode -ne 0) {
+        Write-Failure "Package upgrade failed for chocolatey group."
+        $failed = $true
+    }
+    if ($failed) { return 1 }
+    0
+}
+
 function Uninstall-Package($Package) {
     Write-Host "$(Format-Output 'Uninstalling' 36 $true) $($Package.Name) through $($Package.Driver)..."
     switch ($Package.Driver) {
@@ -428,6 +474,7 @@ function Sync-Packages {
 
 function Upgrade-Packages {
     $failed = $false
+    $groups = [ordered]@{}
     foreach ($package in $packages) {
         if ($package.Updates -ne "manager") {
             Write-Host "$(Format-Output 'Skipping' 33 $true) $($package.Name) updates ($($package.Updates))."
@@ -435,7 +482,10 @@ function Upgrade-Packages {
         }
         try {
             if (Test-Package $package) {
-                Upgrade-Package $package
+                if (-not $groups.Contains($package.Driver)) {
+                    $groups[$package.Driver] = [System.Collections.Generic.List[object]]::new()
+                }
+                $groups[$package.Driver].Add($package)
             } else {
                 Write-Failure "Missing $($package.Name); run xpack sync first."
                 $failed = $true
@@ -444,6 +494,9 @@ function Upgrade-Packages {
             Write-Failure $_.Exception.Message
             $failed = $true
         }
+    }
+    foreach ($driver in $groups.Keys) {
+        if ((Upgrade-PackageGroup $driver @($groups[$driver])) -ne 0) { $failed = $true }
     }
     if ($failed) { return 1 }
     0
