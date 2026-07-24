@@ -36,16 +36,16 @@ const CAILOXO_PROMPT_OK_STYLE = "\u{1b}[38;5;2m"
 const CAILOXO_PROMPT_ERROR_STYLE = "\u{1b}[38;5;1m"
 const CAILOXO_TRANSIENT_OK_STYLE = "\u{1b}[38;5;2m"
 const CAILOXO_TRANSIENT_ERROR_STYLE = "\u{1b}[38;5;1m"
-const CAILOXO_STATUS_TEMPLATES = {behind: "⇣{{ count }}", ahead: "⇡{{ count }}", stashed: "#{{ count }}", action: "{{ action }}", conflicted: "={{ count }}", staged: "+{{ count }}", modified: "!{{ count }}", untracked: "?{{ count }}", renamed: "»{{ count }}", deleted: "-{{ count }}"}
+const CAILOXO_STATUS_TEMPLATES = {behind: "⇣{{ count }}", ahead: "⇡{{ count }}", stashed: "*{{ count }}", action: "{{ action }}", conflicted: "~{{ count }}", staged: "+{{ count }}", modified: "!{{ count }}", untracked: "?{{ count }}", renamed: "»{{ count }}", deleted: "-{{ count }}"}
 const CAILOXO_UPSTREAM_ICONS = {azure_devops: "󰿕 ", bitbucket: " ", codeberg: " ", gitea: "", github: " ", gitlab: " "}
 
 def cailoxo-os-icon [] {
-  let os = (sys host | get name | str downcase)
+  let os = (sys host | get name | str lowercase)
   if ($os | str contains "linux_mint") { "󰣭" } else if ($os | str contains "opensuse") { "" } else if ($os | str contains "raspbian") { "" } else if ($os | str contains "android") { "" } else if ($os | str contains "freebsd") { "" } else if ($os | str contains "manjaro") { "" } else if ($os | str contains "windows") { "" } else if ($os | str contains "alpine") { "" } else if ($os | str contains "centos") { "" } else if ($os | str contains "debian") { "" } else if ($os | str contains "fedora") { "" } else if ($os | str contains "gentoo") { "" } else if ($os | str contains "redhat") { "󱄛" } else if ($os | str contains "ubuntu") { "" } else if ($os | str contains "linux") { "" } else if ($os | str contains "macos") { "" } else if ($os | str contains "nixos") { "" } else if ($os | str contains "arch") { "" } else if ($os | str contains "wsl") { "" } else { "" }
 }
 
 def cailoxo-upstream-provider [url: string] {
-  let normalized = ($url | str downcase)
+  let normalized = ($url | str lowercase)
   if ($normalized | str contains "github.com") { "github" } else if ($normalized | str contains "gitlab.com") { "gitlab" } else if ($normalized | str contains "bitbucket.org") { "bitbucket" } else if ($normalized | str contains "codeberg.org") { "codeberg" } else if ($normalized | str contains "gitea") { "gitea" } else if ($normalized | str contains "dev.azure.com") or ($normalized | str contains "visualstudio.com") { "azure_devops" } else { "" }
 }
 
@@ -219,7 +219,7 @@ def cailoxo-host-name [] {
 def cailoxo-wsl-distro [] {
   let release = "/proc/sys/kernel/osrelease"
   if not ($release | path exists) { return "" }
-  let text = (open --raw $release | str downcase)
+  let text = (open --raw $release | str lowercase)
   if not ($text | str contains "microsoft") { return "" }
   $env.WSL_DISTRO_NAME? | default ""
 }
@@ -267,7 +267,7 @@ def cailoxo-normalize-path [path: string] {
 }
 
 def cailoxo-path-separator [] {
-  let os = (sys host | get name | str downcase)
+  let os = (sys host | get name | str lowercase)
   if ($os | str contains "windows") { '\' } else { '/' }
 }
 
