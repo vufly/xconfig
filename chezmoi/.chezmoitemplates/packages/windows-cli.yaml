@@ -2,3 +2,4 @@
 - choco-cleaner
 - gsudo
 - nushell: { backend: winget, scope: machine }
+- visualstudio2022-workload-vctools
