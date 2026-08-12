@@ -37,7 +37,8 @@ pnpm = "latest"
 
 # Language runtimes and toolchains
 go = "latest"
-python = "3.13"
+java = "17"
+python = "3.14"
 rust = "latest"
 uv = "latest"
 cargo-binstall = "latest"
