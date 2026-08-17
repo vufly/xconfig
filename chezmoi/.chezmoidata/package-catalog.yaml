@@ -70,6 +70,12 @@ packageCatalog:
     winget: KiCad.KiCad
     brew: { id: kicad, kind: cask }
 
+  localsend:
+    chocolatey: LocalSend.Install
+    brew: { id: localsend, kind: cask }
+    apt: { driver: script, path: xpack.d/manage-localsend.sh }
+    dnf: { driver: script, path: xpack.d/manage-localsend.sh }
+
   mise:
     chocolatey: mise
     winget: jdx.mise
