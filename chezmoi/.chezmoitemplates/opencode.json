@@ -921,6 +921,11 @@
           }
         }
       }
+    },
+    "small_model": {
+      "options": {
+        "baseURL": "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}"
+      }
     }
   }
 }
