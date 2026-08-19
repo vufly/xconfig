@@ -1,0 +1,33 @@
+{{- $suffix := "" -}}
+{{- $afterProvider := false -}}
+{{- $preserve := false -}}
+{{- range (splitList "\n" (trimSuffix "\n" .chezmoi.stdin)) -}}
+{{- if $preserve -}}
+{{- $suffix = printf "%s%s\n" $suffix . -}}
+{{- else if eq . "[model_providers.cliproxyapi]" -}}
+{{- $afterProvider = true -}}
+{{- else if and $afterProvider (hasPrefix "[" (trim .)) -}}
+{{- $preserve = true -}}
+{{- $suffix = printf "%s%s\n" $suffix . -}}
+{{- end -}}
+{{- end -}}
+{{- if eq $suffix "" -}}
+{{- $suffix = "[features]\nhooks = true\n" -}}
+{{- end -}}
+model_provider = "cliproxyapi"
+
+experimental_realtime_webrtc_call_base_url = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}" # Codex App voice chat requires WebRTC. If you do not use voice chat, you can omit this option.
+experimental_realtime_ws_base_url = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}" # Codex App voice chat requires WebRTC. If you do not use voice chat, you can omit this option.
+
+[model_providers.cliproxyapi]
+base_url = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}"
+experimental_bearer_token = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").apiKey.value }}{{ end }}"
+name = "OpenAI"
+wire_api = "responses"
+requires_openai_auth = true
+supports_websockets = true
+{{- if ne $suffix "" -}}
+{{ "\n" }}{{ $suffix -}}
+{{- else -}}
+{{ "\n" -}}
+{{- end -}}
