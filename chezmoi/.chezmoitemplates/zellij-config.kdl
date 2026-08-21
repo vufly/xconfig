@@ -3,6 +3,7 @@ default_shell "nu"
 {{ end -}}
 default_mode "locked"
 // default_layout "compact" // replaced by zjstatus
+pane_frame_style "full"
 
 theme "ansi2"
 themes {
