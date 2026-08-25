@@ -47,7 +47,6 @@ Run:
 
 ```bash
 nu --commands 'source /home/vudinhn/xconfig/chezmoi/dot_config/nushell/autoload/git-aliases.nu'
-graphify update .
 ```
 
 If `nu` is unavailable, verify with the next interactive Nushell startup before applying with chezmoi.
