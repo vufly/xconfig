@@ -7,6 +7,7 @@ codex = "aqua:openai/codex"
 codex-acp = "github:zed-industries/codex-acp"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
+fff-mcp = "github:dmtrKovalenko/fff"
 graphify = "pipx:graphifyy"
 nu-gstat = "cargo:nu_plugin_gstat"
 oh-my-codex = "npm:oh-my-codex"
@@ -51,6 +52,7 @@ codex = "latest"
 codex-acp = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 cliproxy = "latest"
+fff-mcp = { version = "latest", matching = "fff-mcp-", bin = "fff-mcp" }
 # graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
 opencode = "latest"
 rtk = { version = "latest", postinstall = "rtk init -g && rtk init -g --codex && rtk init -g --opencode" }

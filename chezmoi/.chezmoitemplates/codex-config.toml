@@ -1,33 +1,32 @@
-{{- $suffix := "" -}}
-{{- $afterProvider := false -}}
-{{- $preserve := false -}}
-{{- range (splitList "\n" (trimSuffix "\n" .chezmoi.stdin)) -}}
-{{- if $preserve -}}
-{{- $suffix = printf "%s%s\n" $suffix . -}}
-{{- else if eq . "[model_providers.cliproxyapi]" -}}
-{{- $afterProvider = true -}}
-{{- else if and $afterProvider (hasPrefix "[" (trim .)) -}}
-{{- $preserve = true -}}
-{{- $suffix = printf "%s%s\n" $suffix . -}}
+{{- $mise := lookPath "mise" -}}
+{{- if not $mise -}}{{- fail "mise must be installed and on PATH before configuring FFF MCP" -}}{{- end -}}
+{{- /* Merge as TOML to preserve runtime settings regardless of their position. */ -}}
+{{- $state := fromToml .chezmoi.stdin -}}
+{{- if not $state -}}
+{{- $state = dict "features" (dict "hooks" true) -}}
 {{- end -}}
+{{- $baseURL := "" -}}
+{{- $token := "" -}}
+{{- if lookPath "bw" -}}
+{{- $proxy := bitwardenFields "item" "cliproxy" -}}
+{{- $baseURL = $proxy.baseUrl.value -}}
+{{- $token = $proxy.apiKey.value -}}
 {{- end -}}
-{{- if eq $suffix "" -}}
-{{- $suffix = "[features]\nhooks = true\n" -}}
-{{- end -}}
-model_provider = "cliproxyapi"
-
-experimental_realtime_webrtc_call_base_url = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}" # Codex App voice chat requires WebRTC. If you do not use voice chat, you can omit this option.
-experimental_realtime_ws_base_url = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}" # Codex App voice chat requires WebRTC. If you do not use voice chat, you can omit this option.
-
-[model_providers.cliproxyapi]
-base_url = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value }}{{ end }}"
-experimental_bearer_token = "{{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").apiKey.value }}{{ end }}"
-name = "OpenAI"
-wire_api = "responses"
-requires_openai_auth = true
-supports_websockets = true
-{{- if ne $suffix "" -}}
-{{ "\n" }}{{ $suffix -}}
-{{- else -}}
-{{ "\n" -}}
-{{- end -}}
+{{- $_ := set $state "model_provider" "cliproxyapi" -}}
+{{- /* Codex App voice chat uses the proxy's WebRTC and WebSocket endpoints. */ -}}
+{{- $_ := set $state "experimental_realtime_webrtc_call_base_url" $baseURL -}}
+{{- $_ := set $state "experimental_realtime_ws_base_url" $baseURL -}}
+{{- $providers := get $state "model_providers" | default dict -}}
+{{- $_ := set $providers "cliproxyapi" (dict
+    "base_url" $baseURL
+    "experimental_bearer_token" $token
+    "name" "OpenAI"
+    "wire_api" "responses"
+    "requires_openai_auth" true
+    "supports_websockets" true
+) -}}
+{{- $_ := set $state "model_providers" $providers -}}
+{{- $servers := get $state "mcp_servers" | default dict -}}
+{{- $_ := set $servers "fff" (dict "command" $mise "args" (list "exec" "--" "fff-mcp")) -}}
+{{- $_ := set $state "mcp_servers" $servers -}}
+{{- $state | toToml -}}

@@ -1,3 +1,5 @@
+{{- $mise := lookPath "mise" -}}
+{{- if not $mise -}}{{- fail "mise must be installed and on PATH before configuring FFF MCP" -}}{{- end -}}
 {
   "$schema": "https://opencode.ai/config.json",
   "lsp": true,
@@ -12,5 +14,12 @@
       }
     }
   },
-  "small_model": "openai/gpt-5.6-luna"
+  "small_model": "openai/gpt-5.6-luna",
+  "mcp": {
+    "fff": {
+      "type": "local",
+      "command": [{{ $mise | toJson }}, "exec", "--", "fff-mcp"],
+      "enabled": true
+    }
+  }
 }
