@@ -90,15 +90,28 @@ function Invoke-NativeHostProcess([string]$FilePath, [string[]]$Arguments) {
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $FilePath
     $startInfo.UseShellExecute = $false
-    foreach ($argument in $Arguments) { [void]$startInfo.ArgumentList.Add($argument) }
+
+    if ($PSVersionTable.PSVersion.Major -ge 7) {
+        foreach ($argument in $Arguments) {
+            [void]$startInfo.ArgumentList.Add($argument)
+        }
+    }
+    else {
+        $startInfo.Arguments = ($Arguments -join ' ')
+    }
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
+
     try {
-        if (-not $process.Start()) { throw "Failed to start $FilePath." }
+        if (-not $process.Start()) {
+            throw "Failed to start $FilePath."
+        }
+
         $process.WaitForExit()
-        $process.ExitCode
-    } finally {
+        return $process.ExitCode
+    }
+    finally {
         $process.Dispose()
     }
 }
@@ -237,6 +250,7 @@ function Test-Package($Package) {
         default { throw "Backend driver $($Package.Driver) is unsupported on Windows." }
     }
 }
+
 
 function Install-Package($Package) {
     Write-Host "$(Format-Output 'Installing' 36 $true) $($Package.Name) through $($Package.Driver)..."

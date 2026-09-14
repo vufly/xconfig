@@ -82,7 +82,13 @@ if ($Machine -notmatch '^[A-Za-z0-9._-]+$') {
 }
 
 $overrideData = @{ machine = $Machine } | ConvertTo-Json -Compress
-chezmoi --source $sourceDir execute-template --override-data $overrideData '{{ includeTemplate ".chezmoitemplates/xpack-records" . }}' | Out-Null
+# Only legacy native argument passing needs escaped JSON quotes.
+if ($PSVersionTable.PSVersion -lt [version]"7.3" -or $PSNativeCommandArgumentPassing -eq "Legacy") {
+    $overrideData = $overrideData.Replace('"', '\"')
+}
+# Send the template through stdin so its quotes survive every PowerShell version.
+'{{ includeTemplate ".chezmoitemplates/xpack-records" . }}' |
+    chezmoi --source $sourceDir execute-template --override-data $overrideData --verbose | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw "Package declaration failed to render for machine '$Machine'."
 }
@@ -93,11 +99,20 @@ New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 
 $yamlSourceDir = $sourceDir.Replace("\", "/").Replace("'", "''")
 $yamlMachine = $Machine.Replace("'", "''")
-@"
+$configContent = @"
 sourceDir: '$yamlSourceDir'
 data:
   machine: '$yamlMachine'
-"@ | Set-Content -LiteralPath $configFile -Encoding utf8
+"@
+# Windows PowerShell's Set-Content -Encoding utf8 adds a BOM that can hide the first YAML key.
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($configFile, ($configContent.Replace("`r`n", "`n") + "`n"), $utf8NoBom)
+
+$configuredSourceDir = chezmoi source-path
+if ($LASTEXITCODE -ne 0) { throw "Could not verify chezmoi source directory." }
+if ($configuredSourceDir.Replace("\", "/") -ne $sourceDir.Replace("\", "/")) {
+    throw "chezmoi uses source directory '$configuredSourceDir' instead of '$sourceDir'. Check '$configFile'."
+}
 
 Write-Host "Applying chezmoi configuration for machine $Machine..."
 chezmoi apply
