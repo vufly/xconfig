@@ -66,6 +66,7 @@ Current divergence:
 
 - Helix target is `%AppData%/helix/config.toml` on Windows, not `$HOME/.config/helix/config.toml`
 - Lazygit target is `AppData/Local/lazygit/config.yml` on Windows
+- Zellij targets are `%AppData%/Zellij/config/config.kdl` and `%AppData%/Zellij/config/layouts/default.kdl` on Windows, not `$HOME/.config/zellij/`
 
 When Windows and Unix paths diverge:
 
