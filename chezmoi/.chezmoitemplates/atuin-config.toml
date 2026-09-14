@@ -1,0 +1,21 @@
+# Sync during shell activity; mise manages updates.
+auto_sync = true
+sync_frequency = "1m"
+update_check = false
+
+# Search across machines, with familiar fuzzy matching.
+search_mode = "fuzzy"
+filter_mode = "global"
+
+# Keep the search interface compact and allow editing before execution.
+style = "compact"
+inline_height = 15
+show_preview = true
+max_preview_height = 4
+enter_accept = false
+
+[search]
+shells = "all"
+
+[ui]
+columns = ["duration", "time", "host", "command"]

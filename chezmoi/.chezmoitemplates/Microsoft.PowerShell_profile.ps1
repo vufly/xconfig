@@ -214,3 +214,6 @@ function global:prompt {
     # Then call the Cailoxo prompt
     _cailoxo_prompt
 }
+
+# --- Atuin history integration ---
+atuin init powershell | Out-String | Invoke-Expression

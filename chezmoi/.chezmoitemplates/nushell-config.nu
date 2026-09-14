@@ -192,3 +192,4 @@ use ($nu.default-config-dir | path join mise.nu)
 # oh-my-posh init nu --config "~/.theme.omp.toml"
 source ($nu.default-config-dir | path join prompt.nu)
 source ~/.zoxide.nu
+source ($nu.default-config-dir | path join atuin.nu)

@@ -20,3 +20,7 @@ let mise_path = $nu.default-config-dir | path join mise.nu
 ^mise activate nu | save $mise_path --force
 
 zoxide init nushell --cmd cd | save -f ~/.zoxide.nu
+
+# Generate before config.nu is parsed; mise activation is loaded there.
+let atuin_path = $nu.default-config-dir | path join atuin.nu
+^mise exec -- atuin init nu | save --force $atuin_path

@@ -214,3 +214,5 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL='gpt-5.4-mini(medium)'
 eval "$(mise activate zsh)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
+# Shell plugin only; mise manages the Atuin binary.
+zinit load atuinsh/atuin
