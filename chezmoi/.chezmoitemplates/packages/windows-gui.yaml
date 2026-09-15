@@ -3,6 +3,7 @@
 - gpg4win
 - powertoys
 - sharex
+- spotify: { backend: winget }
 - sumatrapdf
 - windhawk
 - zalo

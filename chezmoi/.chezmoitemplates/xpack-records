@@ -68,6 +68,7 @@
   {{- $id := $name -}}
   {{- $kind := "" -}}
   {{- $scope := "" -}}
+  {{- $source := "" -}}
   {{- $prepare := "" -}}
   {{- $script := "" -}}
   {{- if hasKey $catalog $name -}}
@@ -80,6 +81,7 @@
         {{- if hasKey $override "id" -}}{{- $id = index $override "id" -}}{{- end -}}
         {{- if hasKey $override "kind" -}}{{- $kind = index $override "kind" -}}{{- end -}}
         {{- if hasKey $override "scope" -}}{{- $scope = index $override "scope" -}}{{- end -}}
+        {{- if hasKey $override "source" -}}{{- $source = index $override "source" -}}{{- end -}}
         {{- if hasKey $override "prepare" -}}{{- $prepare = index $override "prepare" -}}{{- end -}}
         {{- if hasKey $override "driver" -}}{{- $driver = index $override "driver" -}}{{- end -}}
         {{- if hasKey $override "path" -}}{{- $script = index $override "path" -}}{{- end -}}
@@ -95,5 +97,14 @@
   {{- if not (has $scope (list "" "user" "machine")) -}}
     {{- fail (printf "package %q has unsupported scope %q" $name $scope) -}}
   {{- end -}}
-  {{- printf "%s|%s|%s|%s|%s|%s|%s|%s|%s\n" $name $backend $driver $id $kind $updates $prepare $script $scope -}}
+  {{- if and (ne $source "") (ne $driver "winget") -}}
+    {{- fail (printf "package %q sets source for non-Winget driver %q" $name $driver) -}}
+  {{- end -}}
+  {{- if eq $driver "winget" -}}
+    {{- if eq $source "" -}}{{- $source = "winget" -}}{{- end -}}
+    {{- if not (has $source (list "winget" "msstore")) -}}
+      {{- fail (printf "package %q has unsupported Winget source %q" $name $source) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- printf "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" $name $backend $driver $id $kind $updates $prepare $script $scope $source -}}
 {{- end -}}

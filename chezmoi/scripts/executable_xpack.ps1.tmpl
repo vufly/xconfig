@@ -9,7 +9,7 @@ $packages = @(
     $manifest -split '\r?\n' |
         Where-Object { $_ } |
         ForEach-Object {
-            $fields = $_ -split '\|', 9
+            $fields = $_ -split '\|', 10
             [PSCustomObject]@{
                 Name    = $fields[0]
                 Backend = $fields[1]
@@ -20,6 +20,7 @@ $packages = @(
                 Prepare = $fields[6]
                 Script  = $fields[7]
                 Scope   = $fields[8]
+                Source  = $fields[9]
             }
         }
 )
@@ -69,15 +70,25 @@ function Get-PackageKey($Package) {
     if ($Package.Driver -eq "script") {
         return "script|$($Package.Script)"
     }
-    "$($Package.Driver)|$($Package.Id)|$($Package.Kind)|$($Package.Scope)"
+    $key = "$($Package.Driver)|$($Package.Id)|$($Package.Kind)|$($Package.Scope)"
+    if ($Package.Driver -eq "winget" -and (Get-WingetSource $Package) -ne "winget") {
+        $key += "|$(Get-WingetSource $Package)"
+    }
+    $key
 }
 
 function Get-PackageKeyWithoutScope($Package) {
-    "$($Package.Driver)|$($Package.Id)|$($Package.Kind)"
+    "$($Package.Driver)|$($Package.Id)|$($Package.Kind)|$(Get-WingetSource $Package)"
+}
+
+function Get-WingetSource($Package) {
+    if ($Package.Source) { return $Package.Source }
+    "winget"
 }
 
 function Get-PackageDisplay($Package) {
     $display = "$($Package.Backend):$($Package.Id)"
+    if ($Package.Driver -eq "winget") { $display += " [$(Get-WingetSource $Package)]" }
     if ($Package.Scope) { $display += " [$($Package.Scope)]" }
     $display
 }
@@ -193,8 +204,8 @@ function Initialize-PackageInventory([string]$Driver) {
 }
 
 function Add-PackageToInventory($Package) {
-    if ($Package.Driver -eq "winget" -and $Package.Scope) {
-        $script:wingetPackageStatus["$($Package.Id)|$($Package.Scope)"] = $true
+    if ($Package.Driver -eq "winget" -and ($Package.Scope -or (Get-WingetSource $Package) -ne "winget")) {
+        $script:wingetPackageStatus[(Get-PackageKey $Package)] = $true
         return
     }
     if ($script:packageInventories.ContainsKey($Package.Driver)) {
@@ -203,8 +214,8 @@ function Add-PackageToInventory($Package) {
 }
 
 function Remove-PackageFromInventory($Package) {
-    if ($Package.Driver -eq "winget" -and $Package.Scope) {
-        $script:wingetPackageStatus["$($Package.Id)|$($Package.Scope)"] = $false
+    if ($Package.Driver -eq "winget" -and ($Package.Scope -or (Get-WingetSource $Package) -ne "winget")) {
+        $script:wingetPackageStatus[(Get-PackageKey $Package)] = $false
         return
     }
     if ($script:packageInventories.ContainsKey($Package.Driver)) {
@@ -212,11 +223,13 @@ function Remove-PackageFromInventory($Package) {
     }
 }
 
-function Get-WingetPackageStatus([string]$PackageId, [string]$Scope, [string]$Name) {
-    $key = "$PackageId|$Scope"
+function Get-WingetPackageStatus($Package) {
+    $key = Get-PackageKey $Package
     if ($script:wingetPackageStatus.ContainsKey($key)) { return $script:wingetPackageStatus[$key] }
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "winget is not installed." }
-    & winget list --id $PackageId --exact --source winget --scope $Scope --accept-source-agreements --disable-interactivity | Out-Null
+    $arguments = @("list", "--id", $Package.Id, "--exact", "--source", (Get-WingetSource $Package), "--accept-source-agreements", "--disable-interactivity")
+    if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
+    & winget @arguments | Out-Null
     if ($LASTEXITCODE -eq 0) {
         $script:wingetPackageStatus[$key] = $true
         return $true
@@ -225,14 +238,14 @@ function Get-WingetPackageStatus([string]$PackageId, [string]$Scope, [string]$Na
         $script:wingetPackageStatus[$key] = $false
         return $false
     }
-    throw "winget query failed for $Name."
+    throw "winget query failed for $($Package.Name)."
 }
 
 function Test-Package($Package) {
     switch ($Package.Driver) {
         "winget" {
-            if ($Package.Scope) {
-                return Get-WingetPackageStatus $Package.Id $Package.Scope $Package.Name
+            if ($Package.Scope -or (Get-WingetSource $Package) -ne "winget") {
+                return Get-WingetPackageStatus $Package
             }
             Initialize-PackageInventory "winget"
             return $script:packageInventories["winget"].Contains([string]$Package.Id)
@@ -257,7 +270,7 @@ function Install-Package($Package) {
     Invoke-Prepare $Package
     switch ($Package.Driver) {
         "winget" {
-            $arguments = @("install", "--id", $Package.Id, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
+            $arguments = @("install", "--id", $Package.Id, "--exact", "--source", (Get-WingetSource $Package), "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
             if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
             $exitCode = Invoke-NativeHostProcess "winget" $arguments
         }
@@ -282,7 +295,7 @@ function Upgrade-Package($Package) {
     Invoke-Prepare $Package
     switch ($Package.Driver) {
         "winget" {
-            $arguments = @("upgrade", "--id", $Package.Id, "--exact", "--source", "winget", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
+            $arguments = @("upgrade", "--id", $Package.Id, "--exact", "--source", (Get-WingetSource $Package), "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
             if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
             $exitCode = Invoke-NativeHostProcess "winget" $arguments
             if ($exitCode -ne 0 -and $exitCode -ne $wingetNoUpgrade) {
@@ -353,7 +366,7 @@ function Uninstall-Package($Package) {
     Write-Host "$(Format-Output 'Uninstalling' 36 $true) $($Package.Name) through $($Package.Driver)..."
     switch ($Package.Driver) {
         "winget" {
-            $arguments = @("uninstall", "--id", $Package.Id, "--exact", "--source", "winget", "--disable-interactivity")
+            $arguments = @("uninstall", "--id", $Package.Id, "--exact", "--source", (Get-WingetSource $Package), "--disable-interactivity")
             if ($Package.Scope) { $arguments += @("--scope", $Package.Scope) }
             $exitCode = Invoke-NativeHostProcess "winget" $arguments
             if ($exitCode -ne 0) { throw "Package uninstall failed for $($Package.Name)." }
@@ -400,8 +413,11 @@ function Resolve-OwnedPackageScope($Package) {
     })
     if ($legacyPackages.Count -eq 0) { return }
 
-    $userInstalled = Get-WingetPackageStatus $Package.Id "user" $Package.Name
-    $machineInstalled = Get-WingetPackageStatus $Package.Id "machine" $Package.Name
+    $probe = $Package.PSObject.Copy()
+    $probe.Scope = "user"
+    $userInstalled = Get-WingetPackageStatus $probe
+    $probe.Scope = "machine"
+    $machineInstalled = Get-WingetPackageStatus $probe
     if ($userInstalled -and $machineInstalled) {
         throw "Cannot migrate ownership scope for $($Package.Name): both user and machine installations exist."
     }
@@ -607,6 +623,10 @@ function Test-Configuration {
         }
         if ($package.Scope -and ($package.Driver -ne "winget" -or $package.Scope -notin @("user", "machine"))) {
             Write-Failure "$($package.Name) has invalid package scope $($package.Scope)."
+            $failed = $true
+        }
+        if ($package.Source -and ($package.Driver -ne "winget" -or $package.Source -notin @("winget", "msstore"))) {
+            Write-Failure "$($package.Name) has invalid Winget source $($package.Source)."
             $failed = $true
         }
     }

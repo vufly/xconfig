@@ -109,6 +109,7 @@ Supported backend metadata:
 - `id`: backend package identifier.
 - `kind`: backend-specific variant, such as Homebrew `cask` or Chocolatey `prerelease`.
 - `scope`: Winget `user` or `machine` default.
+- `source`: Winget `winget` (default) or `msstore`. Microsoft Store packages use their Store product ID.
 - `prepare`: script run before generic install and upgrade.
 - `driver`: resolved implementation driver, normally `script` for custom lifecycles.
 - `path`: custom lifecycle script path.
@@ -184,7 +185,7 @@ Trace package through declaration, catalog mappings, and scripts before changing
 
 - Preserve platform mappings not included in request.
 - Keep shared declarations valid for every platform receiving them.
-- Changing backend ID, driver, kind, script path, or Winget scope changes xpack ownership identity. Old owned entry remains eligible for explicit pruning.
+- Changing backend ID, driver, kind, script path, Winget scope, or Winget source changes xpack ownership identity. Old owned entry remains eligible for explicit pruning. Existing Winget state without a source uses `winget`.
 - Do not edit local ownership state to hide identity changes.
 - Do not run `xpack prune` after mapping changes.
 - Package versions are not pinned in declarations. Do not encode version updates unless xpack gains an explicit version feature.
@@ -205,7 +206,7 @@ Use `--override-data` platform fixtures when validating non-host platforms. Incl
 
 - package appears exactly once on intended platforms;
 - package is absent from unintended platforms;
-- logical name resolves to expected backend, driver, ID, kind, update policy, prepare path, script path, and scope;
+- logical name resolves to expected backend, driver, ID, kind, update policy, prepare path, script path, scope, and source;
 - WSL excludes GUI declarations.
 
 For changed shell scripts, run POSIX syntax checks:

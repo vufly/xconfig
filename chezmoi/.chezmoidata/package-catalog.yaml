@@ -121,7 +121,7 @@ packageCatalog:
 
   spotify:
     chocolatey: spotify
-    winget: Spotify.Spotify
+    winget: { id: 9NCBCSZSJRSB, source: msstore }
     brew: { id: spotify, kind: cask }
 
   sumatrapdf:
