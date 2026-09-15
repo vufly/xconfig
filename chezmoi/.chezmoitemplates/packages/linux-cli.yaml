@@ -5,6 +5,7 @@
 - pkg-config
 - pinentry-qt
 {{- if lookPath "apt-get" }}
+- build-essential
 - libssl-dev
 {{- end }}
 {{- if lookPath "dnf" }}
