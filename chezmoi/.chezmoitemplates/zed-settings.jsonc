@@ -1,0 +1,163 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "semantic_tokens": "off",
+{{- if eq .chezmoi.os "windows" }}
+  "wsl_connections": [
+    {
+      "distro_name": "Ubuntu",
+      "user": null,
+      "projects": [
+        {
+          "paths": [
+            "/home/vudinhn/xconfig"
+          ]
+        }
+      ]
+    }
+  ],
+{{- end }}
+  "tabs": {
+    "git_status": true
+  },
+  "title_bar": {
+    "show_menus": false,
+    "show_branch_status_icon": true
+  },
+  "colorize_brackets": true,
+  "indent_guides": {
+    "background_coloring": "indent_aware"
+  },
+  "buffer_line_height": "standard",
+  "buffer_font_family": "RecMonoFly Nerd Font",
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false
+  },
+  "agent": {
+    "dock": "right",
+    "sidebar_side": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "project_panel": {
+    "dock": "left"
+  },
+  "icon_theme": "Bearded Icons",
+  "base_keymap": "VSCode",
+  "ui_font_size": 16,
+  "buffer_font_size": 14,
+  "theme": {
+    "light": "Bearded Theme Milkshake Vanilla Banana",
+    "dark": "Bearded Theme Monokai Stone",
+  },
+  "experimental.theme_overrides": {
+    "syntax": {
+      // Keywords
+      "keyword": {
+        "font_weight": 400,
+        "font_style": "italic"
+      },
+      // Operators
+      "operator": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Variables
+      "variable": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      "variable.builtin": {
+        "font_weight": 700,
+        "font_style": "normal"
+      },
+      // Parameters
+      "variable.parameter": {
+        "font_style": "italic"
+      },
+      "variable.parameter.builtin": {
+        "font_weight": 700,
+        "font_style": "italic"
+      },
+      "variable.member": {
+        "font_style": "italic"
+      },
+      // Object properties
+      "property": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Functions
+      "function": {
+        "font_weight": 700
+      },
+      "method": {
+        "font_weight": 700
+      },
+      "function.builtin": {
+        "font_weight": 700
+      },
+      // Classes and Types
+      "type": {
+        "font_weight": 700,
+        "font_style": "italic"
+      },
+      "class": {
+        "font_style": "italic"
+      },
+      "constructor": {
+        "font_style": "italic"
+      },
+      // Strings
+      "string": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Comments
+      "comment": {
+        "font_style": "italic"
+      },
+      "comment.doc": {
+        "font_style": "italic"
+      },
+      // Constants
+      "constant": {
+        "font_weight": 700
+      },
+      "boolean": {
+        "font_weight": 700
+      },
+      // Numbers
+      "number": {
+        "font_weight": 400,
+        "font_style": "normal"
+      },
+      // Punctuation / Brackets
+      "punctuation": {
+        "font_weight": 700
+      },
+      "punctuation.bracket": {
+        "font_weight": 700
+      },
+      "punctuation.delimiter": {
+        "font_weight": 700
+      },
+      // HTML/XML Tags
+      "tag": {
+        "font_weight": 700
+      },
+      // Attributes
+      "attribute": {
+        "font_style": "italic"
+      }
+    }
+  }
+}

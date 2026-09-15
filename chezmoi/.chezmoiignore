@@ -5,6 +5,7 @@ AppData/Roaming/helix
 AppData/Roaming/gnupg
 AppData/Roaming/Zellij
 AppData/Roaming/nushell
+AppData/Roaming/Zed
 scripts/set-theme.ps1
 scripts/xpack.ps1
 scripts/xpack.d/*.ps1
@@ -17,6 +18,7 @@ scripts/xpack.d/*.ps1
 .config/lazygit
 .config/zellij
 .config/nushell
+.config/zed
 .config/powershell/Microsoft.PowerShell_profile.ps1
 .gnupg/gpg-agent.conf
 scripts/set-theme.sh

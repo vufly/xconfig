@@ -68,6 +68,7 @@ Current divergence:
 - Lazygit target is `AppData/Local/lazygit/config.yml` on Windows
 - Zellij targets are `%AppData%/Zellij/config/config.kdl` and `%AppData%/Zellij/config/layouts/default.kdl` on Windows, not `$HOME/.config/zellij/`
 - Nushell targets are under `%AppData%/nushell/` on Windows, not `$HOME/.config/nushell/`; this includes `config.nu`, `env.nu`, `prompt.nu`, and `autoload/`.
+- Zed settings target is `%AppData%/Zed/settings.json` on Windows and `$HOME/.config/zed/settings.json` on Linux and macOS.
 
 When Windows and Unix paths diverge:
 
