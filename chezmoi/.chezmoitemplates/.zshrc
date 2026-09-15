@@ -216,3 +216,4 @@ eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
 # Keep Up Arrow for shell history and Ctrl+R for Atuin; mise manages the binary.
 eval "$(atuin init zsh --disable-up-arrow)"
+[[ ! -r ~/.config/zsh/atuin.zsh ]] || source ~/.config/zsh/atuin.zsh

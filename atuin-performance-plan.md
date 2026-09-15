@@ -2,7 +2,7 @@
 
 ## Status
 
-Deferred investigation. The current change disables Atuin's Up Arrow binding in Zsh, Nushell, and PowerShell while retaining Ctrl+R. No prompt-performance changes have been implemented.
+Atuin's Up Arrow binding is disabled in Zsh, Nushell, and PowerShell while Ctrl+R is retained. A guarded Zsh redraw adaptation is implemented in `chezmoi/dot_config/zsh/atuin.zsh`, sourced after Atuin initialization. Broader prompt caching remains deferred.
 
 ## Findings
 
@@ -21,7 +21,7 @@ Measure selection-to-editable-buffer latency in an affected repository. Compare 
 
 ## Candidate A: Adjust the Atuin return widget
 
-After `atuin init zsh`, adapt only the `_atuin_search` function's prompt-redraw operation. Investigate replacing `zle reset-prompt` with `zle .redisplay`, which redisplays the edit buffer without requesting prompt re-expansion.
+After `atuin init zsh`, adapt only the `_atuin_search` function's prompt-redraw operation. Replace `zle reset-prompt` with `zle .redisplay`, which redisplays the edit buffer without explicitly requesting prompt re-expansion. ZLE still refreshes its invalidated display, so this does not eliminate every prompt render.
 
 - Preserve Atuin's search, exit-status handling, bracketed-paste restoration, buffer assignment, and execution behavior.
 - Do not override `zle` globally or remove repainting altogether.
@@ -29,6 +29,17 @@ After `atuin init zsh`, adapt only the `_atuin_search` function's prompt-redraw 
 - If modifying the generated function body, guard against changes in upstream function shape. Atuin is installed with the `latest` version policy.
 - Validate inline-picker cleanup, multiline prompts, cancellation, selection, and terminal resizing before adopting this approach.
 - This candidate is Zsh-specific. Nushell and PowerShell have different shell integration mechanisms.
+
+### Trial results
+
+Pseudo-terminal tests used the installed Atuin picker, the current multiline Cailoxo prompt, and the xconfig working directory. Background Git fetch was disabled to isolate redraw cost. The diagnostic shell did not load other Zsh plugins, and selected commands were not executed.
+
+- Original widget: **295 ms**, two full prompt renders on return.
+- Adapted widget: **142 ms**, one full prompt render on return.
+- Cancellation: **164 ms**, with the original editable buffer preserved.
+- Resize during search: **448 ms**, with the editable buffer preserved; resize still triggered additional prompt renders.
+
+These are individual local trial measurements, not a guarantee for other repositories or a visual verification in WezTerm. They show that the narrow override removes a redundant render. Further reduction requires investigating the remaining render or implementing Candidate B.
 
 ## Candidate B: Cache prompt rendering
 
