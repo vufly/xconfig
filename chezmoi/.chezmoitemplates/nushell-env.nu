@@ -23,4 +23,5 @@ zoxide init nushell --cmd cd | save -f ~/.zoxide.nu
 
 # Generate before config.nu is parsed; mise activation is loaded there.
 let atuin_path = $nu.default-config-dir | path join atuin.nu
-^mise exec -- atuin init nu | save --force $atuin_path
+# Keep Up Arrow for shell history and Ctrl+R for Atuin.
+^mise exec -- atuin init nu --disable-up-arrow | save --force $atuin_path

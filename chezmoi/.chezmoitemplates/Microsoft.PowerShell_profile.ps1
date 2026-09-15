@@ -216,4 +216,5 @@ function global:prompt {
 }
 
 # --- Atuin history integration ---
-atuin init powershell | Out-String | Invoke-Expression
+# Keep Up Arrow for shell history and Ctrl+R for Atuin.
+atuin init powershell --disable-up-arrow | Out-String | Invoke-Expression
