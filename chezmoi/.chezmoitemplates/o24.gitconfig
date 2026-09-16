@@ -1,4 +1,4 @@
-{{ if or (eq .chezmoi.hostname "OHP360") (eq .chezmoi.hostname "ohp360-wsl") -}}
+{{ if hasPrefix "ohp" (lower .chezmoi.hostname) -}}
 [user]
     name = Nguyen Dinh Vu
     email = divn@outpost24.com
