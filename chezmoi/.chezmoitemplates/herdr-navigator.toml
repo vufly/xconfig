@@ -1,0 +1,13 @@
+[picker]
+reuse_existing = true
+create_missing = false
+prefix_workspace_labels = false
+
+[[integrations]]
+id = "workflows"
+label = "Workflows and role history"
+enabled = true
+collect = "workspace list --navigator"
+open = "workspace open {{ "{{id}}" }} --focus"
+notify_success = false
+notify_error = true

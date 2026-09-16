@@ -6,6 +6,10 @@
 {{- $state = dict "features" (dict "hooks" true) -}}
 {{- end -}}
 {{- $baseURL := "" -}}
+{{- /* Herdr's Codex session integration needs hooks; preserve other features. */ -}}
+{{- $features := get $state "features" | default dict -}}
+{{- $_ := set $features "hooks" true -}}
+{{- $_ := set $state "features" $features -}}
 {{- $token := "" -}}
 {{- if lookPath "bw" -}}
 {{- $proxy := bitwardenFields "item" "cliproxy" -}}

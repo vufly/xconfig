@@ -65,6 +65,7 @@ Do not assume Windows uses same target path as Unix.
 Current divergence:
 
 - Helix target is `%AppData%/helix/config.toml` on Windows, not `$HOME/.config/helix/config.toml`
+- Herdr target is `%AppData%/herdr/config.toml` on Windows, not `$HOME/.config/herdr/config.toml`.
 - Lazygit target is `AppData/Local/lazygit/config.yml` on Windows
 - Zellij targets are `%AppData%/Zellij/config/config.kdl` and `%AppData%/Zellij/config/layouts/default.kdl` on Windows, not `$HOME/.config/zellij/`
 - Nushell targets are under `%AppData%/nushell/` on Windows, not `$HOME/.config/nushell/`; this includes `config.nu`, `env.nu`, `prompt.nu`, and `autoload/`.

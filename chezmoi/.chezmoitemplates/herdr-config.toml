@@ -1,0 +1,27 @@
+onboarding = false
+
+[keys]
+prefix = "ctrl+a"
+
+{{ if ne .chezmoi.os "windows" -}}
+[[keys.command]]
+key = "prefix+o"
+type = "plugin_action"
+command = "workflows.workspaces.tree"
+description = "workflow tree and role history"
+
+[[keys.command]]
+key = "prefix+t"
+type = "plugin_action"
+command = "herdr-navigator.open"
+description = "find workspace or agent"
+
+[[keys.command]]
+key = "prefix+shift+p"
+type = "plugin_action"
+command = "cloudmanic.herdr-plus.projects"
+description = "project templates"
+{{ end -}}
+
+[theme]
+name = "terminal"
