@@ -1,5 +1,5 @@
 ---
-name: imagegen
+name: imagegen-proxy
 description: Generate or edit raster images through Codex ImageGen CLI and configured compatible OpenAI endpoint. Use when users request AI-created photos, illustrations, textures, sprites, mockups, or transparent-background cutouts.
 ---
 
@@ -14,7 +14,7 @@ Use this skill only for bitmap image generation or editing. This global skill pr
 3. Run Codex CLI only through proxy. Do not modify or invoke `~/.codex/skills/.system/imagegen/scripts/image_gen.py` directly.
 
 ```sh
-uv run --with openai python "$HOME/.agents/skills/imagegen/imagegen_proxy.py" generate \
+uv run --with openai python "$HOME/.agents/skills/imagegen-proxy/imagegen_proxy.py" generate \
   --prompt "..." \
   --out output/imagegen/output.png
 ```
