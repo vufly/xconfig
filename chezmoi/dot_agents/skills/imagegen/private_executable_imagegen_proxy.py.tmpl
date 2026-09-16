@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""Run Codex ImageGen CLI through configured compatible OpenAI endpoint."""
+
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+OPENAI_API_KEY = {{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").apiKey.value | toJson }}{{ else }}""{{ end }}
+OPENAI_BASE_URL = {{ if lookPath "bw" }}{{ (bitwardenFields "item" "cliproxy").baseUrl.value | toJson }}{{ else }}""{{ end }}
+
+
+def main() -> int:
+    if not OPENAI_API_KEY or not OPENAI_BASE_URL:
+        print("ImageGen proxy credentials are not configured.", file=sys.stderr)
+        return 1
+
+    codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
+    image_gen = codex_home / "skills" / ".system" / "imagegen" / "scripts" / "image_gen.py"
+    if not image_gen.is_file():
+        print(f"Codex ImageGen CLI not found: {image_gen}", file=sys.stderr)
+        return 1
+
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "OPENAI_API_KEY": OPENAI_API_KEY,
+            "OPENAI_BASE_URL": OPENAI_BASE_URL,
+        }
+    )
+    return subprocess.run([sys.executable, str(image_gen), *sys.argv[1:]], env=environment).returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
