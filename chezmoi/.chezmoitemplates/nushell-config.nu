@@ -74,6 +74,7 @@ if ($ls_colors_path | path exists) {
 alias vim = nvim
 alias c = clear
 alias lsi = eza --icons
+alias agy = antigravity
 
 alias t = tmux
 alias ta = tmux a -t
@@ -150,6 +151,14 @@ def --wrapped xpack [...args: string] {
   run-external "pwsh" "-NoProfile" "-File" ($home_dir | path join "scripts/xpack.ps1") ...$args
 {{- else }}
   run-external ($home_dir | path join "scripts/xpack.sh") ...$args
+{{- end }}
+}
+
+def --wrapped sync-skills [...args: string] {
+{{- if $isWindows }}
+  run-external "pwsh" "-NoProfile" "-File" ($home_dir | path join "scripts/sync-skills.ps1") ...$args
+{{- else }}
+  run-external ($home_dir | path join "scripts/sync-skills.sh") ...$args
 {{- end }}
 }
 

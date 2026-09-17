@@ -26,6 +26,7 @@ Set-PsFzfOption -TabExpansion
 
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
+Set-Alias agy antigravity
 
 function Get-GitAliasCommand {
     $exclude = @(
@@ -64,6 +65,10 @@ function theme {
 
 function xpack {
     & "$HOME/scripts/xpack.ps1" @args
+}
+
+function sync-skills {
+    & "$HOME/scripts/sync-skills.ps1" @args
 }
 
 $global:BW_SESSION_FILE = Join-Path ([System.IO.Path]::GetTempPath()) "bw-session"

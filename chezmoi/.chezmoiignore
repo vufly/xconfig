@@ -10,6 +10,7 @@ AppData/Roaming/Zed
 scripts/set-theme.ps1
 scripts/xpack.ps1
 scripts/xpack.d/*.ps1
+scripts/sync-skills.ps1
 {{ end }}
 
 {{ if eq .chezmoi.os "windows" -}}
@@ -26,6 +27,7 @@ scripts/xpack.d/*.ps1
 scripts/set-theme.sh
 scripts/xpack.sh
 scripts/xpack.d/*.sh
+scripts/sync-skills.sh
 {{ end }}
 
 .config/nushell/mise.nu
