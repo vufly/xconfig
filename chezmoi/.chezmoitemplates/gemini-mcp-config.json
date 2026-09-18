@@ -1,0 +1,15 @@
+{{- $mise := lookPath "mise" -}}
+{{- if not $mise -}}{{- fail "mise must be installed and on PATH before configuring FFF MCP" -}}{{- end -}}
+{{- $state := dict -}}
+{{- if .chezmoi.stdin | trim -}}
+  {{- $state = fromJson .chezmoi.stdin | default dict -}}
+{{- end -}}
+{{- $servers := get $state "mcpServers" | default dict -}}
+{{- $existingFff := get $servers "fff" | default dict -}}
+{{- $fff := dict "command" $mise "args" (list "exec" "--" "fff-mcp") -}}
+{{- if hasKey $existingFff "disabled" -}}
+  {{- $_ := set $fff "disabled" (get $existingFff "disabled") -}}
+{{- end -}}
+{{- $_ := set $servers "fff" $fff -}}
+{{- $_ := set $state "mcpServers" $servers -}}
+{{- $state | toPrettyJson "  " -}}

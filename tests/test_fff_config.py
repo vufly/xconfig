@@ -75,7 +75,10 @@ enabled = true
         _, parsed = self.assert_codex(PROVIDER + runtime)
         del parsed["mcp_servers"]["fff"]
         for key, value in tomllib.loads(runtime).items():
-            self.assertEqual(parsed[key], value)
+            if key == "features":
+                self.assertEqual(parsed[key], {"hooks": True})
+            else:
+                self.assertEqual(parsed[key], value)
 
     def test_preserves_top_level_settings_and_other_providers(self):
         current = '''model = "gpt-6-astra"
@@ -91,8 +94,9 @@ hooks = false
 '''
         _, parsed = self.assert_codex(current)
         original = tomllib.loads(current)
-        for key in ("model", "model_reasoning_effort", "approvals_reviewer", "features"):
+        for key in ("model", "model_reasoning_effort", "approvals_reviewer"):
             self.assertEqual(parsed[key], original[key])
+        self.assertEqual(parsed["features"], {"hooks": True})
         self.assertEqual(parsed["model_providers"]["other"], original["model_providers"]["other"])
 
     def test_replaces_existing_fff_and_subtables(self):
@@ -121,7 +125,7 @@ theme = "light"
 '''
                 output, parsed = self.assert_codex(current)
                 self.assertNotIn("OLD_SETTING", output)
-                self.assertEqual(parsed["features"], {"hooks": False})
+                self.assertEqual(parsed["features"], {"hooks": True})
                 self.assertEqual(parsed["mcp_servers"]["other"], {"command": "keep-me"})
                 self.assertEqual(parsed["tui"], {"theme": "light"})
 
@@ -150,6 +154,34 @@ command = "old"
     def test_crlf_input_normalized(self):
         self.assert_codex((PROVIDER + "[features]\nhooks = true\n").replace("\n", "\r\n"))
 
+    def assert_gemini(self, current, platform="linux", mise=None):
+        output = render("gemini-mcp-config.json", current, platform, mise=mise)
+        parsed = json.loads(output)
+        expected_mise = MISE_PATHS[platform] if mise is None else mise
+        self.assertEqual(parsed["mcpServers"]["fff"]["command"], expected_mise)
+        self.assertEqual(parsed["mcpServers"]["fff"]["args"], ["exec", "--", "fff-mcp"])
+        self.assertNotIn("\r", output)
+        self.assertFalse(output.startswith("\ufeff"))
+        self.assertTrue(output.endswith("\n"))
+        self.assertEqual(render("gemini-mcp-config.json", output, platform, mise=mise), output)
+        return output, parsed
+
+    def test_gemini_mcp_on_each_platform(self):
+        for platform in MISE_PATHS:
+            with self.subTest(platform=platform):
+                self.assert_gemini("", platform)
+
+    def test_gemini_preserves_other_servers_and_disabled(self):
+        current = json.dumps({
+            "mcpServers": {
+                "sqlite": {"command": "sqlite-mcp"},
+                "fff": {"command": "old", "disabled": True},
+            }
+        })
+        _, parsed = self.assert_gemini(current, "linux")
+        self.assertEqual(parsed["mcpServers"]["sqlite"], {"command": "sqlite-mcp"})
+        self.assertTrue(parsed["mcpServers"]["fff"]["disabled"])
+
     def test_mise_and_opencode_on_each_platform(self):
         for platform, mise in MISE_PATHS.items():
             with self.subTest(platform=platform):
@@ -170,11 +202,13 @@ command = "old"
         mise = r"C:\Users\Test User\工具\mise.exe"
         codex = tomllib.loads(render("codex-config.toml", platform="windows", mise=mise))
         opencode = json.loads(render("opencode.json", platform="windows", mise=mise))
+        gemini = json.loads(render("gemini-mcp-config.json", platform="windows", mise=mise))
         self.assertEqual(codex["mcp_servers"]["fff"]["command"], mise)
         self.assertEqual(opencode["mcp"]["fff"]["command"][0], mise)
+        self.assertEqual(gemini["mcpServers"]["fff"]["command"], mise)
 
     def test_missing_mise_fails_clearly(self):
-        for name in ("codex-config.toml", "opencode.json"):
+        for name in ("codex-config.toml", "opencode.json", "gemini-mcp-config.json"):
             with self.subTest(template=name):
                 with self.assertRaises(subprocess.CalledProcessError) as error:
                     render(name, mise="")
