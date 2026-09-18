@@ -9,7 +9,6 @@ codex-acp = "github:zed-industries/codex-acp"
 codex-wakatime = "npm:codex-wakatime"
 eza = "aqua:eza-community/eza"
 fff-mcp = "github:dmtrKovalenko/fff"
-gemini-cli = "npm:@google/gemini-cli"
 graphify = "pipx:graphifyy"
 nu-gstat = "cargo:nu_plugin_gstat"
 oh-my-codex = "npm:oh-my-codex"
@@ -56,7 +55,6 @@ codex-acp = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 cliproxy = "latest"
 fff-mcp = { version = "latest", matching = "fff-mcp-", bin = "fff-mcp" }
-gemini-cli = "latest"
 # graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
 # After install/upgrade: mise run herdr:setup (refresh bundled agent integrations).
 # Inspect without changes: mise run herdr:status.
