@@ -33,9 +33,15 @@ if (Test-Path $targetLink) {
 }
 
 try {
-    New-Item -ItemType SymbolicLink -Path $targetLink -Target $sourceDir -Force | Out-Null
-    Write-Host "Linked (SymbolicLink): $targetLink -> $sourceDir"
+    if ($env:OS -eq "Windows_NT") {
+        New-Item -ItemType Junction -Path $targetLink -Target $sourceDir -Force | Out-Null
+        Write-Host "Linked (Junction): $targetLink -> $sourceDir"
+    } else {
+        New-Item -ItemType SymbolicLink -Path $targetLink -Target $sourceDir -Force | Out-Null
+        Write-Host "Linked (SymbolicLink): $targetLink -> $sourceDir"
+    }
 } catch {
+    if ($env:OS -ne "Windows_NT") { throw }
     New-Item -ItemType Junction -Path $targetLink -Target $sourceDir -Force | Out-Null
     Write-Host "Linked (Junction): $targetLink -> $sourceDir"
 }

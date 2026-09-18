@@ -1,0 +1,5 @@
+{{/* chezmoi:template:line-endings=lf */}}
+#!/usr/bin/env pwsh
+
+$ErrorActionPreference = "Stop"
+& (Join-Path $HOME "scripts\sync-skills.ps1")
