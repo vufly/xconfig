@@ -115,7 +115,7 @@ alias gitsp="git submodule foreach --recursive 'git pull origin master'"
 alias theme="$HOME/scripts/set-theme.sh"
 alias xpack="$HOME/scripts/xpack.sh"
 alias sync-skills="$HOME/scripts/sync-skills.sh"
-alias agy="antigravity"
+alias antigravity="agy"
 
 ilias() {
   local selected alias_name

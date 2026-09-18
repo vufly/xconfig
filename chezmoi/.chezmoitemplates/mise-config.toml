@@ -1,6 +1,7 @@
 [tool_alias]
 9router = "npm:9router"
 antigravity = "github:google-antigravity/antigravity-cli"
+agy = "github:google-antigravity/antigravity-cli"
 agent-browser = "npm:agent-browser"
 claude-code = "npm:@anthropic-ai/claude-code"
 cliproxy = "github:router-for-me/CLIProxyAPI"
@@ -49,7 +50,11 @@ cargo-binstall = "latest"
 {{ if eq .machine "ohp360-wsl" -}}
 agent-browser = { version = "latest", allowBuilds = "agent-browser" }
 {{ end -}}
-antigravity = "latest"
+{{- if eq .chezmoi.os "windows" }}
+antigravity = { version = "latest", rename_exe = { "antigravity.exe" = "agy.exe" } }
+{{- else }}
+antigravity = { version = "latest", rename_exe = { "antigravity" = "agy" } }
+{{- end }}
 codex = "latest"
 codex-acp = "latest"
 claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }

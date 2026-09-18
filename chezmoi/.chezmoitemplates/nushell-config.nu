@@ -74,7 +74,7 @@ if ($ls_colors_path | path exists) {
 alias vim = nvim
 alias c = clear
 alias lsi = eza --icons
-alias agy = antigravity
+alias antigravity = agy
 
 alias t = tmux
 alias ta = tmux a -t
