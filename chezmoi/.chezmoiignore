@@ -11,7 +11,7 @@ scripts/set-theme.ps1
 scripts/xpack.ps1
 scripts/xpack.d/*.ps1
 scripts/sync-skills.ps1
-.chezmoiscripts/run_after_sync-skills.ps1.tmpl
+.chezmoiscripts/sync-skills.ps1
 {{ end }}
 
 {{ if eq .chezmoi.os "windows" -}}
@@ -29,7 +29,7 @@ scripts/set-theme.sh
 scripts/xpack.sh
 scripts/xpack.d/*.sh
 scripts/sync-skills.sh
-.chezmoiscripts/run_after_sync-skills.sh.tmpl
+.chezmoiscripts/sync-skills.sh
 .gemini/config/skills
 {{ end }}
 
