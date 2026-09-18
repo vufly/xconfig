@@ -7,6 +7,46 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "git": {
+    "inline_blame": {
+      "show_commit_summary": true
+    }
+  },
+  "proxy": "",
+  "context_servers": {
+    "fff": {
+      "enabled": true,
+      "remote": false,
+      "settings": {
+        "settings": {
+          "fff_binary_path": "fff-mcp",
+          "base_path": null,
+          "frecency_db": null,
+          "history_db": null,
+          "log_file": null,
+          "log_level": "info",
+          "no_update_check": false,
+          "no_warmup": false,
+          "max_cached_files": null
+        }
+      }
+    }
+  },
+  "agent_servers": {
+    "codex-acp": {
+      "type": "registry"
+    },
+    "opencode": {
+      "type": "registry",
+      "env": {
+        "LS_COLORS": ""
+      }
+    }
+  },
+  "cli_default_open_behavior": "existing_window",
+  "git_panel": {
+    "dock": "left"
+  },
   "semantic_tokens": "off",
 {{- if eq .chezmoi.os "windows" }}
   "wsl_connections": [
@@ -14,6 +54,11 @@
       "distro_name": "Ubuntu",
       "user": null,
       "projects": [
+        {
+          "paths": [
+            "/home/vudinhn/repos/vibecad"
+          ]
+        },
         {
           "paths": [
             "/home/vudinhn/xconfig"
