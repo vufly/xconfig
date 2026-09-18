@@ -26,7 +26,6 @@ Set-PsFzfOption -TabExpansion
 
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
-Set-Alias antigravity agy
 
 function Get-GitAliasCommand {
     $exclude = @(
