@@ -3,6 +3,7 @@ Documents/PowerShell
 AppData/Local/lazygit/config.yml.tmpl
 AppData/Roaming/helix
 AppData/Roaming/herdr
+AppData/Roaming/magy
 AppData/Roaming/gnupg
 AppData/Roaming/Zellij
 AppData/Roaming/nushell
@@ -19,6 +20,7 @@ scripts/sync-skills.ps1
 .p10k.zsh
 .config/helix
 .config/herdr
+.config/magy
 .config/lazygit
 .config/zellij
 .config/nushell
@@ -37,3 +39,5 @@ scripts/sync-skills.sh
 .config/nushell/history.txt
 AppData/Roaming/nushell/mise.nu
 AppData/Roaming/nushell/history.txt
+.config/magy/.config.json.lock
+AppData/Roaming/magy/.config.json.lock
