@@ -1,3 +1,5 @@
+if ($Host.Name -ne 'ConsoleHost' -or [Console]::IsInputRedirected) { return }
+
 function choco {
     if (-not (Get-Module -Name chocolateyProfile -ListAvailable)) {
         $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"

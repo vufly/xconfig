@@ -52,6 +52,8 @@ Examples:
 
 - `dot_config/helix/modify_config.toml` -> `.chezmoitemplates/helix-config.toml`
 - `AppData/Roaming/helix/modify_config.toml` -> `.chezmoitemplates/helix-config.toml`
+- `dot_config/zed/modify_settings.json` -> `.chezmoitemplates/zed-settings.jsonc`
+- `AppData/Roaming/Zed/modify_settings.json` -> `.chezmoitemplates/zed-settings.jsonc`
 - `dot_config/lazygit/config.yml.tmpl` -> `.chezmoitemplates/lazygit.yml`
 - `AppData/Local/lazygit/config.yml.tmpl` -> `.chezmoitemplates/lazygit.yml`
 - `dot_wezterm.lua.tmpl` -> `.chezmoitemplates/wezterm.lua`
