@@ -2,6 +2,7 @@
 - fork: { backend: winget, updates: self }
 - gpg4win
 - powertoys
+- rio: { backend: winget }
 - sharex
 - spotify: { backend: winget }
 - sumatrapdf

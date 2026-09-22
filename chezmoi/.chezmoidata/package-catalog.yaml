@@ -115,6 +115,11 @@ packageCatalog:
     chocolatey: powertoys
     winget: Microsoft.PowerToys
 
+  rio:
+    chocolatey: rio-terminal
+    winget: raphamorim.rio
+    brew: { id: rio, kind: cask }
+
   sharex:
     chocolatey: sharex
     winget: ShareX.ShareX
