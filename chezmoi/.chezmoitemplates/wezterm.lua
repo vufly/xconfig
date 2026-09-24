@@ -124,6 +124,7 @@ end
 
 config.default_cursor_style = 'BlinkingBlock'
 config.cursor_blink_rate = 500
+config.enable_kitty_keyboard = true
 
 --------------------------------------------------------------------------------
 -- Fonts
