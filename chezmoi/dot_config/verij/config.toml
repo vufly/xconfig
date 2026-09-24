@@ -2,5 +2,8 @@
 pane_format = "{session}{if tab} | {tab}{endif}{if pane} | {pane}{endif}"
 pane_default = "Workspace"
 
-[host]
+[tui]
+single_click_action = true
+
+[zellij]
 focus_follows_mouse = true
