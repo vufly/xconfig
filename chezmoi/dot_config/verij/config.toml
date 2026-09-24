@@ -1,0 +1,3 @@
+[workspace]
+pane_format = "{session}{if tab} | {tab}{endif}{if pane} | {pane}{endif}"
+pane_default = "Workspace"

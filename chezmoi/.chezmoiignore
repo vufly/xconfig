@@ -23,6 +23,7 @@ scripts/sync-skills.ps1
 .config/magy
 .config/lazygit
 .config/zellij
+.config/verij
 .config/nushell
 .config/zed
 .config/powershell/Microsoft.PowerShell_profile.ps1

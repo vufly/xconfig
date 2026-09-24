@@ -19,6 +19,8 @@ This repository uses three layers:
 - `init-chezmoi.ps1`: Windows bootstrap.
 - `init-chezmoi.sh`: Linux and macOS bootstrap.
 
+Chezmoi manages Verij's `~/.config/verij/config.toml` and editable `verij.kdl` host layout. Verij's `host-registry.toml` and `hosts.toml` remain local runtime state. The shared Zellij config template includes session serialization, scrollback preservation, and Linux Verij plugin loading.
+
 ## Bootstrap
 
 Clone this repository before running a bootstrap script.
