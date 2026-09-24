@@ -112,6 +112,7 @@ yt-dlp = "latest"
 # cliproxy = "latest"
 serie = "latest"
 tmux = "latest"
+powershell = "latest"
 {{ end }}
 
 [tasks."herdr:setup"]
