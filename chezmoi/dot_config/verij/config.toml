@@ -6,4 +6,5 @@ pane_default = "Workspace"
 single_click_action = true
 
 [zellij]
+pane_frame_style = "titles"
 focus_follows_mouse = true
