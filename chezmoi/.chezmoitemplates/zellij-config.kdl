@@ -4,6 +4,7 @@ default_shell "nu"
 default_mode "locked"
 // default_layout "compact" // replaced by zjstatus
 pane_frame_style "full"
+focus_follows_mouse true
 session_serialization true
 serialize_pane_viewport true
 scrollback_lines_to_serialize 0
