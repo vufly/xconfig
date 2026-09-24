@@ -182,7 +182,22 @@ keybinds {
         bind "l" "Right" { MovePane "Right"; }
     }
     tab {
-        bind "Ctrl t" { SwitchToMode "Normal"; }
+        // Rename focused tab to current directory in a small floating pane.
+        bind "Ctrl t" {
+{{- if eq .chezmoi.os "windows" }}
+            Run "nu" "-c" "ztn" {
+{{- else }}
+            Run "zsh" "-ic" "ztn" {
+{{- end }}
+                floating true
+                x "70%"
+                y 1
+                width "30%"
+                height 3
+                close_on_exit true
+            }
+            SwitchToMode "Locked";
+        }
         bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
         bind "h" "Left" "Up" "k" { GoToPreviousTab; }
         bind "l" "Right" "Down" "j" { GoToNextTab; }
@@ -296,6 +311,22 @@ keybinds {
     tmux {
         bind "[" { SwitchToMode "Scroll"; }
         bind "Ctrl a" { Write 2; SwitchToMode "Locked"; }
+        // Rename focused tab to current directory in a small floating pane.
+        bind "Ctrl t" {
+{{- if eq .chezmoi.os "windows" }}
+            Run "nu" "-c" "ztn" {
+{{- else }}
+            Run "zsh" "-ic" "ztn" {
+{{- end }}
+                floating true
+                x "70%"
+                y 1
+                width "30%"
+                height 3
+                close_on_exit true
+            }
+            SwitchToMode "Locked";
+        }
         bind "\"" { NewPane "Right"; SwitchToMode "Locked"; }
         bind "%" { NewPane "Down"; SwitchToMode "Locked"; }
         bind "z" { ToggleFocusFullscreen; SwitchToMode "Locked"; }
