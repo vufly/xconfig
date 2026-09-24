@@ -91,6 +91,9 @@ alias z = zellij
 alias za = zellij attach --force-run-commands
 alias zls = zellij list-sessions
 alias zn = zellij -s
+def ztn [] { # Rename focused Zellij tab to current directory name.
+  zellij action rename-tab (pwd | path basename)
+}
 alias zk = zellij kill-session
 alias zka = zellij kill-all-sessions
 

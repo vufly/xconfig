@@ -155,6 +155,11 @@ function zn {
     & zellij -s $args
 }
 
+function ztn { # Rename focused Zellij tab to current directory name.
+    $name = Split-Path -Leaf (Get-Location).Path
+    & zellij action rename-tab $name
+}
+
 function zk {
     & zellij kill-session $args
 }

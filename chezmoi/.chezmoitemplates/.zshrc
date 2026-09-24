@@ -106,6 +106,9 @@ alias zls="zellij list-sessions"
 alias zn="zellij -s"
 alias zk="zellij kill-session"
 alias zka="zellij kill-all-sessions"
+ztn() { # Rename focused Zellij tab to current directory name.
+  zellij action rename-tab "${PWD:t}"
+}
 
 alias 256="curl -s https://gist.githubusercontent.com/HaleTom/89ffe32783f89f403bba96bd7bcd1263/raw/ | bash"
 
