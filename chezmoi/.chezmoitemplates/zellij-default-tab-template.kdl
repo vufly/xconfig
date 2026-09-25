@@ -1,0 +1,62 @@
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="zjstatus" {
+                format_left   "{mode}#[bg=7,fg=0,bold]#[bg=7,fg=0] {session}#[fg=7]"
+                format_center "{tabs}"
+                format_right  "#[fg=8]#[bg=8,fg=15]{swap_layout}  ▐#[bg=15,fg=8]{datetime}#[fg=15]"
+                format_space  ""
+                format_hide_on_overlength "true"
+                format_precedence "rlc"
+
+                border_enabled  "false"
+                border_char     "─"
+                border_format   "#[fg=#6C7086]{char}"
+                border_position "top"
+
+                hide_frame_for_single_pane "false"
+
+                mode_locked        "#[fg=243]#[bg=243,fg=0,bold]LOCKED 󰌾 "
+                mode_normal            "#[fg=2]#[bg=2,fg=0,bold]NORMAL 󰿆 "
+                mode_tmux              "#[fg=4]#[bg=4,fg=0,bold] TMUX   "
+                mode_resize            "#[fg=5]#[bg=5,fg=0,bold]RESIZE 󰩨 "
+                mode_pane              "#[fg=5]#[bg=5,fg=0,bold] PANE   "
+                mode_tab               "#[fg=5]#[bg=5,fg=0,bold]  TAB   "
+                mode_scroll            "#[fg=5]#[bg=5,fg=0,bold]SCROLL 󰧈 "
+                mode_enter_search      "#[fg=5]#[bg=5,fg=0,bold]SEARCH 󱎸 "
+                mode_search            "#[fg=5]#[bg=5,fg=0,bold]SEARCH 󰹹 "
+                mode_rename_tab        "#[fg=5]#[bg=5,fg=0,bold]RENAME 󰣞 "
+                mode_rename_pane       "#[fg=5]#[bg=5,fg=0,bold]RENAME  "
+                mode_session           "#[fg=5]#[bg=5,fg=0,bold]SESSION 󰚟"
+                mode_move              "#[fg=5]#[bg=5,fg=0,bold] MOVE   "
+                mode_prompt            "#[fg=5]#[bg=5,fg=0,bold]PROMPT  "
+
+                // formatting for inactive tabs
+                tab_normal              "#[fg=15]#[bg=15,fg=8]{floating_indicator}{index}|{name}#[fg=15]"
+                tab_normal_fullscreen   "#[fg=15]#[bg=15,fg=8]{fullscreen_indicator}{index}|{name}#[fg=15]"
+                tab_normal_sync         "#[fg=15]#[bg=15,fg=8]{sync_indicator}{index}|{name}#[fg=15]"
+
+                // formatting for the current active tab
+                tab_active              "#[fg=1]#[bg=1,fg=255,bold,italics]{floating_indicator}{index}|{name}#[fg=1]"
+                tab_active_fullscreen   "#[fg=1]#[bg=1,fg=255,bold,italics]{fullscreen_indicator}{index}|{name}#[fg=1]"
+                tab_active_sync         "#[fg=1]#[bg=1,fg=255,bold,italics]{sync_indicator}{index}|{name}#[fg=1]"
+
+                // separator between the tabs
+                tab_separator           " "
+
+                // indicators
+                tab_sync_indicator       " "
+                tab_fullscreen_indicator " "
+                tab_floating_indicator   "󰹙 "
+
+                command_git_branch_command     "git rev-parse --abbrev-ref HEAD"
+                command_git_branch_format      "#[fg=blue] {stdout} "
+                command_git_branch_interval    "10"
+                command_git_branch_rendermode  "static"
+
+                datetime        "{format}"
+                datetime_format "%d %b %R"
+                datetime_timezone "Asia/Ho_Chi_Minh"
+            }
+        }
+    }

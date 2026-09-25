@@ -193,6 +193,9 @@ gact() {
 
 export GPG_TTY=$TTY
 export PATH="$HOME/.local/bin:$PATH"
+{{ if hasPrefix "ohp" (lower .chezmoi.hostname) -}}
+export PATH="$HOME/o24/scripts/zsh:$PATH"
+{{ end -}}
 # export ANDROID_HOME=~/Android/Sdk
 # export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 

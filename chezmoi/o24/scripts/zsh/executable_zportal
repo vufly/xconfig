@@ -1,0 +1,47 @@
+#!/usr/bin/env zsh
+
+# Implementation contract: ~/o24/scripts/README.md
+
+emulate -L zsh
+setopt pipefail
+
+case "$#" in
+    0)
+        layout_name="portal_main"
+        ;;
+    1)
+        case "$1" in
+            --task) layout_name="portal_task" ;;
+            *)
+                print -u2 "Usage: zportal [--task]"
+                exit 2
+                ;;
+        esac
+        ;;
+    *)
+        print -u2 "Usage: zportal [--task]"
+        exit 2
+        ;;
+esac
+
+layout_path="$HOME/o24/zellij/${layout_name}.kdl"
+if [[ ! -r "$layout_path" ]]; then
+    print -u2 "zportal: layout not found: $layout_path"
+    exit 1
+fi
+
+layout=$(<"$layout_path")
+if [[ "$layout" != *"__ZPORTAL_CWD__"* ]]; then
+    print -u2 "zportal: cwd placeholder missing from $layout_path"
+    exit 1
+fi
+
+cwd=$PWD
+cwd=${cwd//\\/\\\\}
+cwd=${cwd//\"/\\\"}
+cwd=${cwd//$'\n'/\\n}
+cwd=${cwd//$'\r'/\\r}
+cwd=${cwd//$'\t'/\\t}
+layout=${layout//__ZPORTAL_CWD__/$cwd}
+
+zellij action override-layout --apply-only-to-active-tab --layout-string "$layout"

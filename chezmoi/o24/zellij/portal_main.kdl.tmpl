@@ -1,0 +1,18 @@
+{{/* chezmoi:template:line-endings=lf */}}
+layout {
+{{ includeTemplate ".chezmoitemplates/zellij-default-tab-template.kdl" . }}
+    tab name="portal" cwd="__ZPORTAL_CWD__" {
+        pane split_direction="vertical" {
+            pane {
+                pane name="watch" cwd="src" command="node" {
+                    args "RUN.js"
+                }
+                pane name="proxy" cwd="src/tools" command="bun" {
+                    args "ui-proxy.bun.js"
+                }
+                pane name="terminal" cwd="src"
+            }
+            pane
+        }
+    }
+}

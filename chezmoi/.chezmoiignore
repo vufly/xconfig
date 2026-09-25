@@ -36,6 +36,10 @@ scripts/sync-skills.sh
 .gemini/config/skills
 {{ end }}
 
+{{ if not (hasPrefix "ohp" (lower .chezmoi.hostname)) }}
+o24
+{{ end }}
+
 .config/nushell/mise.nu
 .config/nushell/history.txt
 AppData/Roaming/nushell/mise.nu

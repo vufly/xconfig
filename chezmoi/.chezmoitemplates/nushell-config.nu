@@ -64,6 +64,9 @@ let runtime_dir = ($env.TEMP? | default ($env.TMP? | default ($home_dir | path j
 let home_dir = ($env.HOME? | default $nu.default-config-dir)
 let runtime_dir = ($env.XDG_RUNTIME_DIR? | default ($home_dir | path join ".cache"))
 {{- end }}
+{{ if hasPrefix "ohp" (lower .chezmoi.hostname) -}}
+$env.PATH = ($env.PATH | prepend ($home_dir | path join "o24" "scripts" "nu"))
+{{ end -}}
 
 let ls_colors_path = ($home_dir | path join ".config/LS_COLORS")
 if ($ls_colors_path | path exists) {

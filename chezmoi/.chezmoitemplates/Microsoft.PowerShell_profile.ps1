@@ -1,5 +1,12 @@
 if ($Host.Name -ne 'ConsoleHost' -or [Console]::IsInputRedirected) { return }
 
+{{ if hasPrefix "ohp" (lower .chezmoi.hostname) -}}
+$o24Scripts = Join-Path $HOME "o24\scripts\powershell"
+if (($env:PATH -split [System.IO.Path]::PathSeparator) -notcontains $o24Scripts) {
+    $env:PATH = "$o24Scripts$([System.IO.Path]::PathSeparator)$env:PATH"
+}
+{{ end -}}
+
 function choco {
     if (-not (Get-Module -Name chocolateyProfile -ListAvailable)) {
         $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"

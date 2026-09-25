@@ -1,0 +1,28 @@
+#!/usr/bin/env nu
+
+# Implementation contract: ~/o24/scripts/README.md
+def main [--task] {
+    let layout_name = if $task { "portal_task" } else { "portal_main" }
+
+    let layout_path = ($env.HOME | path join "o24" "zellij" $"($layout_name).kdl")
+    if not ($layout_path | path exists) {
+        error make { msg: $"zportal: layout not found: ($layout_path)" }
+    }
+
+    let layout = (open --raw $layout_path)
+    if not ($layout | str contains "__ZPORTAL_CWD__") {
+        error make { msg: $"zportal: cwd placeholder missing from ($layout_path)" }
+    }
+
+    let cwd = (pwd | into string)
+    let escaped_cwd = ($cwd
+        | str replace -a '\' '\\'
+        | str replace -a '"' '\"'
+        | str replace -a (char newline) '\n'
+        | str replace -a (char carriage_return) '\r'
+        | str replace -a (char tab) '\t'
+    )
+    let layout = ($layout | str replace -a "__ZPORTAL_CWD__" $escaped_cwd)
+
+    zellij action override-layout --apply-only-to-active-tab --layout-string $layout
+}
