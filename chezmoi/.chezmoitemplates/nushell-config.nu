@@ -206,4 +206,6 @@ use ($nu.default-config-dir | path join mise.nu)
 # oh-my-posh init nu --config "~/.theme.omp.toml"
 source ($nu.default-config-dir | path join prompt.nu)
 source ~/.zoxide.nu
+# Atuin's init script starts a background job before mise's first pre_prompt hook.
+$env.PATH = ($env.PATH | prepend (mise which atuin | path dirname))
 source ($nu.default-config-dir | path join atuin.nu)
