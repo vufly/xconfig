@@ -36,8 +36,8 @@ $env.config.completions.use_ls_colors = true
 
 if ((which carapace | length) > 0) {
   let carapace_path = (which carapace | get path.0)
-  let carapace_completer = {|spans|
-    run-external $carapace_path $spans.0 nushell ...$spans | from json
+  let carapace_completer = {|place: record|
+    run-external $carapace_path $place.command.0 nushell ...$place.command | from json
   }
 
   $env.config.completions.external = {
