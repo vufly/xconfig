@@ -5,6 +5,29 @@ pane_default = "Workspace"
 [tui]
 single_click_action = true
 
+[tui.tree]
+# Tmux-like #{variable}, #{?condition,yes,no}, and #[fg=color,bg=color,bold].
+# Colors refer to [colors] keys; built-in colors apply when [colors] is omitted.
+session_format = '#{?selected,,#[fg=muted]}#[bold]#{fold_marker} #[default]#{?selected,#{?attached,#[fg=attached_fg],},#{?exited,#[fg=muted],#{?attached,#[fg=attached_fg],#[fg=session]}}}#[bold]#{session_name}#[default]#{?collapsed,#{?has_active_tab, #{?attached,#[fg=active_fg,bg=active_bg,bold] [#{active_tab_name}] #[default],#{?selected,,#[fg=muted]}[#{active_tab_name}]#[default]},}#{?has_tabs, #{?selected,,#[fg=muted]}(#{tab_count} tabs)#[default],},#{?has_tabs, #{?selected,,#[fg=muted]}(#{tab_count})#[default],}}'
+tab_format = '#{branch} #{?active,#{?selected,#[fg=active_fg,bg=active_bg,bold] #{tab_name} #[default],#[fg=active_fg,bold]#{tab_name}#[default]},#{tab_name}}'
+fold_collapsed = "▷"
+fold_expanded = "▽"
+branch_first = "├"
+branch_middle = "├"
+branch_last = "└"
+
+[tui.tree.session_styles]
+normal = ""
+selected = "fg=selected_fg,bg=selected_bg"
+active = ""
+both = "fg=selected_fg,bg=selected_bg"
+
+[tui.tree.tab_styles]
+normal = ""
+selected = "fg=selected_fg,bg=selected_bg"
+active = "fg=active_fg,bg=active_bg"
+both = "fg=selected_fg,bg=selected_bg"
+
 [zellij]
 pane_frame_style = "titles"
 focus_follows_mouse = true

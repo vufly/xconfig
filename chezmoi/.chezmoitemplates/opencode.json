@@ -1,5 +1,7 @@
 {{- $mise := lookPath "mise" -}}
 {{- if not $mise -}}{{- fail "mise must be installed and on PATH before configuring FFF MCP" -}}{{- end -}}
+{{- $magy := lookPath "magy-mcp" -}}
+{{- if not $magy -}}{{- fail "magy-mcp must be installed and on PATH before configuring Magy MCP" -}}{{- end -}}
 {
   "$schema": "https://opencode.ai/config.json",
   "lsp": true,
@@ -19,6 +21,11 @@
     "fff": {
       "type": "local",
       "command": [{{ $mise | toJson }}, "exec", "--", "fff-mcp"],
+      "enabled": true
+    },
+    "magy": {
+      "type": "local",
+      "command": [{{ $magy | toJson }}],
       "enabled": true
     }
   }
