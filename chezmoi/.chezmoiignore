@@ -2,7 +2,6 @@
 Documents/PowerShell
 AppData/Local/lazygit/config.yml.tmpl
 AppData/Roaming/helix
-AppData/Roaming/herdr
 AppData/Roaming/magy
 AppData/Roaming/gnupg
 AppData/Roaming/Zellij
@@ -19,7 +18,6 @@ scripts/sync-skills.ps1
 .zshrc
 .p10k.zsh
 .config/helix
-.config/herdr
 .config/magy
 .config/lazygit
 .config/zellij

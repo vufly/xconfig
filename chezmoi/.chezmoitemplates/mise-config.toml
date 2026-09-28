@@ -61,8 +61,6 @@ claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
 cliproxy = "latest"
 fff-mcp = { version = "latest", matching = "fff-mcp-", bin = "fff-mcp" }
 # graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
-# After install/upgrade: mise run herdr:setup (refresh bundled agent integrations).
-# Inspect without changes: mise run herdr:status.
 herdr = "latest"
 opencode = "latest"
 rtk = { version = "latest", postinstall = "rtk init -g && rtk init -g --codex && rtk init -g --opencode" }
@@ -114,19 +112,3 @@ serie = "latest"
 tmux = "latest"
 powershell = "latest"
 {{ end }}
-
-[tasks."herdr:setup"]
-description = "Ensure OpenCode/Codex integrations and selected Herdr plugins"
-run = 'node "{{ .chezmoi.homeDir }}/scripts/herdr-setup.mjs" setup'
-
-[tasks."herdr:integrations"]
-description = "Refresh bundled OpenCode and Codex integrations"
-run = 'node "{{ .chezmoi.homeDir }}/scripts/herdr-setup.mjs" integrations'
-
-[tasks."herdr:plugins"]
-description = "Ensure pinned Plus and Navigator plugins"
-run = 'node "{{ .chezmoi.homeDir }}/scripts/herdr-setup.mjs" plugins'
-
-[tasks."herdr:status"]
-description = "Show Herdr, agent, integration and plugin status"
-run = 'node "{{ .chezmoi.homeDir }}/scripts/herdr-setup.mjs" status'
