@@ -15,15 +15,27 @@ MISE_PATHS = {
     "darwin": "/opt/homebrew/bin/mise",
     "windows": r"C:\ProgramData\chocolatey\bin\mise.exe",
 }
+MAGY_PATHS = {
+    "linux": "/home/test/.local/bin/magy-mcp",
+    "darwin": "/opt/homebrew/bin/magy-mcp",
+    "windows": r"C:\ProgramData\chocolatey\bin\magy-mcp.exe",
+}
 
 
-def render(name, current="", platform="linux", mise=None):
+def render(name, current="", platform="linux", mise=None, magy=None):
     """Stub host discovery and credentials; execute the real template with chezmoi."""
     mise = MISE_PATHS[platform] if mise is None else mise
+    magy = MAGY_PATHS[platform] if magy is None else magy
     source = (TEMPLATES / name).read_text(encoding="utf-8")
     source = source.replace('lookPath "mise"', ".testMise")
+    source = source.replace('lookPath "magy-mcp"', ".testMagy")
     source = source.replace('lookPath "bw"', '""')
-    data = {"testMise": mise, "machine": "test", "chezmoi": {"os": platform}}
+    data = {
+        "testMise": mise,
+        "testMagy": magy,
+        "machine": "test",
+        "chezmoi": {"os": platform},
+    }
     result = subprocess.run(
         [
             "chezmoi",
@@ -154,16 +166,18 @@ command = "old"
     def test_crlf_input_normalized(self):
         self.assert_codex((PROVIDER + "[features]\nhooks = true\n").replace("\n", "\r\n"))
 
-    def assert_gemini(self, current, platform="linux", mise=None):
-        output = render("gemini-mcp-config.json", current, platform, mise=mise)
+    def assert_gemini(self, current, platform="linux", mise=None, magy=None):
+        output = render("gemini-mcp-config.json", current, platform, mise=mise, magy=magy)
         parsed = json.loads(output)
         expected_mise = MISE_PATHS[platform] if mise is None else mise
+        expected_magy = MAGY_PATHS[platform] if magy is None else magy
         self.assertEqual(parsed["mcpServers"]["fff"]["command"], expected_mise)
         self.assertEqual(parsed["mcpServers"]["fff"]["args"], ["exec", "--", "fff-mcp"])
+        self.assertEqual(parsed["mcpServers"]["magy"]["command"], expected_magy)
         self.assertNotIn("\r", output)
         self.assertFalse(output.startswith("\ufeff"))
         self.assertTrue(output.endswith("\n"))
-        self.assertEqual(render("gemini-mcp-config.json", output, platform, mise=mise), output)
+        self.assertEqual(render("gemini-mcp-config.json", output, platform, mise=mise, magy=magy), output)
         return output, parsed
 
     def test_gemini_mcp_on_each_platform(self):
@@ -176,11 +190,13 @@ command = "old"
             "mcpServers": {
                 "sqlite": {"command": "sqlite-mcp"},
                 "fff": {"command": "old", "disabled": True},
+                "magy": {"command": "old", "disabled": True},
             }
         })
         _, parsed = self.assert_gemini(current, "linux")
         self.assertEqual(parsed["mcpServers"]["sqlite"], {"command": "sqlite-mcp"})
         self.assertTrue(parsed["mcpServers"]["fff"]["disabled"])
+        self.assertTrue(parsed["mcpServers"]["magy"]["disabled"])
 
     def test_mise_and_opencode_on_each_platform(self):
         for platform, mise in MISE_PATHS.items():
@@ -197,15 +213,22 @@ command = "old"
                     "type": "local", "command": [mise, "exec", "--", "fff-mcp"],
                     "enabled": True,
                 })
+                self.assertEqual(config["mcp"]["magy"], {
+                    "type": "local", "command": [MAGY_PATHS[platform]],
+                    "enabled": True,
+                })
 
     def test_path_with_spaces_and_unicode(self):
         mise = r"C:\Users\Test User\工具\mise.exe"
+        magy = r"C:\Users\Test User\工具\magy-mcp.exe"
         codex = tomllib.loads(render("codex-config.toml", platform="windows", mise=mise))
-        opencode = json.loads(render("opencode.json", platform="windows", mise=mise))
-        gemini = json.loads(render("gemini-mcp-config.json", platform="windows", mise=mise))
+        opencode = json.loads(render("opencode.json", platform="windows", mise=mise, magy=magy))
+        gemini = json.loads(render("gemini-mcp-config.json", platform="windows", mise=mise, magy=magy))
         self.assertEqual(codex["mcp_servers"]["fff"]["command"], mise)
         self.assertEqual(opencode["mcp"]["fff"]["command"][0], mise)
+        self.assertEqual(opencode["mcp"]["magy"]["command"][0], magy)
         self.assertEqual(gemini["mcpServers"]["fff"]["command"], mise)
+        self.assertEqual(gemini["mcpServers"]["magy"]["command"], magy)
 
     def test_missing_mise_fails_clearly(self):
         for name in ("codex-config.toml", "opencode.json", "gemini-mcp-config.json"):
@@ -213,6 +236,13 @@ command = "old"
                 with self.assertRaises(subprocess.CalledProcessError) as error:
                     render(name, mise="")
                 self.assertIn(b"mise must be installed and on PATH", error.exception.stderr)
+
+    def test_missing_magy_fails_clearly(self):
+        for name in ("opencode.json", "gemini-mcp-config.json"):
+            with self.subTest(template=name):
+                with self.assertRaises(subprocess.CalledProcessError) as error:
+                    render(name, magy="")
+                self.assertIn(b"magy-mcp must be installed and on PATH", error.exception.stderr)
 
 
 if __name__ == "__main__":
