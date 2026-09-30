@@ -16,7 +16,6 @@ oh-my-codex = "npm:oh-my-codex"
 pm2 = "npm:pm2"
 pnpm = "github:pnpm/pnpm"
 psmux = "github:psmux/psmux"
-rtk = "github:rtk-ai/rtk"
 serie = "cargo:serie"
 syncthing = "github:syncthing/syncthing"
 tig = "github:jonas/tig"
@@ -63,7 +62,6 @@ fff-mcp = { version = "latest", matching = "fff-mcp-", bin = "fff-mcp" }
 # graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
 herdr = "latest"
 opencode = "latest"
-rtk = { version = "latest", postinstall = "rtk init -g && rtk init -g --codex && rtk init -g --opencode" }
 
 # Shell and core terminal utilities
 atuin = "latest"
