@@ -159,6 +159,7 @@ config.font_rules = {
 }
 config.font_size = 12.1
 config.bold_brightens_ansi_colors = false
+config.text_min_contrast_ratio = 4.5
 config.underline_position = '-2.5pt'
 
 --------------------------------------------------------------------------------
