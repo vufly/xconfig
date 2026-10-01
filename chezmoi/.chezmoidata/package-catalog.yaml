@@ -175,7 +175,7 @@ packageCatalog:
 
   wezterm:
     chocolatey: wezterm
-    winget: wez.wezterm
+    winget: wez.wezterm.nightly
     brew: { id: wezterm, kind: cask }
 
   zalo:

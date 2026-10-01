@@ -6,5 +6,6 @@
 - sharex
 - spotify: { backend: winget }
 - sumatrapdf
+- wezterm: { backend: winget, scope: machine }
 - windhawk
 - zalo
