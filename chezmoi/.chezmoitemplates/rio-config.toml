@@ -1,0 +1,56 @@
+confirm-before-quit = true
+draw-bold-text-with-light-colors = false
+enable-scroll-bar = false
+grapheme-clustering = true
+hide-mouse-cursor-when-typing = true
+line-height = 1.0
+padding = [8]
+scrollback-history-limit = 10000
+theme = "bearded-theme-monokai-stone"
+force-theme = "light"
+
+[adaptive-theme]
+light = "bearded-theme-milkshake-vanilla"
+dark = "bearded-theme-monokai-stone"
+
+[cursor]
+shape = "block"
+blinking = true
+blinking-interval = 500
+
+[fonts]
+size = 17
+family = "RecMonoFly Nerd Font"
+features = []
+use-drawable-chars = true
+hinting = false
+
+[fonts.bold]
+family = "RecMonoFly Nerd Font"
+weight = 550
+
+[fonts.bold-italic]
+family = "RecMonoFly Nerd Font"
+weight = 550
+style = "Italic"
+
+[navigation]
+mode = "Tab"
+hide-if-single = false
+max-tab-width = 256
+unfocused-split-opacity = 0.85
+use-split = true
+
+[panel]
+padding = [5]
+border-width = 1.0
+
+[window]
+decorations = "Buttonless"
+opacity = 1.0
+
+{{ if eq .chezmoi.os "windows" -}}
+[shell]
+program = "nu.exe"
+args = []
+{{- end }}

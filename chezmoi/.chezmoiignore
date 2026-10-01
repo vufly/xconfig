@@ -1,6 +1,7 @@
 {{ if ne .chezmoi.os "windows" }}
 Documents/PowerShell
 AppData/Local/lazygit/config.yml.tmpl
+AppData/Local/rio
 AppData/Roaming/helix
 AppData/Roaming/magy
 AppData/Roaming/gnupg
@@ -20,6 +21,7 @@ scripts/sync-skills.ps1
 .config/helix
 .config/magy
 .config/lazygit
+.config/rio
 .config/zellij
 .config/verij
 .local/bin/verij
