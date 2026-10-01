@@ -134,6 +134,29 @@ config.font = wezterm.font_with_fallback {
   'RecMonoFly Nerd Font',
   'Symbols Nerd Font',
 }
+-- Keep stable-style bold selection despite nightly's heavier automatic weights.
+config.font_rules = {
+  {
+    intensity = 'Bold',
+    italic = false,
+    font = wezterm.font_with_fallback {
+      { family = 'RecMonoFly Nerd Font', weight = 'DemiBold' },
+      'Symbols Nerd Font',
+    },
+  },
+  {
+    intensity = 'Bold',
+    italic = true,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'RecMonoFly Nerd Font',
+        weight = 'DemiBold',
+        style = 'Italic',
+      },
+      'Symbols Nerd Font',
+    },
+  },
+}
 config.font_size = 12.1
 config.bold_brightens_ansi_colors = false
 config.underline_position = '-2.5pt'
