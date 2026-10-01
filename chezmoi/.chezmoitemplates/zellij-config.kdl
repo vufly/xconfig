@@ -186,7 +186,7 @@ keybinds {
         // Rename focused tab to current directory in a small floating pane.
         bind "Ctrl t" {
 {{- if eq .chezmoi.os "windows" }}
-            Run "nu" "-c" "ztn" {
+            Run "nu" "-c" "zellij action rename-tab (pwd | path basename)" {
 {{- else }}
             Run "zsh" "-ic" "ztn" {
 {{- end }}
@@ -315,7 +315,7 @@ keybinds {
         // Rename focused tab to current directory in a small floating pane.
         bind "Ctrl t" {
 {{- if eq .chezmoi.os "windows" }}
-            Run "nu" "-c" "ztn" {
+            Run "nu" "-c" "zellij action rename-tab (pwd | path basename)" {
 {{- else }}
             Run "zsh" "-ic" "ztn" {
 {{- end }}
@@ -397,7 +397,7 @@ keybinds {
     shared_except "session" "locked" {
         bind "Ctrl o" { SwitchToMode "Session"; }
     }
-    shared_except "tab" "locked" {
+    shared_except "tab" "tmux" "locked" {
         bind "Ctrl t" { SwitchToMode "Tab"; }
     }
     shared_except "move" "locked" {
