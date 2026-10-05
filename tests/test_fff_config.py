@@ -237,12 +237,19 @@ command = "old"
                     render(name, mise="")
                 self.assertIn(b"mise must be installed and on PATH", error.exception.stderr)
 
-    def test_missing_magy_fails_clearly(self):
-        for name in ("opencode.json", "gemini-mcp-config.json"):
-            with self.subTest(template=name):
-                with self.assertRaises(subprocess.CalledProcessError) as error:
-                    render(name, magy="")
-                self.assertIn(b"magy-mcp must be installed and on PATH", error.exception.stderr)
+    def test_missing_magy_is_omitted(self):
+        opencode = json.loads(render("opencode.json", magy=""))
+        self.assertNotIn("magy", opencode["mcp"])
+
+        current = json.dumps({
+            "mcpServers": {
+                "sqlite": {"command": "sqlite-mcp"},
+                "magy": {"command": "old-magy-mcp"},
+            }
+        })
+        gemini = json.loads(render("gemini-mcp-config.json", current, magy=""))
+        self.assertNotIn("magy", gemini["mcpServers"])
+        self.assertEqual(gemini["mcpServers"]["sqlite"], {"command": "sqlite-mcp"})
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 {{- $mise := lookPath "mise" -}}
 {{- if not $mise -}}{{- fail "mise must be installed and on PATH before configuring FFF MCP" -}}{{- end -}}
 {{- $magy := lookPath "magy-mcp" -}}
-{{- if not $magy -}}{{- fail "magy-mcp must be installed and on PATH before configuring Magy MCP" -}}{{- end -}}
 {{- $state := dict -}}
 {{- if .chezmoi.stdin | trim -}}
   {{- $state = fromJson .chezmoi.stdin | default dict -}}
@@ -13,11 +12,15 @@
   {{- $_ := set $fff "disabled" (get $existingFff "disabled") -}}
 {{- end -}}
 {{- $_ := set $servers "fff" $fff -}}
-{{- $existingMagy := get $servers "magy" | default dict -}}
-{{- $magyConfig := dict "command" $magy -}}
-{{- if hasKey $existingMagy "disabled" -}}
-  {{- $_ := set $magyConfig "disabled" (get $existingMagy "disabled") -}}
+{{- if $magy -}}
+  {{- $existingMagy := get $servers "magy" | default dict -}}
+  {{- $magyConfig := dict "command" $magy -}}
+  {{- if hasKey $existingMagy "disabled" -}}
+    {{- $_ := set $magyConfig "disabled" (get $existingMagy "disabled") -}}
+  {{- end -}}
+  {{- $_ := set $servers "magy" $magyConfig -}}
+{{- else -}}
+  {{- $_ := unset $servers "magy" -}}
 {{- end -}}
-{{- $_ := set $servers "magy" $magyConfig -}}
 {{- $_ := set $state "mcpServers" $servers -}}
 {{- $state | toPrettyJson "  " -}}
