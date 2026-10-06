@@ -33,7 +33,6 @@ scripts/set-theme.sh
 scripts/xpack.sh
 scripts/xpack.d/*.sh
 scripts/sync-skills.sh
-scripts/install-bitwarden-cli.sh
 .chezmoiscripts/sync-skills.sh
 .gemini/config/skills
 {{ end }}
