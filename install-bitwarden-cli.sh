@@ -26,7 +26,7 @@ for command in curl unzip; do
   fi
 done
 
-install_dir="$HOME/bin"
+install_dir="$HOME/.local/bin"
 mkdir -p "$install_dir"
 temp_dir=$(mktemp -d "$install_dir/.bw-install.XXXXXX")
 trap 'rm -rf "$temp_dir"' EXIT
@@ -44,5 +44,5 @@ mv -f "$temp_dir/bw" "$install_dir/bw"
 printf 'Installed Bitwarden CLI %s to %s/bw\n' "$version" "$install_dir"
 case ":$PATH:" in
   *":$install_dir:"*) ;;
-  *) printf 'Add to your shell profile: export PATH="$HOME/bin:$PATH"\n' ;;
+  *) printf 'Add to your shell profile: export PATH="$HOME/.local/bin:$PATH"\n' ;;
 esac
