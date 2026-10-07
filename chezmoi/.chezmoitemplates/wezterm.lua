@@ -203,7 +203,7 @@ end)
 --------------------------------------------------------------------------------
 
 {{ if eq .chezmoi.os "windows" -}}
-config.default_prog = { 'nu.exe' }
+config.default_prog = { 'pwsh.exe' }
 {{ else -}}
 config.default_prog = { os.getenv("SHELL") }
 {{ end }}
