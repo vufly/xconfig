@@ -13,6 +13,7 @@ $script:CAILOXO_GITDIR_FORMAT = '<b><i>%s</i></b>'
 $script:CAILOXO_BRANCH_ICON = ' '
 $script:CAILOXO_STATUS_SEPARATOR = ' '
 $script:CAILOXO_GIT_STATUS = $true
+$script:CAILOXO_SHOW_STASH_COUNT = $true
 $script:CAILOXO_FETCH_UPSTREAM_ICON = $true
 $script:CAILOXO_GIT_URL = $true
 $script:CAILOXO_FETCH_REMOTE = $true
@@ -40,9 +41,9 @@ $script:CAILOXO_TRANSIENT_ERROR_STYLE = '[38;5;1m'
 $script:CAILOXO_STATUS_TEMPLATES = @{
   'behind' = '⇣{{ count }}'
   'ahead' = '⇡{{ count }}'
-  'stashed' = '#{{ count }}'
+  'stashed' = '*{{ count }}'
   'action' = '{{ action }}'
-  'conflicted' = '={{ count }}'
+  'conflicted' = '~{{ count }}'
   'staged' = '+{{ count }}'
   'modified' = '!{{ count }}'
   'untracked' = '?{{ count }}'
@@ -158,12 +159,6 @@ function Cailoxo-Home-Path {
 
 function Cailoxo-Path-Separator {
   if ($IsWindows) { '\' } else { '/' }
-}
-
-function Cailoxo-Git-Root-Name {
-  $root = & git rev-parse --show-toplevel 2>$null
-  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace(($root -join ''))) { return '' }
-  Split-Path -Leaf (($root -join "`n").Trim())
 }
 
 function Cailoxo-Format-Path {
@@ -320,15 +315,17 @@ function Cailoxo-Git-Url-End {
 
 function Cailoxo-Upstream-Info {
   param([string]$Branch)
-  $info = @{ upstream = ''; upstream_icon = ''; upstream_url = '' }
-  if (-not $script:CAILOXO_FETCH_UPSTREAM_ICON -and -not $script:CAILOXO_GIT_URL) { return $info }
+  $info = @{ remote = ''; upstream = ''; upstream_icon = ''; upstream_url = '' }
+  if (-not $script:CAILOXO_FETCH_UPSTREAM_ICON -and -not $script:CAILOXO_GIT_URL -and -not $script:CAILOXO_FETCH_REMOTE) { return $info }
   $remote = Cailoxo-Remote-Name $Branch
+  $info.remote = $remote
+  if (-not $script:CAILOXO_FETCH_UPSTREAM_ICON -and -not $script:CAILOXO_GIT_URL) { return $info }
   $url = (& git config --get "remote.$remote.url" 2>$null) -join ''
   if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $info }
   $rawUrl = $url.Trim()
   $upstream = Cailoxo-Upstream-Provider $rawUrl
   $icon = if ($script:CAILOXO_FETCH_UPSTREAM_ICON -and $upstream -ne '' -and $script:CAILOXO_UPSTREAM_ICONS.ContainsKey($upstream)) { $script:CAILOXO_UPSTREAM_ICONS[$upstream] } else { '' }
-  @{ upstream = $upstream; upstream_icon = $icon; upstream_url = (Cailoxo-Clean-Git-Url $rawUrl) }
+  @{ remote = $remote; upstream = $upstream; upstream_icon = $icon; upstream_url = (Cailoxo-Clean-Git-Url $rawUrl) }
 }
 
 function Cailoxo-Remote-Name {
@@ -393,35 +390,30 @@ function Cailoxo-Poll-Fetch {
 }
 
 function Cailoxo-Start-Fetch {
-  param([string]$Branch)
+  param([string]$Branch, [string]$Remote, [string]$Root)
   if (-not $script:CAILOXO_FETCH_REMOTE) { return }
   if (-not $script:CAILOXO_FETCH_READY) { return }
   Cailoxo-Poll-Fetch
   if ($null -ne $script:CAILOXO_FETCH_PROCESS) { return }
-
-  $remote = Cailoxo-Remote-Name $Branch
-  if ([string]::IsNullOrWhiteSpace($remote)) { return }
-  $root = (& git rev-parse --show-toplevel 2>$null) -join ''
-  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($root)) { return }
-  $root = $root.Trim()
+  if ([string]::IsNullOrWhiteSpace($Remote) -or [string]::IsNullOrWhiteSpace($Root)) { return }
 
   $now = Cailoxo-Now-Ms
-  $key = "$root|$remote"
+  $key = "$Root|$Remote"
   if ($script:CAILOXO_FETCH_LAST_KEY -eq $key -and ($now - $script:CAILOXO_FETCH_LAST_START_MS) -lt $script:CAILOXO_FETCH_REMOTE_INTERVAL_MS) { return }
-  $upstreamRef = (& git -C $root rev-parse --symbolic-full-name "$Branch@{upstream}" 2>$null) -join ''
+  $upstreamRef = (& git -C $Root rev-parse --symbolic-full-name "$Branch@{upstream}" 2>$null) -join ''
   if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($upstreamRef)) { return }
   $upstreamRef = $upstreamRef.Trim()
-  $before = (& git -C $root rev-parse --verify $upstreamRef 2>$null) -join ''
+  $before = (& git -C $Root rev-parse --verify $upstreamRef 2>$null) -join ''
   if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($before)) { $before = '' } else { $before = $before.Trim() }
   $script:CAILOXO_FETCH_LAST_KEY = $key
   $script:CAILOXO_FETCH_LAST_START_MS = $now
-  $script:CAILOXO_FETCH_ROOT = $root
+  $script:CAILOXO_FETCH_ROOT = $Root
   $script:CAILOXO_FETCH_UPSTREAM_REF = $upstreamRef
   $script:CAILOXO_FETCH_BEFORE = $before
 
   $psi = [System.Diagnostics.ProcessStartInfo]::new()
   $psi.FileName = 'git'
-  $psi.WorkingDirectory = $root
+  $psi.WorkingDirectory = $Root
   $psi.UseShellExecute = $false
   $psi.RedirectStandardOutput = $true
   $psi.RedirectStandardError = $true
@@ -429,7 +421,7 @@ function Cailoxo-Start-Fetch {
   $psi.ArgumentList.Add('fetch')
   $psi.ArgumentList.Add('--quiet')
   $psi.ArgumentList.Add('--no-tags')
-  $psi.ArgumentList.Add($remote)
+  $psi.ArgumentList.Add($Remote)
   try {
     $script:CAILOXO_FETCH_PROCESS = [System.Diagnostics.Process]::Start($psi)
     $script:CAILOXO_FETCH_PROCESS.EnableRaisingEvents = $true
@@ -519,13 +511,6 @@ function Cailoxo-Status-Item {
   $script:CAILOXO_STATUS_TEMPLATES[$Name].Replace('{{ count }}', [string]$Count)
 }
 
-function Cailoxo-Git-Path {
-  param([string]$Name)
-  $path = (& git rev-parse --git-path $Name 2>$null) -join ''
-  if ($LASTEXITCODE -ne 0) { return '' }
-  $path.Trim()
-}
-
 function Cailoxo-Read-Git-File {
   param([string]$Path)
   if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return '' }
@@ -543,84 +528,97 @@ function Cailoxo-Git-Action-With-Progress {
 }
 
 function Cailoxo-Git-Action {
-  $rebaseMerge = Cailoxo-Git-Path 'rebase-merge'
-  if ($rebaseMerge -ne '' -and (Test-Path -LiteralPath $rebaseMerge)) {
+  param([string]$GitDir)
+  if ([string]::IsNullOrWhiteSpace($GitDir)) { return '' }
+  $rebaseMerge = Join-Path $GitDir 'rebase-merge'
+  if (Test-Path -LiteralPath $rebaseMerge) {
     $action = if (Test-Path -LiteralPath (Join-Path $rebaseMerge 'interactive')) { 'rebase-i' } else { 'rebase-m' }
     return (Cailoxo-Git-Action-With-Progress $action $rebaseMerge)
   }
 
-  $rebaseApply = Cailoxo-Git-Path 'rebase-apply'
-  if ($rebaseApply -ne '' -and (Test-Path -LiteralPath $rebaseApply)) {
+  $rebaseApply = Join-Path $GitDir 'rebase-apply'
+  if (Test-Path -LiteralPath $rebaseApply) {
     $action = if (Test-Path -LiteralPath (Join-Path $rebaseApply 'rebasing')) { 'rebase' } elseif (Test-Path -LiteralPath (Join-Path $rebaseApply 'applying')) { 'am' } else { 'am/rebase' }
     return (Cailoxo-Git-Action-With-Progress $action $rebaseApply)
   }
 
-  $mergeHead = Cailoxo-Git-Path 'MERGE_HEAD'
-  if ($mergeHead -ne '' -and (Test-Path -LiteralPath $mergeHead)) { return 'merge' }
+  $mergeHead = Join-Path $GitDir 'MERGE_HEAD'
+  if (Test-Path -LiteralPath $mergeHead) { return 'merge' }
 
-  $revertHead = Cailoxo-Git-Path 'REVERT_HEAD'
-  if ($revertHead -ne '' -and (Test-Path -LiteralPath $revertHead)) {
-    $sequencer = Cailoxo-Git-Path 'sequencer'
-    if ($sequencer -ne '' -and (Test-Path -LiteralPath $sequencer)) { return 'revert-seq' }
+  $revertHead = Join-Path $GitDir 'REVERT_HEAD'
+  if (Test-Path -LiteralPath $revertHead) {
+    $sequencer = Join-Path $GitDir 'sequencer'
+    if (Test-Path -LiteralPath $sequencer) { return 'revert-seq' }
     return 'revert'
   }
 
-  $cherryHead = Cailoxo-Git-Path 'CHERRY_PICK_HEAD'
-  if ($cherryHead -ne '' -and (Test-Path -LiteralPath $cherryHead)) {
-    $sequencer = Cailoxo-Git-Path 'sequencer'
-    if ($sequencer -ne '' -and (Test-Path -LiteralPath $sequencer)) { return 'cherry-seq' }
+  $cherryHead = Join-Path $GitDir 'CHERRY_PICK_HEAD'
+  if (Test-Path -LiteralPath $cherryHead) {
+    $sequencer = Join-Path $GitDir 'sequencer'
+    if (Test-Path -LiteralPath $sequencer) { return 'cherry-seq' }
     return 'cherry'
   }
 
-  $bisectLog = Cailoxo-Git-Path 'BISECT_LOG'
-  if ($bisectLog -ne '' -and (Test-Path -LiteralPath $bisectLog)) { return 'bisect' }
+  $bisectLog = Join-Path $GitDir 'BISECT_LOG'
+  if (Test-Path -LiteralPath $bisectLog) { return 'bisect' }
   ''
 }
 
-function Cailoxo-Count-Command {
-  param([scriptblock]$Block)
-  $raw = & $Block 2>$null
-  if ($LASTEXITCODE -ne 0) { return 0 }
-  $value = 0
-  if ([int]::TryParse((($raw -join '').Trim()), [ref]$value)) { return $value }
-  0
-}
-
 function Cailoxo-Git-Info {
-  $empty = @{ branch = ''; status = ''; dirty = $false; upstream = ''; upstream_icon = ''; upstream_url = '' }
-  $inside = (& git rev-parse --is-inside-work-tree 2>$null) -join ''
-  if ($LASTEXITCODE -ne 0 -or $inside.Trim() -ne 'true') { return $empty }
-
-  $branch = (& git symbolic-ref --quiet --short HEAD 2>$null) -join ''
-  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
-    $branch = (& git rev-parse --short HEAD 2>$null) -join ''
-  }
-  $branch = $branch.Trim()
-  if ($branch -eq '') { return $empty }
-  $upstream = Cailoxo-Upstream-Info $branch
-  Cailoxo-Start-Fetch $branch
-  if (-not $script:CAILOXO_GIT_STATUS) { return @{ branch = $branch; status = ''; dirty = $false; upstream = $upstream.upstream; upstream_icon = $upstream.upstream_icon; upstream_url = $upstream.upstream_url } }
-
+  $empty = @{ root = ''; branch = ''; status = ''; dirty = $false; upstream = ''; upstream_icon = ''; upstream_url = '' }
+  $branch = ''
+  $oid = ''
+  $root = ''
+  $gitDir = ''
   $counts = @{ ahead = 0; behind = 0; action = 0; conflicted = 0; untracked = 0; modified = 0; staged = 0; renamed = 0; deleted = 0; stashed = 0 }
-  $status = & git status --porcelain=v1 2>$null
-  foreach ($line in @($status)) {
-    if ([string]::IsNullOrEmpty($line) -or $line.Length -lt 2) { continue }
-    $code = $line.Substring(0, 2)
-    if ($code -eq '??') { $counts.untracked++; continue }
-    if (@('DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU') -contains $code) { $counts.conflicted++; continue }
-    $x = $line.Substring(0, 1)
-    $y = $line.Substring(1, 1)
-    if ($x -eq 'R') { $counts.renamed++ }
-    if ($x -eq 'D' -or $y -eq 'D') { $counts.deleted++ }
-    if ($x -ne ' ' -and $x -ne 'R' -and $x -ne 'D') { $counts.staged++ }
-    if ($y -ne ' ' -and $y -ne 'D') { $counts.modified++ }
+
+  if ($script:CAILOXO_GIT_STATUS) {
+    $args = @('status', '--porcelain=v2', '--branch')
+    if ($script:CAILOXO_SHOW_STASH_COUNT) { $args += '--show-stash' }
+    $lines = @(& git @args 2>$null)
+    if ($LASTEXITCODE -ne 0) { return $empty }
+    foreach ($line in $lines) {
+      if ($line.StartsWith('# branch.oid ')) { $oid = $line.Substring(13).Trim(); continue }
+      if ($line.StartsWith('# branch.head ')) { $branch = $line.Substring(14).Trim(); continue }
+      if ($line -match '^# branch\.ab \+(\d+) -(\d+)$') { $counts.ahead = [int]$Matches[1]; $counts.behind = [int]$Matches[2]; continue }
+      if ($script:CAILOXO_SHOW_STASH_COUNT -and $line -match '^# stash (\d+)$') { $counts.stashed = [int]$Matches[1]; continue }
+      if ($line.StartsWith('? ')) { $counts.untracked++; continue }
+      if ($line.StartsWith('u ')) { $counts.conflicted++; continue }
+      if (($line.StartsWith('1 ') -or $line.StartsWith('2 ')) -and $line.Length -ge 4) {
+        $x = $line.Substring(2, 1)
+        $y = $line.Substring(3, 1)
+        if ($line.StartsWith('2 ') -and $x -eq 'R') { $counts.renamed++ }
+        if ($x -eq 'D' -or $y -eq 'D') { $counts.deleted++ }
+        if ($x -ne '.' -and $x -ne 'R' -and $x -ne 'D') { $counts.staged++ }
+        if ($y -ne '.' -and $y -ne 'D') { $counts.modified++ }
+      }
+    }
+    $metadata = @(& git rev-parse --show-toplevel --absolute-git-dir 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $metadata.Count -lt 2) { return $empty }
+    $root = [string]$metadata[0]
+    $gitDir = [string]$metadata[1]
+  } else {
+    $metadata = @(& git rev-parse --show-toplevel --absolute-git-dir 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $metadata.Count -lt 2) { return $empty }
+    $root = [string]$metadata[0]
+    $gitDir = [string]$metadata[1]
+    $branch = ((& git symbolic-ref --quiet --short HEAD 2>$null) -join '').Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
+      $oid = ((& git rev-parse --short HEAD 2>$null) -join '').Trim()
+    }
   }
 
-  $counts.ahead = Cailoxo-Count-Command { git rev-list --count '@{upstream}..HEAD' }
-  $counts.behind = Cailoxo-Count-Command { git rev-list --count 'HEAD..@{upstream}' }
-  $action = Cailoxo-Git-Action
-  $stash = & git stash list 2>$null
-  if ($LASTEXITCODE -eq 0) { $counts.stashed = @($stash | Where-Object { $_ -ne '' }).Count }
+  $root = $root.Trim()
+  $gitDir = $gitDir.Trim()
+  if ($branch -eq '(detached)' -or $branch -eq 'HEAD' -or [string]::IsNullOrWhiteSpace($branch)) {
+    $branch = if ($oid.Length -gt 7) { $oid.Substring(0, 7) } else { $oid }
+  }
+  if ([string]::IsNullOrWhiteSpace($branch)) { return $empty }
+  $upstream = Cailoxo-Upstream-Info $branch
+  Cailoxo-Start-Fetch $branch $upstream.remote $root
+  if (-not $script:CAILOXO_GIT_STATUS) { return @{ root = $root; branch = $branch; status = ''; dirty = $false; upstream = $upstream.upstream; upstream_icon = $upstream.upstream_icon; upstream_url = $upstream.upstream_url } }
+
+  $action = Cailoxo-Git-Action $gitDir
   $dirty = (($counts.conflicted + $counts.untracked + $counts.modified + $counts.staged + $counts.renamed + $counts.deleted) -gt 0)
 
   $items = @()
@@ -628,14 +626,14 @@ function Cailoxo-Git-Info {
     $item = Cailoxo-Status-Item $name $counts[$name] $action
     if ($item -ne '') { $items += $item }
   }
-  @{ branch = $branch; status = ($items -join $script:CAILOXO_STATUS_SEPARATOR); dirty = $dirty; upstream = $upstream.upstream; upstream_icon = $upstream.upstream_icon; upstream_url = $upstream.upstream_url }
+  @{ root = $root; branch = $branch; status = ($items -join $script:CAILOXO_STATUS_SEPARATOR); dirty = $dirty; upstream = $upstream.upstream; upstream_icon = $upstream.upstream_icon; upstream_url = $upstream.upstream_url }
 }
 
 function Cailoxo-Render-Full {
   param([int]$LastStatus)
   $osIcon = Cailoxo-Os-Icon
   $git = Cailoxo-Git-Info
-  $gitRoot = Cailoxo-Git-Root-Name
+  $gitRoot = if ([string]::IsNullOrWhiteSpace($git.root)) { '' } else { Split-Path -Leaf $git.root }
   $gitVars = @{ status = $git.status; branch_icon = $script:CAILOXO_BRANCH_ICON; upstream_icon = $git.upstream_icon; upstream = $git.upstream; upstream_url = $git.upstream_url; branch = $git.branch }
   $gitText = if ($git.branch -eq '') { '' } else { Cailoxo-Apply-Template $script:CAILOXO_GIT_TEMPLATE $gitVars }
   $osText = Cailoxo-Apply-Template $script:CAILOXO_OS_TEMPLATE @{ icon = $osIcon }

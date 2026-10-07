@@ -14,6 +14,7 @@ const CAILOXO_GITDIR_FORMAT = "<b><i>%s</i></b>"
 const CAILOXO_BRANCH_ICON = " "
 const CAILOXO_STATUS_SEPARATOR = " "
 const CAILOXO_GIT_STATUS = true
+const CAILOXO_SHOW_STASH_COUNT = true
 const CAILOXO_FETCH_UPSTREAM_ICON = true
 const CAILOXO_GIT_URL = true
 const CAILOXO_FETCH_REMOTE = true
@@ -111,12 +112,8 @@ def cailoxo-remote-name [branch: string] {
   if $remote.exit_code == 0 and ($remote.stdout | str trim) != "" { $remote.stdout | str trim } else { "origin" }
 }
 
-def cailoxo-start-fetch [branch: string] {
+def --env cailoxo-start-fetch [branch: string, remote: string, root: string] {
   if not $CAILOXO_FETCH_REMOTE { return }
-  let remote = (cailoxo-remote-name $branch)
-  let root_out = (git rev-parse --show-toplevel | complete)
-  if $root_out.exit_code != 0 { return }
-  let root = ($root_out.stdout | str trim)
   if $root == "" or $remote == "" { return }
 
   let key = $"($root)|($remote)"
@@ -137,13 +134,26 @@ def cailoxo-start-fetch [branch: string] {
 }
 
 def cailoxo-upstream-info [branch: string] {
-  if (not $CAILOXO_FETCH_UPSTREAM_ICON) and (not $CAILOXO_GIT_URL) { return {upstream: "", upstream_icon: "", upstream_url: ""} }
+  if (not $CAILOXO_FETCH_UPSTREAM_ICON) and (not $CAILOXO_GIT_URL) and (not $CAILOXO_FETCH_REMOTE) { return {remote: "", upstream: "", upstream_icon: "", upstream_url: ""} }
   let remote_name = (cailoxo-remote-name $branch)
+  if (not $CAILOXO_FETCH_UPSTREAM_ICON) and (not $CAILOXO_GIT_URL) { return {remote: $remote_name, upstream: "", upstream_icon: "", upstream_url: ""} }
   let url_out = (git config --get $"remote.($remote_name).url" | complete)
   let upstream_url = if $url_out.exit_code == 0 { $url_out.stdout | str trim } else { "" }
   let upstream = (cailoxo-upstream-provider $upstream_url)
   let upstream_icon = if $upstream != "" and ($upstream in ($CAILOXO_UPSTREAM_ICONS | columns)) { $CAILOXO_UPSTREAM_ICONS | get $upstream } else { "" }
-  {upstream: $upstream, upstream_icon: $upstream_icon, upstream_url: (cailoxo-clean-git-url $upstream_url)}
+  {remote: $remote_name, upstream: $upstream, upstream_icon: $upstream_icon, upstream_url: (cailoxo-clean-git-url $upstream_url)}
+}
+
+def --env cailoxo-fetch-hook [] {
+  if not $CAILOXO_FETCH_REMOTE { return }
+  let root_out = (git rev-parse --show-toplevel | complete)
+  if $root_out.exit_code != 0 { return }
+  let branch_out = (git symbolic-ref --quiet --short HEAD | complete)
+  if $branch_out.exit_code != 0 { return }
+  let root = ($root_out.stdout | str trim)
+  let branch = ($branch_out.stdout | str trim)
+  if $root == "" or $branch == "" { return }
+  cailoxo-start-fetch $branch (cailoxo-remote-name $branch) $root
 }
 
 def cailoxo-apply-template [template: string, vars: record] {
@@ -258,11 +268,6 @@ def cailoxo-git-url-end [url: string] {
   "\u{1b}]8;;\u{1b}\\"
 }
 
-def cailoxo-git-root-name [] {
-  let root = (git rev-parse --show-toplevel | complete)
-  if $root.exit_code == 0 { $root.stdout | str trim | path basename } else { "" }
-}
-
 def cailoxo-normalize-path [path: string] {
   $path | str replace --all '\' '/'
 }
@@ -364,11 +369,6 @@ def cailoxo-status-item [name: string, count: int, action: string] {
   $template | str replace --all "{{ count }}" ($count | into string)
 }
 
-def cailoxo-git-path [name: string] {
-  let out = (git rev-parse --git-path $name | complete)
-  if $out.exit_code == 0 { $out.stdout | str trim } else { "" }
-}
-
 def cailoxo-read-git-file [path: string] {
   if $path != "" and ($path | path exists) { open --raw $path | str trim } else { "" }
 }
@@ -381,89 +381,109 @@ def cailoxo-git-action-with-progress [action: string, dir: string] {
   if $next != "" and $last != "" { $"($action) ($next)/($last)" } else { $action }
 }
 
-def cailoxo-git-action [] {
-  let rebase_merge = (cailoxo-git-path "rebase-merge")
-  if $rebase_merge != "" and ($rebase_merge | path exists) {
+def cailoxo-git-action [git_dir: string] {
+  if $git_dir == "" { return "" }
+  let rebase_merge = ($git_dir | path join "rebase-merge")
+  if ($rebase_merge | path exists) {
     let interactive = ($rebase_merge | path join "interactive")
     let action = if ($interactive | path exists) { "rebase-i" } else { "rebase-m" }
     return (cailoxo-git-action-with-progress $action $rebase_merge)
   }
 
-  let rebase_apply = (cailoxo-git-path "rebase-apply")
-  if $rebase_apply != "" and ($rebase_apply | path exists) {
+  let rebase_apply = ($git_dir | path join "rebase-apply")
+  if ($rebase_apply | path exists) {
     let rebasing = ($rebase_apply | path join "rebasing")
     let applying = ($rebase_apply | path join "applying")
     let action = if ($rebasing | path exists) { "rebase" } else if ($applying | path exists) { "am" } else { "am/rebase" }
     return (cailoxo-git-action-with-progress $action $rebase_apply)
   }
 
-  let merge_head = (cailoxo-git-path "MERGE_HEAD")
-  if $merge_head != "" and ($merge_head | path exists) { return "merge" }
+  let merge_head = ($git_dir | path join "MERGE_HEAD")
+  if ($merge_head | path exists) { return "merge" }
 
-  let revert_head = (cailoxo-git-path "REVERT_HEAD")
-  if $revert_head != "" and ($revert_head | path exists) {
-    let sequencer = (cailoxo-git-path "sequencer")
-    if $sequencer != "" and ($sequencer | path exists) { return "revert-seq" }
+  let revert_head = ($git_dir | path join "REVERT_HEAD")
+  if ($revert_head | path exists) {
+    let sequencer = ($git_dir | path join "sequencer")
+    if ($sequencer | path exists) { return "revert-seq" }
     return "revert"
   }
 
-  let cherry_head = (cailoxo-git-path "CHERRY_PICK_HEAD")
-  if $cherry_head != "" and ($cherry_head | path exists) {
-    let sequencer = (cailoxo-git-path "sequencer")
-    if $sequencer != "" and ($sequencer | path exists) { return "cherry-seq" }
+  let cherry_head = ($git_dir | path join "CHERRY_PICK_HEAD")
+  if ($cherry_head | path exists) {
+    let sequencer = ($git_dir | path join "sequencer")
+    if ($sequencer | path exists) { return "cherry-seq" }
     return "cherry"
   }
 
-  let bisect_log = (cailoxo-git-path "BISECT_LOG")
-  if $bisect_log != "" and ($bisect_log | path exists) { return "bisect" }
+  let bisect_log = ($git_dir | path join "BISECT_LOG")
+  if ($bisect_log | path exists) { return "bisect" }
   ""
 }
 
-def cailoxo-git-info [] {
-  let inside = (git rev-parse --is-inside-work-tree | complete)
-  if $inside.exit_code != 0 or ($inside.stdout | str trim) != "true" {
-    return {branch: "", status: "", dirty: false, upstream: "", upstream_icon: "", upstream_url: ""}
-  }
-
-  let branch_out = (git symbolic-ref --quiet --short HEAD | complete)
-  let branch = if $branch_out.exit_code == 0 {
-    $branch_out.stdout | str trim
-  } else {
-    (git rev-parse --short HEAD | complete).stdout | str trim
-  }
-  if $branch == "" { return {branch: "", status: "", dirty: false, upstream: "", upstream_icon: "", upstream_url: ""} }
-  let upstream = (cailoxo-upstream-info $branch)
-  cailoxo-start-fetch $branch
-  if not $CAILOXO_GIT_STATUS { return {branch: $branch, status: "", dirty: false, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url} }
-
+def --env cailoxo-git-info [] {
+  let empty = {root: "", branch: "", status: "", dirty: false, upstream: "", upstream_icon: "", upstream_url: ""}
+  mut branch = ""
+  mut oid = ""
+  mut root = ""
+  mut git_dir = ""
   mut counts = {ahead: 0, behind: 0, action: 0, conflicted: 0, untracked: 0, modified: 0, staged: 0, renamed: 0, deleted: 0, stashed: 0}
-  let status_out = (git status --porcelain=v1 | complete)
-  for line in ($status_out.stdout | lines) {
-    if $line == "" { continue }
-    let code = ($line | str substring 0..<2)
-    if $code == "??" {
-      $counts = ($counts | upsert untracked ($counts.untracked + 1))
-      continue
-    }
-    if $code in [DD AU UD UA DU AA UU] {
-      $counts = ($counts | upsert conflicted ($counts.conflicted + 1))
-      continue
-    }
-    let x = ($line | str substring 0..<1)
-    let y = ($line | str substring 1..<2)
-    if $x == "R" { $counts = ($counts | upsert renamed ($counts.renamed + 1)) }
-    if $x == "D" or $y == "D" { $counts = ($counts | upsert deleted ($counts.deleted + 1)) }
-    if $x != " " and $x != "R" and $x != "D" { $counts = ($counts | upsert staged ($counts.staged + 1)) }
-    if $y != " " and $y != "D" { $counts = ($counts | upsert modified ($counts.modified + 1)) }
-  }
 
-  let ahead_out = (git rev-list --count '@{upstream}..HEAD' | complete)
-  if $ahead_out.exit_code == 0 { $counts = ($counts | upsert ahead (($ahead_out.stdout | str trim | into int) | default 0)) }
-  let behind_out = (git rev-list --count 'HEAD..@{upstream}' | complete)
-  if $behind_out.exit_code == 0 { $counts = ($counts | upsert behind (($behind_out.stdout | str trim | into int) | default 0)) }
-  let action = (cailoxo-git-action)
-  let stash_out = (git stash list | complete)
-  if $stash_out.exit_code == 0 { $counts = ($counts | upsert stashed (($stash_out.stdout | lines | length) | default 0)) }
+  if $CAILOXO_GIT_STATUS {
+    let status_args = if $CAILOXO_SHOW_STASH_COUNT { [status --porcelain=v2 --branch --show-stash] } else { [status --porcelain=v2 --branch] }
+    let status_out = (run-external "git" ...$status_args | complete)
+    if $status_out.exit_code != 0 { return $empty }
+    for line in ($status_out.stdout | lines) {
+      if ($line | str starts-with "# branch.oid ") { $oid = ($line | str replace "# branch.oid " "" | str trim); continue }
+      if ($line | str starts-with "# branch.head ") { $branch = ($line | str replace "# branch.head " "" | str trim); continue }
+      if ($line | str starts-with "# branch.ab ") {
+        let ab = ($line | str replace "# branch.ab " "" | split row " ")
+        $counts = ($counts | upsert ahead (($ab | get 0 | str replace "+" "" | into int) | default 0))
+        $counts = ($counts | upsert behind (($ab | get 1 | str replace "-" "" | into int) | default 0))
+        continue
+      }
+      if $CAILOXO_SHOW_STASH_COUNT and ($line | str starts-with "# stash ") {
+        $counts = ($counts | upsert stashed (($line | str replace "# stash " "" | into int) | default 0))
+        continue
+      }
+      if ($line | str starts-with "? ") { $counts = ($counts | upsert untracked ($counts.untracked + 1)); continue }
+      if ($line | str starts-with "u ") { $counts = ($counts | upsert conflicted ($counts.conflicted + 1)); continue }
+      if ($line | str starts-with "1 ") or ($line | str starts-with "2 ") {
+        let x = ($line | str substring 2..<3)
+        let y = ($line | str substring 3..<4)
+        if ($line | str starts-with "2 ") and $x == "R" { $counts = ($counts | upsert renamed ($counts.renamed + 1)) }
+        if $x == "D" or $y == "D" { $counts = ($counts | upsert deleted ($counts.deleted + 1)) }
+        if $x != "." and $x != "R" and $x != "D" { $counts = ($counts | upsert staged ($counts.staged + 1)) }
+        if $y != "." and $y != "D" { $counts = ($counts | upsert modified ($counts.modified + 1)) }
+      }
+    }
+    let metadata = (git rev-parse --show-toplevel --absolute-git-dir | complete)
+    if $metadata.exit_code != 0 { return $empty }
+    let paths = ($metadata.stdout | lines)
+    if ($paths | length) < 2 { return $empty }
+    $root = ($paths | get 0 | str trim)
+    $git_dir = ($paths | get 1 | str trim)
+  } else {
+    let metadata = (git rev-parse --show-toplevel --absolute-git-dir | complete)
+    if $metadata.exit_code != 0 { return $empty }
+    let paths = ($metadata.stdout | lines)
+    if ($paths | length) < 2 { return $empty }
+    $root = ($paths | get 0 | str trim)
+    $git_dir = ($paths | get 1 | str trim)
+    let branch_out = (git symbolic-ref --quiet --short HEAD | complete)
+    if $branch_out.exit_code == 0 {
+      $branch = ($branch_out.stdout | str trim)
+    } else {
+      $oid = ((git rev-parse --short HEAD | complete).stdout | str trim)
+    }
+  }
+  if $branch == "" or $branch == "(detached)" {
+    $branch = if (($oid | str length --chars) > 7) { $oid | str substring 0..<7 } else { $oid }
+  }
+  if $branch == "" { return $empty }
+  let upstream = (cailoxo-upstream-info $branch)
+  if not $CAILOXO_GIT_STATUS { return {root: $root, branch: $branch, status: "", dirty: false, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url} }
+
+  let action = (cailoxo-git-action $git_dir)
   let dirty = (($counts.conflicted + $counts.untracked + $counts.modified + $counts.staged + $counts.renamed + $counts.deleted) > 0)
 
   mut items = []
@@ -471,14 +491,14 @@ def cailoxo-git-info [] {
     let item = (cailoxo-status-item $name ($counts | get $name) $action)
     if $item != "" { $items = ($items | append $item) }
   }
-  {branch: $branch, status: ($items | str join $CAILOXO_STATUS_SEPARATOR), dirty: $dirty, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url}
+  {root: $root, branch: $branch, status: ($items | str join $CAILOXO_STATUS_SEPARATOR), dirty: $dirty, upstream: $upstream.upstream, upstream_icon: $upstream.upstream_icon, upstream_url: $upstream.upstream_url}
 }
 
 
-def cailoxo-render-main [] {
+def --env cailoxo-render-main [] {
   let os_icon = (cailoxo-os-icon)
   let git = (cailoxo-git-info)
-  let git_root = (cailoxo-git-root-name)
+  let git_root = if $git.root == "" { "" } else { $git.root | path basename }
   let git_vars = {status: $git.status, branch_icon: $CAILOXO_BRANCH_ICON, upstream_icon: $git.upstream_icon, upstream: $git.upstream, upstream_url: $git.upstream_url, branch: $git.branch}
   let git_text = if $git.branch == "" { "" } else { cailoxo-apply-template $CAILOXO_GIT_TEMPLATE $git_vars }
   let os_text = (cailoxo-apply-template $CAILOXO_OS_TEMPLATE {icon: $os_icon})
@@ -506,7 +526,7 @@ def cailoxo-render-indicator [] {
   $prompt_style + (cailoxo-style-template $CAILOXO_PROMPT_TEMPLATE) + $CAILOXO_RESET + $suffix
 }
 
-def cailoxo-render-full [] {
+def --env cailoxo-render-full [] {
   (cailoxo-render-main) + (cailoxo-render-indicator)
 }
 
@@ -521,6 +541,10 @@ $env.PROMPT_COMMAND_RIGHT = ""
 $env.PROMPT_INDICATOR_VI_INSERT = ""
 $env.PROMPT_INDICATOR_VI_NORMAL = ""
 $env.PROMPT_MULTILINE_INDICATOR = ""
+if $CAILOXO_FETCH_REMOTE and (not ($env.CAILOXO_FETCH_HOOK_INSTALLED? | default false)) {
+  $env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt | append {|| cailoxo-fetch-hook })
+  $env.CAILOXO_FETCH_HOOK_INSTALLED = true
+}
 $env.TRANSIENT_PROMPT_COMMAND = ""
 $env.TRANSIENT_PROMPT_INDICATOR = {|| cailoxo-render-transient }
 $env.TRANSIENT_PROMPT_COMMAND_RIGHT = ""

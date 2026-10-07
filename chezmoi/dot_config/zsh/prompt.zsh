@@ -16,6 +16,7 @@ if [[ -o interactive ]]; then
   typeset -g __CAILOXO_BRANCH_ICON=' '
   typeset -g __CAILOXO_STATUS_SEPARATOR=' '
   typeset -gi __CAILOXO_GIT_STATUS=1
+  typeset -gi __CAILOXO_SHOW_STASH_COUNT=1
   typeset -gi __CAILOXO_FETCH_UPSTREAM_ICON=1
   typeset -gi __CAILOXO_GIT_URL=1
   typeset -gi __CAILOXO_FETCH_REMOTE=1
@@ -111,12 +112,6 @@ if [[ -o interactive ]]; then
     [[ -n $format ]] || { print -r -- "$value"; return }
     [[ $format == *%s* ]] || { print -r -- "$value"; return }
     print -r -- "${format//\%s/$value}"
-  }
-
-  __cailoxo_git_root_name() {
-    local root
-    root=$(git rev-parse --show-toplevel 2>/dev/null) || return
-    print -r -- "${root:t}"
   }
 
   __cailoxo_format_path() {
@@ -295,9 +290,8 @@ if [[ -o interactive ]]; then
 
   __cailoxo_upstream_icon() {
     (( __CAILOXO_FETCH_UPSTREAM_ICON )) || return
-    local remote url provider upstream_icon=
-    remote=$(__cailoxo_remote_name)
-    url=$(git config --get "remote.$remote.url" 2>/dev/null) || return
+    local url=$1 provider upstream_icon=
+    [[ -n $url ]] || return
     provider=$(__cailoxo_upstream_provider "$url")
     case $provider in
       azure_devops) upstream_icon='󰿕 ' ;;
@@ -324,13 +318,11 @@ if [[ -o interactive ]]; then
 
   __cailoxo_start_fetch() {
     (( __CAILOXO_FETCH_REMOTE )) || return
-    [[ -n $branch ]] || return
+    local branch=$1 remote=$2 root=$3
+    [[ -n $branch && -n $remote && -n $root ]] || return
     [[ -n $__CAILOXO_FETCH_FD ]] && return
 
-    local remote root key now upstream_ref before fd
-    remote=$(__cailoxo_remote_name)
-    root=$(git rev-parse --show-toplevel 2>/dev/null) || return
-    [[ -n $root && -n $remote ]] || return
+    local key now upstream_ref before fd
     key="$root|$remote"
     now=$(__cailoxo_now_s)
     if [[ $__CAILOXO_FETCH_LAST_KEY == "$key" && $(( now - __CAILOXO_FETCH_LAST_START_S )) -lt $__CAILOXO_FETCH_REMOTE_INTERVAL_S ]]; then
@@ -493,9 +485,9 @@ if [[ -o interactive ]]; then
     case $name in
     behind) template='⇣{{ count }}' ; count=${behind} ;;
     ahead) template='⇡{{ count }}' ; count=${ahead} ;;
-    stashed) template='#{{ count }}' ; count=${stashed} ;;
+    stashed) template='*{{ count }}' ; count=${stashed} ;;
     action) template='{{ action }}' ; count=${action} ;;
-    conflicted) template='={{ count }}' ; count=${conflicted} ;;
+    conflicted) template='~{{ count }}' ; count=${conflicted} ;;
     staged) template='+{{ count }}' ; count=${staged} ;;
     modified) template='!{{ count }}' ; count=${modified} ;;
     untracked) template='?{{ count }}' ; count=${untracked} ;;
@@ -509,10 +501,6 @@ if [[ -o interactive ]]; then
     fi
     (( count > 0 )) || return
     print -r -- ${template//\{\{ count \}\}/$count}
-  }
-
-  __cailoxo_git_file() {
-    git rev-parse --git-path "$1" 2>/dev/null
   }
 
   __cailoxo_git_action_with_progress() {
@@ -529,8 +517,9 @@ if [[ -o interactive ]]; then
   }
 
   __cailoxo_git_action() {
-    local path
-    path=$(__cailoxo_git_file rebase-merge)
+    local git_dir=$1 path
+    [[ -n $git_dir ]] || return
+    path=$git_dir/rebase-merge
     if [[ -d $path ]]; then
       if [[ -e $path/interactive ]]; then
         __cailoxo_git_action_with_progress rebase-i "$path"
@@ -540,7 +529,7 @@ if [[ -o interactive ]]; then
       return
     fi
 
-    path=$(__cailoxo_git_file rebase-apply)
+    path=$git_dir/rebase-apply
     if [[ -d $path ]]; then
       if [[ -e $path/rebasing ]]; then
         __cailoxo_git_action_with_progress rebase "$path"
@@ -552,21 +541,21 @@ if [[ -o interactive ]]; then
       return
     fi
 
-    path=$(__cailoxo_git_file MERGE_HEAD)
+    path=$git_dir/MERGE_HEAD
     [[ -e $path ]] && { print -r -- merge; return; }
-    path=$(__cailoxo_git_file REVERT_HEAD)
+    path=$git_dir/REVERT_HEAD
     if [[ -e $path ]]; then
-      path=$(__cailoxo_git_file sequencer)
+      path=$git_dir/sequencer
       [[ -d $path ]] && print -r -- revert-seq || print -r -- revert
       return
     fi
-    path=$(__cailoxo_git_file CHERRY_PICK_HEAD)
+    path=$git_dir/CHERRY_PICK_HEAD
     if [[ -e $path ]]; then
-      path=$(__cailoxo_git_file sequencer)
+      path=$git_dir/sequencer
       [[ -d $path ]] && print -r -- cherry-seq || print -r -- cherry
       return
     fi
-    path=$(__cailoxo_git_file BISECT_LOG)
+    path=$git_dir/BISECT_LOG
     [[ -e $path ]] && print -r -- bisect
   }
 
@@ -577,50 +566,68 @@ if [[ -o interactive ]]; then
     upstream=
     upstream_icon=
     upstream_url=
-    local inside
-    inside=$(git rev-parse --is-inside-work-tree 2>/dev/null) || return
-    [[ $inside == true ]] || return
-
-    branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null) || branch=
+    git_root_name=
+    local root= git_dir= oid= remote=
+    local ahead=0 behind=0 action= conflicted=0 untracked=0 modified=0 staged=0 renamed=0 deleted=0 stashed=0
+    if (( __CAILOXO_GIT_STATUS )); then
+      local -a status_args lines metadata
+      status_args=(status --porcelain=v2 --branch)
+      (( __CAILOXO_SHOW_STASH_COUNT )) && status_args+=(--show-stash)
+      lines=("${(@f)$(git "${status_args[@]}" 2>/dev/null)}") || return
+      local line ab code x y
+      for line in "${lines[@]}"; do
+        if [[ $line == '# branch.oid '* ]]; then
+          oid=${line#\# branch.oid }
+        elif [[ $line == '# branch.head '* ]]; then
+          branch=${line#\# branch.head }
+        elif [[ $line == '# branch.ab '* ]]; then
+          ab=${line#\# branch.ab }
+          ahead=${${ab%% *}#+}
+          behind=${${ab##* }#-}
+        elif (( __CAILOXO_SHOW_STASH_COUNT )) && [[ $line == '# stash '* ]]; then
+          stashed=${line#\# stash }
+        elif [[ $line == '? '* ]]; then
+          (( untracked++ ))
+        elif [[ $line == 'u '* ]]; then
+          (( conflicted++ ))
+        elif [[ $line == '1 '* || $line == '2 '* ]]; then
+          x=${line[3,3]}
+          y=${line[4,4]}
+          [[ $line == '2 '* && $x == R ]] && (( renamed++ ))
+          [[ $x == D || $y == D ]] && (( deleted++ ))
+          [[ $x != . && $x != R && $x != D ]] && (( staged++ ))
+          [[ $y != . && $y != D ]] && (( modified++ ))
+        fi
+      done
+      metadata=("${(@f)$(git rev-parse --show-toplevel --absolute-git-dir 2>/dev/null)}") || return
+      (( ${#metadata} >= 2 )) || return
+      root=$metadata[1]
+      git_dir=$metadata[2]
+    else
+      local -a metadata
+      metadata=("${(@f)$(git rev-parse --show-toplevel --absolute-git-dir 2>/dev/null)}") || return
+      (( ${#metadata} >= 2 )) || return
+      root=$metadata[1]
+      git_dir=$metadata[2]
+      branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) || oid=$(git rev-parse --short HEAD 2>/dev/null) || return
+    fi
+    [[ $branch == '(detached)' || -z $branch ]] && branch=${oid[1,7]}
     [[ -n $branch ]] || return
+    git_root_name=${root:t}
     if (( __CAILOXO_FETCH_UPSTREAM_ICON || __CAILOXO_GIT_URL )); then
-      local remote
       remote=$(__cailoxo_remote_name)
       upstream_url=$(git config --get "remote.$remote.url" 2>/dev/null) || upstream_url=
       upstream=$(__cailoxo_upstream_provider "$upstream_url")
       if (( __CAILOXO_FETCH_UPSTREAM_ICON )); then
-        upstream_icon=$(__cailoxo_upstream_icon)
+        upstream_icon=$(__cailoxo_upstream_icon "$upstream_url")
       fi
       upstream_url=$(__cailoxo_clean_git_url "$upstream_url")
+    elif (( __CAILOXO_FETCH_REMOTE )); then
+      remote=$(__cailoxo_remote_name)
     fi
-    __cailoxo_start_fetch
+    __cailoxo_start_fetch "$branch" "$remote" "$root"
     (( __CAILOXO_GIT_STATUS )) || return
-
-    local ahead=0 behind=0 action= conflicted=0 untracked=0 modified=0 staged=0 renamed=0 deleted=0 stashed=0
-    local out line code x y
-    out=$(git status --porcelain=v1 2>/dev/null)
-    while IFS= read -r line; do
-      [[ -n $line ]] || continue
-      code=${line[1,2]}
-      if [[ $code == '??' ]]; then
-        (( untracked++ ))
-        continue
-      fi
-      case $code in
-        DD|AU|UD|UA|DU|AA|UU) (( conflicted++ )); continue ;;
-      esac
-      x=${line[1,1]}
-      y=${line[2,2]}
-      [[ $x == R ]] && (( renamed++ ))
-      [[ $x == D || $y == D ]] && (( deleted++ ))
-      [[ $x != ' ' && $x != R && $x != D ]] && (( staged++ ))
-      [[ $y != ' ' && $y != D ]] && (( modified++ ))
-    done <<< $out
-
-    ahead=$(git rev-list --count '@{upstream}..HEAD' 2>/dev/null || print -r -- 0)
-    behind=$(git rev-list --count 'HEAD..@{upstream}' 2>/dev/null || print -r -- 0)
-    action=$(__cailoxo_git_action)
-    stashed=$(git stash list 2>/dev/null | wc -l | tr -d ' ')
+    action=$(__cailoxo_git_action "$git_dir")
     (( conflicted || untracked || modified || staged || renamed || deleted )) && git_dirty=1
 
     local -a items
@@ -648,7 +655,6 @@ if [[ -o interactive ]]; then
     branch_icon=$__CAILOXO_BRANCH_ICON
     [[ $PWD == $HOME ]] && is_home=1 || is_home=0
     __cailoxo_git_info
-    git_root_name=$(__cailoxo_git_root_name)
 
     local git_text path_text os_text git_plain os_plain fixed budget git_style path_sep git_sep
     git_text=$(__cailoxo_apply_template "$__CAILOXO_GIT_TEMPLATE")
