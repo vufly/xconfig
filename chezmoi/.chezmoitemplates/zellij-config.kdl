@@ -191,10 +191,10 @@ keybinds {
             Run "zsh" "-ic" "ztn" {
 {{- end }}
                 floating true
-                x "100%"
+                x "50%"
                 y 0
-                width 0
-                height 0
+                width 20
+                height 5
                 close_on_exit true
             }
             SwitchToMode "Locked";
@@ -320,10 +320,10 @@ keybinds {
             Run "zsh" "-ic" "ztn" {
 {{- end }}
                 floating true
-                x "100%"
+                x "50%"
                 y 0
-                width 0
-                height 0
+                width 20
+                height 5
                 close_on_exit true
             }
             SwitchToMode "Locked";
