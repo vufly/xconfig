@@ -436,7 +436,7 @@ load_plugins {
     "zellij:link"
     // zjstatus belongs in the default tab template, not as a headless plugin.
 {{- if eq .chezmoi.os "linux" }}
-    "file:{{ .chezmoi.homeDir }}/repos/verij/dist/verij_plugin.wasm"
+    "file:{{ .chezmoi.homeDir }}/.local/share/verij/verij_plugin.wasm"
 {{- end }}
     // "file:/path/to/my-plugin.wasm"
     // "https://example.com/my-plugin.wasm"
