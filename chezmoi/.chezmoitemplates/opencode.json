@@ -15,7 +15,7 @@
       }
     }
   },
-  "small_model": "openai/gpt-5.6-luna",
+  "small_model": "openai/gpt-6-luna",
   "mcp": {
     "fff": {
       "type": "local",
