@@ -9,7 +9,7 @@ case "$(uname -s)" in
 esac
 
 source_dir="$HOME/.agents/skills"
-target_link="$HOME/.gemini/config/skills"
+target_link="$HOME/.gemini/skills"
 
 mkdir -p "$source_dir"
 mkdir -p "$(dirname "$target_link")"
