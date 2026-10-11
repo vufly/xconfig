@@ -20,7 +20,7 @@ branch_last = "└"
 opencode = "▣"
 codex = ""
 claude = ""
-agy = ""
+agy = "⮝"
 pi = "󰏿"
 
 [tui.tree.session_styles]
