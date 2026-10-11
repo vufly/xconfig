@@ -17,7 +17,7 @@ branch_middle = "├"
 branch_last = "└"
 
 [tui.tree.agent_names]
-opencode = ""
+opencode = "▣"
 codex = ""
 claude = ""
 agy = ""
