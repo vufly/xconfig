@@ -57,8 +57,11 @@ Examples:
 - `dot_config/lazygit/config.yml.tmpl` -> `.chezmoitemplates/lazygit.yml`
 - `AppData/Local/lazygit/config.yml.tmpl` -> `.chezmoitemplates/lazygit.yml`
 - `dot_wezterm.lua.tmpl` -> `.chezmoitemplates/wezterm.lua`
+- `dot_config/opencode/modify_tui.json` -> `.chezmoitemplates/opencode-tui.json`
 
 Use this pattern for new managed files when body is large or shared.
+
+OpenCode TUI config manages `$schema` and `theme` while preserving other live JSON fields. Keep machine-specific plugin registrations and options in the destination, including entries installed by `verij agent setup opencode`.
 
 ## Windows Path Divergence
 

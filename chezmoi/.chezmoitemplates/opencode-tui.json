@@ -1,0 +1,9 @@
+{{- /* Preserve local TUI settings, including machine-specific plugin registrations. */ -}}
+{{- $config := dict -}}
+{{- $current := trim (trimPrefix "\ufeff" .chezmoi.stdin) -}}
+{{- if $current -}}
+  {{- $config = fromJson $current -}}
+{{- end -}}
+{{- $_ := set $config "$schema" "https://opencode.ai/tui.json" -}}
+{{- $_ := set $config "theme" "bearded-theme-best" -}}
+{{ $config | toPrettyJson -}}
