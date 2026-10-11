@@ -16,6 +16,13 @@ branch_first = "├"
 branch_middle = "├"
 branch_last = "└"
 
+[tui.tree.agent_names]
+opencode = ""
+codex = ""
+claude = ""
+agy = ""
+pi = "󰏿"
+
 [tui.tree.session_styles]
 normal = ""
 selected = "fg=selected_fg,bg=selected_bg"
