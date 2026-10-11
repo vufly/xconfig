@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $sourceDir = Join-Path $HOME ".agents\skills"
-$targetLink = Join-Path $HOME ".gemini\config\skills"
+$targetLink = Join-Path $HOME ".gemini\skills"
 
 if (-not (Test-Path $sourceDir)) {
     New-Item -ItemType Directory -Path $sourceDir -Force | Out-Null
