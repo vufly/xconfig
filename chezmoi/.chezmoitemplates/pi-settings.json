@@ -1,0 +1,22 @@
+{{- /* Preserve local Pi settings while declaratively managing packages and core defaults. */ -}}
+{{- $config := dict -}}
+{{- $current := trim (trimPrefix "\ufeff" .chezmoi.stdin) -}}
+{{- if $current -}}
+  {{- $config = fromJson $current -}}
+{{- end -}}
+{{- $packages := list
+  "npm:@router-for-me/pi-cliproxyapi-provider"
+  "npm:@ff-labs/pi-fff"
+-}}
+{{- $defaultTools := list
+  "+grep"
+  "+find"
+  "+ls"
+  "+codemode"
+-}}
+{{- $_ := set $config "packages" $packages -}}
+{{- $_ := set $config "transport" "websocket-cached" -}}
+{{- $_ := set $config "defaultProvider" "cliproxyapi" -}}
+{{- $_ := set $config "defaultModel" "gpt-6.1-sol" -}}
+{{- $_ := set $config "defaultTools" $defaultTools -}}
+{{ $config | toPrettyJson -}}

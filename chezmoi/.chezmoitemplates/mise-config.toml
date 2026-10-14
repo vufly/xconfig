@@ -13,6 +13,7 @@ fff-mcp = "github:dmtrKovalenko/fff"
 graphify = "pipx:graphifyy"
 nu-gstat = "cargo:nu_plugin_gstat"
 oh-my-codex = "npm:oh-my-codex"
+pi = "aqua:earendil-works/pi"
 pm2 = "npm:pm2"
 pnpm = "github:pnpm/pnpm"
 psmux = "github:psmux/psmux"
@@ -62,6 +63,11 @@ fff-mcp = { version = "latest", matching = "fff-mcp-", bin = "fff-mcp" }
 # graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
 herdr = "latest"
 opencode = "latest"
+{{- if eq .chezmoi.os "windows" }}
+pi = { version = "latest", postinstall = "npm install --prefix \"%USERPROFILE%\\.pi\\agent\\npm\" @earendil-works/pi-ai" }
+{{- else }}
+pi = { version = "latest", postinstall = "npm install --prefix ~/.pi/agent/npm @earendil-works/pi-ai" }
+{{- end }}
 
 # Shell and core terminal utilities
 atuin = "latest"
