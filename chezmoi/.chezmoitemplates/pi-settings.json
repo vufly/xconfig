@@ -15,6 +15,7 @@
   "+codemode"
 -}}
 {{- $_ := set $config "packages" $packages -}}
+{{- $_ := set $config "theme" "bearded-theme-milkshake-vanilla/bearded-theme-monokai-stone" -}}
 {{- $_ := set $config "transport" "websocket-cached" -}}
 {{- $_ := set $config "defaultProvider" "cliproxyapi" -}}
 {{- $_ := set $config "defaultModel" "gpt-6.1-sol" -}}
