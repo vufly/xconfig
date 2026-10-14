@@ -59,6 +59,7 @@ Examples:
 - `dot_wezterm.lua.tmpl` -> `.chezmoitemplates/wezterm.lua`
 - `dot_config/opencode/modify_tui.json` -> `.chezmoitemplates/opencode-tui.json`
 - `dot_pi/agent/modify_settings.json` -> `.chezmoitemplates/pi-settings.json`
+- `dot_pi/agent/modify_web-search.json` -> `.chezmoitemplates/pi-web-search.json`
 
 Use this pattern for new managed files when body is large or shared.
 

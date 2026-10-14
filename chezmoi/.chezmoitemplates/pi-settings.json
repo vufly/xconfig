@@ -7,6 +7,7 @@
 {{- $packages := list
   "npm:@router-for-me/pi-cliproxyapi-provider"
   "npm:@ff-labs/pi-fff"
+  "npm:pi-web-access"
 -}}
 {{- $defaultTools := list
   "+grep"

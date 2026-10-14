@@ -1,0 +1,21 @@
+{{- /* Preserve local web-search settings while managing OpenAI Responses routing. */ -}}
+{{- $config := dict -}}
+{{- $current := trim (trimPrefix "\ufeff" .chezmoi.stdin) -}}
+{{- if $current -}}
+  {{- $config = fromJson $current -}}
+{{- end -}}
+{{- $responsesUrl := "" -}}
+{{- if lookPath "bw" -}}
+  {{- $raw := (bitwardenFields "item" "cliproxy").baseUrl.value -}}
+  {{- if $raw -}}
+    {{- $base := trimSuffix "/v1" (trimSuffix "/" $raw) -}}
+    {{- $responsesUrl = printf "%s/v1/responses" $base -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $responsesUrl -}}
+  {{- $responsesUrl = "http://localhost:61144/v1/responses" -}}
+{{- end -}}
+{{- $_ := set $config "openaiSearchProviders" (list "cliproxyapi") -}}
+{{- $_ := set $config "openaiResponsesUrl" $responsesUrl -}}
+{{- $_ := unset $config "openaiSearchModel" -}}
+{{ $config | toPrettyJson -}}
