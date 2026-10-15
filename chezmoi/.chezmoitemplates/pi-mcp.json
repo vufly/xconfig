@@ -1,0 +1,26 @@
+{{- /* Manage Magy while preserving unrelated servers and local MCP preferences. */ -}}
+{{- $magy := lookPath "magy-mcp" -}}
+{{- $state := dict -}}
+{{- $current := trim (trimPrefix "\ufeff" .chezmoi.stdin) -}}
+{{- if $current -}}
+  {{- $state = fromJson $current | default dict -}}
+{{- end -}}
+{{- $servers := get $state "mcpServers" | default dict -}}
+{{- if $magy -}}
+  {{- $existing := get $servers "magy" | default dict -}}
+  {{- $config := dict
+    "command" $magy
+    "exposure" "codemode"
+    "description" "Delegate tasks to Agy across isolated profiles; start, monitor, and cancel asynchronous or watched runs."
+  -}}
+  {{- range list "enabled" "exposure" "toolExposure" "timeout" "env" "cwd" -}}
+    {{- if hasKey $existing . -}}
+      {{- $_ := set $config . (get $existing .) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $_ := set $servers "magy" $config -}}
+{{- else -}}
+  {{- $_ := unset $servers "magy" -}}
+{{- end -}}
+{{- $_ := set $state "mcpServers" $servers -}}
+{{ $state | toPrettyJson -}}
