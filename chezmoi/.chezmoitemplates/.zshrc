@@ -156,7 +156,13 @@ bwload() {
   [[ -r "$BW_SESSION_FILE" ]] && export BW_SESSION="$(<"$BW_SESSION_FILE")"
 }
 
-precmd_functions+=(bwload)
+_set_idle_terminal_title() {
+  [[ -o interactive && -t 1 && ${TERM:-dumb} != dumb ]] || return 0
+  printf '\033]0;zsh\007'
+}
+
+# Register before bwload so a missing Bitwarden session cannot skip title reset.
+precmd_functions+=(_set_idle_terminal_title bwload)
 
 if [[ -r /proc/version ]] && grep -qi microsoft /proc/version; then
   export WINUSER=$(pushd /mnt/c > /dev/null && cmd.exe /q /c "echo %USERNAME%" | rev | cut -c 2- | rev )
