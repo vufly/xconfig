@@ -9,6 +9,7 @@
   "npm:@ff-labs/pi-fff"
   "npm:pi-pigment"
   "npm:pi-web-access"
+  "npm:pi-title"
 -}}
 {{- $defaultTools := list
   "+grep"

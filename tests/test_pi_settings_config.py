@@ -23,6 +23,7 @@ class PiSettingsConfigTests(unittest.TestCase):
             "bearded-theme-milkshake-vanilla/bearded-theme-monokai-stone",
         )
         self.assertIn("npm:pi-pigment", parsed["packages"])
+        self.assertIn("npm:pi-title", parsed["packages"])
         self.assertEqual(parsed["transport"], "websocket-cached")
 
     def test_preserves_local_preferences(self):

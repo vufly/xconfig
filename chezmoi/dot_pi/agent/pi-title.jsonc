@@ -1,0 +1,5 @@
+{
+  "enabled": true,
+  "model": "cliproxyapi/gpt-6-luna",
+  "refreshTurns": 5
+}
