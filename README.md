@@ -21,8 +21,6 @@ This repository uses three layers:
 
 Chezmoi manages Verij's `~/.config/verij/config.toml` and editable `verij.kdl` host layout. Verij's `host-registry.toml` and `hosts.toml` remain local runtime state. The shared Zellij config template includes session serialization, scrollback preservation, and Linux Verij plugin loading.
 
-On Linux, an after-apply hook runs `verij agent setup pi` when Verij and supported Pi 1.2.0 are available. Verij owns the monitoring extension under `~/.pi/agent/extensions/verij-monitoring` and its machine-local configuration under `~/.pi/agent/verij-monitoring`; these generated files are not copied into dotfiles. `PI_CODING_AGENT_DIR` overrides the agent directory for both setup and Pi. Restart Pi or run `/reload` after setup, then inspect `verij agent doctor pi`. Monitoring requires an interactive Pi TUI inside a verified Zellij pane; ordinary Pi usage does not require this extension.
-
 ## Bootstrap
 
 Clone this repository before running a bootstrap script.
