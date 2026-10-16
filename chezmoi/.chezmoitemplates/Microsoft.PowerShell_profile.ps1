@@ -1,4 +1,10 @@
-if ($Host.Name -ne 'ConsoleHost' -or [Console]::IsInputRedirected) { return }
+if ($Host.Name -ne 'ConsoleHost') { return }
+$isInteractive = -not [Console]::IsInputRedirected
+if (-not $isInteractive) {
+    $parentProcessId = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $PID").ParentProcessId
+    $parentProcess = if ($parentProcessId) { Get-Process -Id $parentProcessId -ErrorAction SilentlyContinue }
+    if (-not $parentProcess -or $parentProcess.ProcessName -ne 'gsudo') { return }
+}
 
 {{ if hasPrefix "ohp" (lower .chezmoi.hostname) -}}
 $o24Scripts = Join-Path $HOME "o24\scripts\powershell"
@@ -17,21 +23,23 @@ function choco {
     Microsoft.PowerShell.Core\Invoke-Expression ("choco " + ($args -join ' '))
 }
 
-# --- PSReadLine setup ---
-Import-Module PSReadLine
-if ($Host.Name -eq 'ConsoleHost' -and $ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') {
-    try {
-        Set-PSReadLineOption -PredictionSource History
-    } catch {}
-}
+if ($isInteractive) {
+    # --- PSReadLine setup ---
+    Import-Module PSReadLine
+    if ($ExecutionContext.SessionState.LanguageMode -eq 'FullLanguage') {
+        try {
+            Set-PSReadLineOption -PredictionSource History
+        } catch {}
+    }
 
-# --- PSFzf ---
-Import-Module PSFzf
-Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
-$commandOverride = [ScriptBlock]{ param($Location) Write-Host $Location }
-Set-PsFzfOption -AltCCommand $commandOverride
-Set-PSReadLineKeyHandler -Key Tab -ScriptBlock { Invoke-FzfTabCompletion }
-Set-PsFzfOption -TabExpansion
+    # --- PSFzf ---
+    Import-Module PSFzf
+    Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+    $commandOverride = [ScriptBlock]{ param($Location) Write-Host $Location }
+    Set-PsFzfOption -AltCCommand $commandOverride
+    Set-PSReadLineKeyHandler -Key Tab -ScriptBlock { Invoke-FzfTabCompletion }
+    Set-PsFzfOption -TabExpansion
+}
 
 # --- Utilities and aliases ---
 Import-Module git-aliases -DisableNameChecking
@@ -65,7 +73,9 @@ function ilias {
     [Microsoft.PowerShell.PSConsoleReadLine]::Insert("$name ")
 }
 
-Set-PSReadLineKeyHandler -Chord 'Alt+a' -ScriptBlock { ilias }
+if ($isInteractive) {
+    Set-PSReadLineKeyHandler -Chord 'Alt+a' -ScriptBlock { ilias }
+}
 
 function theme {
     & "$HOME/scripts/set-theme.ps1" @args
@@ -203,36 +213,38 @@ if (Test-Path $LSColorsPath) {
 # --- Force UTF-8 Encoding ---
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
-# --- Oh My Posh initialization ---
-# oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
+if ($isInteractive) {
+    # --- Oh My Posh initialization ---
+    # oh-my-posh init pwsh --config "~/.theme.omp.toml" | Invoke-Expression
 
-# --- Cailoxo prompt initialization ---
-$CailoxoPromptPath = Join-Path $HOME ".config/powershell/prompt.txt"
-if (Test-Path $CailoxoPromptPath) {
-    Get-Content $CailoxoPromptPath -Raw | Invoke-Expression
-}
-
-# --- Zoxide integration ---
-# Initialize zoxide hooks for PowerShell
-(& { (zoxide init powershell --cmd cd | Out-String) }) | Invoke-Expression
-
-# Wrap the existing prompt safely (Cailoxo owns the prompt)
-if (Test-Path Function:\prompt) {
-    if (Test-Path Function:\_cailoxo_prompt) {
-        Remove-Item Function:\_cailoxo_prompt -Force
+    # --- Cailoxo prompt initialization ---
+    $CailoxoPromptPath = Join-Path $HOME ".config/powershell/prompt.txt"
+    if (Test-Path $CailoxoPromptPath) {
+        Get-Content $CailoxoPromptPath -Raw | Invoke-Expression
     }
-    Rename-Item Function:\prompt _cailoxo_prompt
+
+    # --- Zoxide integration ---
+    # Initialize zoxide hooks for PowerShell
+    (& { (zoxide init powershell --cmd cd | Out-String) }) | Invoke-Expression
+
+    # Wrap the existing prompt safely (Cailoxo owns the prompt)
+    if (Test-Path Function:\prompt) {
+        if (Test-Path Function:\_cailoxo_prompt) {
+            Remove-Item Function:\_cailoxo_prompt -Force
+        }
+        Rename-Item Function:\prompt _cailoxo_prompt
+    }
+
+    function global:prompt {
+        bwload
+        # Let zoxide learn current directory
+        & zoxide add "$(Get-Location)" | Out-Null
+
+        # Then call the Cailoxo prompt
+        _cailoxo_prompt
+    }
+
+    # --- Atuin history integration ---
+    # Keep Up Arrow for shell history and Ctrl+R for Atuin.
+    atuin init powershell --disable-up-arrow | Out-String | Invoke-Expression
 }
-
-function global:prompt {
-    bwload
-    # Let zoxide learn current directory
-    & zoxide add "$(Get-Location)" | Out-Null
-
-    # Then call the Cailoxo prompt
-    _cailoxo_prompt
-}
-
-# --- Atuin history integration ---
-# Keep Up Arrow for shell history and Ctrl+R for Atuin.
-atuin init powershell --disable-up-arrow | Out-String | Invoke-Expression

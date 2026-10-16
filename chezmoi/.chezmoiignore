@@ -13,6 +13,7 @@ scripts/xpack.ps1
 scripts/xpack.d/*.ps1
 scripts/sync-skills.ps1
 .chezmoiscripts/sync-skills.ps1
+.chezmoiscripts/run_after_configure-gsudo.ps1
 {{ end }}
 
 {{ if eq .chezmoi.os "windows" -}}

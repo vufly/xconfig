@@ -1,0 +1,20 @@
+{{/* chezmoi:template:line-endings=lf */}}
+#!/usr/bin/env pwsh
+
+$ErrorActionPreference = "Stop"
+
+if (-not (Get-Command gsudo.exe -ErrorAction SilentlyContinue)) {
+    return
+}
+
+$setting = & gsudo.exe config PowerShellLoadProfile
+if ($LASTEXITCODE -ne 0) {
+    throw "Could not read gsudo PowerShellLoadProfile setting."
+}
+
+if ($setting -notmatch 'PowerShellLoadProfile\s*=\s*"True"') {
+    & gsudo.exe config PowerShellLoadProfile true
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not enable gsudo PowerShell profile loading."
+    }
+}
