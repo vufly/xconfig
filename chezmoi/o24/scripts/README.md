@@ -27,11 +27,11 @@ The command must run inside a Zellij session. The caller current directory becom
 - `terminal`: `src`
 - remaining pane: caller current directory
 
-`portal_task.kdl` uses the same tab template and watcher, but omits `proxy` and provides three named panes:
+`portal_task.kdl` uses the same tab template and watcher, but omits `proxy` and provides three panes:
 
 - `watch`: `src`, runs `node RUN.js`.
 - `terminal`: `src`, reserved for free commands such as `git` and `lazygit`.
-- `agent`: caller worktree root, reserved for manually starting OpenCode, Codex, or another coding agent.
+- Unnamed pane: caller worktree root, reserved for manually starting OpenCode, Codex, or another coding agent.
 
 When using Verij, attach or create an inner session, enter the worktree, and run `zportal --task`. Verij owns session navigation; this command replaces only the active inner-session tab.
 
