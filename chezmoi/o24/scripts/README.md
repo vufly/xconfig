@@ -18,7 +18,7 @@ Each supported shell prepends its native script directory to `PATH`:
 
 `zportal` replaces only the active Zellij tab with the Portal main layout. `zportal --task` replaces it with the Portal task layout. Neither command creates a tab, modifies other tabs, or retains terminal panes outside the layout.
 
-The command reads `~/o24/zellij/portal_main.kdl` or `~/o24/zellij/portal_task.kdl`. Both include shared `zjstatus` configuration and a `cwd="__ZPORTAL_CWD__"` placeholder. The main tab is named `portal`; the task tab name uses the same cwd placeholder.
+The command reads `~/o24/zellij/portal_main.kdl` or `~/o24/zellij/portal_task.kdl`. Both include shared `zjstatus` configuration and a `cwd="__ZPORTAL_CWD__"` placeholder. The main tab is named `portal`; the task tab is named after the caller's current directory (final path component), using `__ZPORTAL_TAB_NAME__`.
 
 The command must run inside a Zellij session. The caller current directory becomes the Portal tab cwd. Relative pane directories resolve from it:
 
@@ -48,6 +48,9 @@ fail if layout does not contain "__ZPORTAL_CWD__"
 cwd = current_working_directory()
 escaped_cwd = kdl_escape(cwd)
 layout_string = replace_all(layout, "__ZPORTAL_CWD__", escaped_cwd)
+if layout_name == "portal_task":
+  escaped_tab_name = kdl_escape(basename(cwd))
+  layout_string = replace_all(layout_string, "__ZPORTAL_TAB_NAME__", escaped_tab_name)
 
 exec zellij action override-layout \
   --apply-only-to-active-tab \

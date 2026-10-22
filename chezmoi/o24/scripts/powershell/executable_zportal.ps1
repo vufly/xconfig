@@ -24,10 +24,18 @@ $layout = Get-Content -LiteralPath $layoutPath -Raw
 if (-not $layout.Contains("__ZPORTAL_CWD__")) {
     throw "zportal: cwd placeholder missing from $layoutPath"
 }
+if ($layoutName -eq "portal_task" -and -not $layout.Contains("__ZPORTAL_TAB_NAME__")) {
+    throw "zportal: tab name placeholder missing from $layoutPath"
+}
 
 $cwd = (Get-Location).Path
+$tabName = Split-Path -Path $cwd -Leaf
+if ([string]::IsNullOrEmpty($tabName)) {
+    $tabName = $cwd
+}
 $escapedCwd = $cwd.Replace("\", "\\").Replace('"', '\"').Replace("`n", "\n").Replace("`r", "\r").Replace("`t", "\t")
-$layout = $layout.Replace("__ZPORTAL_CWD__", $escapedCwd)
+$escapedTabName = $tabName.Replace("\", "\\").Replace('"', '\"').Replace("`n", "\n").Replace("`r", "\r").Replace("`t", "\t")
+$layout = $layout.Replace("__ZPORTAL_CWD__", $escapedCwd).Replace("__ZPORTAL_TAB_NAME__", $escapedTabName)
 
 & zellij action override-layout --apply-only-to-active-tab --layout-string $layout
 exit $LASTEXITCODE

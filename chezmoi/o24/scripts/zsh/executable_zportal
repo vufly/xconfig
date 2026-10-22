@@ -35,13 +35,25 @@ if [[ "$layout" != *"__ZPORTAL_CWD__"* ]]; then
     print -u2 "zportal: cwd placeholder missing from $layout_path"
     exit 1
 fi
+if [[ "$layout_name" == "portal_task" && "$layout" != *"__ZPORTAL_TAB_NAME__"* ]]; then
+    print -u2 "zportal: tab name placeholder missing from $layout_path"
+    exit 1
+fi
 
 cwd=$PWD
+tab_name=${cwd:t}
+[[ -n "$tab_name" ]] || tab_name=$cwd
 cwd=${cwd//\\/\\\\}
 cwd=${cwd//\"/\\\"}
 cwd=${cwd//$'\n'/\\n}
 cwd=${cwd//$'\r'/\\r}
 cwd=${cwd//$'\t'/\\t}
+tab_name=${tab_name//\\/\\\\}
+tab_name=${tab_name//\"/\\\"}
+tab_name=${tab_name//$'\n'/\\n}
+tab_name=${tab_name//$'\r'/\\r}
+tab_name=${tab_name//$'\t'/\\t}
 layout=${layout//__ZPORTAL_CWD__/$cwd}
+layout=${layout//__ZPORTAL_TAB_NAME__/$tab_name}
 
 zellij action override-layout --apply-only-to-active-tab --layout-string "$layout"

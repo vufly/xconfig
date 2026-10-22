@@ -13,8 +13,13 @@ def main [--task] {
     if not ($layout | str contains "__ZPORTAL_CWD__") {
         error make { msg: $"zportal: cwd placeholder missing from ($layout_path)" }
     }
+    if $task and not ($layout | str contains "__ZPORTAL_TAB_NAME__") {
+        error make { msg: $"zportal: tab name placeholder missing from ($layout_path)" }
+    }
 
     let cwd = (pwd | into string)
+    let tab_name = ($cwd | path basename)
+    let tab_name = if ($tab_name | is-empty) { $cwd } else { $tab_name }
     let escaped_cwd = ($cwd
         | str replace -a '\' '\\'
         | str replace -a '"' '\"'
@@ -22,7 +27,17 @@ def main [--task] {
         | str replace -a (char carriage_return) '\r'
         | str replace -a (char tab) '\t'
     )
-    let layout = ($layout | str replace -a "__ZPORTAL_CWD__" $escaped_cwd)
+    let escaped_tab_name = ($tab_name
+        | str replace -a '\' '\\'
+        | str replace -a '"' '\"'
+        | str replace -a (char newline) '\n'
+        | str replace -a (char carriage_return) '\r'
+        | str replace -a (char tab) '\t'
+    )
+    let layout = ($layout
+        | str replace -a "__ZPORTAL_CWD__" $escaped_cwd
+        | str replace -a "__ZPORTAL_TAB_NAME__" $escaped_tab_name
+    )
 
     zellij action override-layout --apply-only-to-active-tab --layout-string $layout
 }
