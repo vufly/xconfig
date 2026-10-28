@@ -48,7 +48,7 @@ cargo-binstall = "latest"
 
 # Vibe coding
 {{ if eq .machine "ohp360-wsl" -}}
-agent-browser = { version = "latest", allowBuilds = "agent-browser" }
+agent-browser = { version = "latest", allow_builds = ["agent-browser"] }
 {{ end -}}
 {{- if eq .chezmoi.os "windows" }}
 antigravity = { version = "latest", rename_exe = { "antigravity.exe" = "agy.exe" } }
@@ -57,7 +57,7 @@ antigravity = { version = "latest", rename_exe = { "antigravity" = "agy" } }
 {{- end }}
 codex = "latest"
 codex-acp = "latest"
-claude-code = { version = "latest", allowBuilds = "@anthropic-ai/claude-code" }
+claude-code = { version = "latest", allow_builds = ["@anthropic-ai/claude-code"] }
 cliproxy = "latest"
 fff-mcp = { version = "latest", matching = "fff-mcp-", bin = "fff-mcp" }
 # graphify = { version = "latest", postinstall = "graphify install && graphify install --platform opencode && graphify install --platform codex" }
