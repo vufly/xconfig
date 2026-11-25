@@ -4,7 +4,7 @@
 - powertoys
 - rio: { backend: winget }
 - sharex
-- spotify: { backend: winget }
+- spotify
 - sumatrapdf
 - wezterm: { backend: winget, scope: machine }
 - windhawk
