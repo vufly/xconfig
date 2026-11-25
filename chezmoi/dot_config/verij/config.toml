@@ -21,7 +21,7 @@ opencode = "▣"
 codex = ""
 claude = ""
 agy = "⮝"
-pi = "󰏿"
+pi = ""
 
 [tui.tree.session_styles]
 normal = ""
