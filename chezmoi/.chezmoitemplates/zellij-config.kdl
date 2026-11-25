@@ -1,5 +1,5 @@
 {{ if eq .chezmoi.os "windows" -}}
-default_shell "nu"
+default_shell "pwsh.exe"
 {{ end -}}
 default_mode "locked"
 // default_layout "compact" // replaced by zjstatus
@@ -186,7 +186,7 @@ keybinds {
         // Rename focused tab to current directory in a small floating pane.
         bind "Ctrl t" {
 {{- if eq .chezmoi.os "windows" }}
-            Run "nu" "-c" "zellij action rename-tab (pwd | path basename)" {
+            Run "pwsh.exe" "-NoProfile" "-Command" "zellij action rename-tab (Split-Path -Leaf (Get-Location).Path)" {
 {{- else }}
             Run "zsh" "-ic" "ztn" {
 {{- end }}
@@ -315,7 +315,7 @@ keybinds {
         // Rename focused tab to current directory in a small floating pane.
         bind "Ctrl t" {
 {{- if eq .chezmoi.os "windows" }}
-            Run "nu" "-c" "zellij action rename-tab (pwd | path basename)" {
+            Run "pwsh.exe" "-NoProfile" "-Command" "zellij action rename-tab (Split-Path -Leaf (Get-Location).Path)" {
 {{- else }}
             Run "zsh" "-ic" "ztn" {
 {{- end }}
