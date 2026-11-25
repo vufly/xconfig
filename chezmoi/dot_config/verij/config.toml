@@ -37,4 +37,5 @@ both = "fg=selected_fg,bg=selected_bg"
 
 [zellij]
 pane_frame_style = "titles"
-focus_follows_mouse = true
+focus_follows_mouse = false
+mouse_click_through = true
